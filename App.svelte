@@ -1,6 +1,6 @@
 <script>
-  import { onMount, onDestroy } from 'svelte';
-  import { createClient } from '@supabase/supabase-js';
+  import {onMount, onDestroy} from 'svelte';
+  import {createClient} from '@supabase/supabase-js';
 
   // Configuration Supabase avec les variables d'environnement de Vercel
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -30,6 +30,10 @@
   let isLoading = false;
   let windowWidth = 0;
   let windowHeight = 0;
+
+  // Variable pour suivre les dernières multiplications résolues (pour le mode mobile)
+  let lastSolvedMultiplications = [];
+  const MAX_LAST_SOLVED = 10; // Nombre maximal de dernières multiplications à afficher
 
   // Grille de jeu (10x10)
   let grid = Array(10).fill().map(() => Array(10).fill(null));
@@ -107,6 +111,7 @@
     gameState = 'playing';
     score = 0;
     gameTimer = gameDuration * 60;
+    lastSolvedMultiplications = []; // Réinitialiser les dernières multiplications résolues
 
     // Réinitialiser la grille et les cellules résolues
     grid = Array(10).fill().map(() => Array(10).fill(null));
@@ -207,6 +212,16 @@
       // Marquer la cellule comme résolue et afficher le résultat
       solvedCells[currentRow - 1][currentCol - 1] = true;
       grid[currentRow - 1][currentCol - 1] = correctAnswer;
+
+      // Ajouter cette multiplication aux dernières résolues (pour le mode mobile)
+      const newSolved = {
+        row: currentRow,
+        col: currentCol,
+        result: correctAnswer,
+        timestamp: Date.now()
+      };
+
+      lastSolvedMultiplications = [newSolved, ...lastSolvedMultiplications].slice(0, MAX_LAST_SOLVED);
 
       clearInterval(cellTimerInterval);
 
@@ -452,18 +467,14 @@
           <div class="mobile-solved-info">
             <h3>Dernières multiplications résolues</h3>
             <div class="solved-list">
-              {#if getSolvedCount() === 0}
+              {#if lastSolvedMultiplications.length === 0}
                 <p>Aucune multiplication résolue pour le moment.</p>
               {:else}
                 <div class="solved-grid">
-                  {#each Array(10) as _, rowIndex}
-                    {#each Array(10) as _, colIndex}
-                      {#if solvedCells[rowIndex][colIndex]}
-                        <div class="solved-item">
-                          {rowIndex + 1} × {colIndex + 1} = {grid[rowIndex][colIndex]}
-                        </div>
-                      {/if}
-                    {/each}
+                  {#each lastSolvedMultiplications as solved}
+                    <div class="solved-item">
+                      {solved.row} × {solved.col} = {solved.result}
+                    </div>
                   {/each}
                 </div>
               {/if}
@@ -715,6 +726,7 @@
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    width: 100%;
   }
 
   .current-multiplication-mobile {
@@ -725,6 +737,7 @@
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     text-align: center;
+    margin-bottom: 10px;
   }
 
   .multiplication-question {
@@ -760,21 +773,25 @@
 
   .mobile-solved-info {
     width: 100%;
+    max-width: 400px;
     padding: 15px;
     background-color: #fff;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
   }
 
   .solved-list {
     max-height: 200px;
     overflow-y: auto;
+    padding: 5px;
   }
 
   .solved-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
+    justify-content: center;
   }
 
   .solved-item {
@@ -783,6 +800,9 @@
     border-radius: 5px;
     font-size: 14px;
     color: #2e7d32;
+    min-width: 80px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   /* Grille - Optimisée pour responsive */
