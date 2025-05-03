@@ -28,15 +28,19 @@
   let level = 'adulte'; // 'adulte' ou 'enfant'
   let isMobile = false;
   let isLoading = false;
+  let windowWidth = 0;
+  let windowHeight = 0;
 
   // Grille de jeu (10x10)
   let grid = Array(10).fill().map(() => Array(10).fill(null));
   // Grille pour suivre les cellules déjà résolues
   let solvedCells = Array(10).fill().map(() => Array(10).fill(false));
 
-  // Vérifier si l'appareil est mobile
-  function checkMobile() {
-    isMobile = window.innerWidth < 768;
+  // Vérifier si l'appareil est mobile et obtenir les dimensions de la fenêtre
+  function updateDimensions() {
+    windowWidth = window.innerWidth;
+    windowHeight = window.innerHeight;
+    isMobile = windowWidth < 768;
   }
 
   // Chargement des leaderboards depuis Supabase
@@ -89,12 +93,12 @@
   }
 
   onMount(() => {
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    updateDimensions();
+    window.addEventListener('resize', updateDimensions);
     loadLeaderboards();
 
     return () => {
-      window.removeEventListener('resize', checkMobile);
+      window.removeEventListener('resize', updateDimensions);
     };
   });
 
@@ -339,7 +343,7 @@
   }
 </script>
 
-<main class="container">
+<main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}">
   {#if gameState === 'notStarted'}
     <div class="start-screen">
       <h1>Jeu de Multiplication</h1>
@@ -467,7 +471,7 @@
           </div>
         </div>
       {:else}
-        <!-- Version desktop - Affichage avec grille -->
+        <!-- Version desktop - Affichage avec grille responsive -->
         <div class="current-multiplication">
           <span>Multiplication actuelle: {currentRow} × {currentCol}</span>
           <div class="cell-timer-container">
@@ -476,7 +480,7 @@
         </div>
 
         <div class="grid-container">
-          <div class="grid">
+          <div class="grid" style="--grid-size: {Math.min(windowWidth - 40, windowHeight - 250, 900) / 11}px;">
             <!-- En-tête des colonnes -->
             <div class="grid-header-cell"></div>
             {#each Array(10) as _, colIndex}
@@ -557,12 +561,14 @@
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #f5f5f5;
+    overflow-x: hidden; /* Empêche le défilement horizontal sur la page */
   }
 
   .container {
-    max-width: 800px;
     margin: 0 auto;
     padding: 20px;
+    box-sizing: border-box;
+    width: 100%;
   }
 
   h1 {
@@ -779,16 +785,21 @@
     color: #2e7d32;
   }
 
-  /* Grille */
+  /* Grille - Optimisée pour responsive */
   .grid-container {
-    overflow-x: auto;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    overflow: hidden; /* Supprime les barres de défilement */
   }
 
   .grid {
     display: grid;
-    grid-template-columns: repeat(11, 1fr); /* 1 colonne pour les en-têtes + 10 colonnes pour la grille */
-    gap: 5px;
-    margin-top: 20px;
+    grid-template-columns: repeat(11, var(--grid-size)); /* Utilise une variable CSS pour la taille */
+    gap: 3px;
+    margin: 0 auto;
   }
 
   .grid-header-cell {
@@ -799,12 +810,13 @@
     border-radius: 5px;
     font-weight: bold;
     color: #555;
-    aspect-ratio: 1;
+    width: var(--grid-size);
+    height: var(--grid-size);
   }
 
   .grid-cell {
-    width: 100%;
-    aspect-ratio: 1;
+    width: var(--grid-size);
+    height: var(--grid-size);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -812,6 +824,7 @@
     border-radius: 5px;
     font-weight: bold;
     position: relative;
+    box-sizing: border-box;
   }
 
   .grid-cell.current {
@@ -829,10 +842,12 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    height: 100%;
   }
 
   .multiplication-text {
-    font-size: 12px;
+    font-size: min(12px, calc(var(--grid-size) / 4));
     color: #757575;
   }
 
@@ -847,11 +862,12 @@
   input[type="number"] {
     width: 90%;
     height: 80%;
-    font-size: 16px;
+    font-size: min(16px, calc(var(--grid-size) / 3));
     text-align: center;
     border: 2px solid #ccc;
     border-radius: 5px;
     padding: 0;
+    box-sizing: border-box;
   }
 
   input.correct {
@@ -924,6 +940,8 @@
   /* Tableau des scores */
   .leaderboard {
     margin-top: 30px;
+    width: 100%;
+    overflow-x: auto; /* Permettre le défilement horizontal pour le tableau si nécessaire */
   }
 
   table {
