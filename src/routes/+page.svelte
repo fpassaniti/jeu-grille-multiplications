@@ -10,6 +10,7 @@
 
   // Importation des stores et utilitaires
   import { formatTime } from '$lib/utils/formatters';
+  import { calculateScore } from '$lib/utils/game-logic';
   import { selectedTables, getSelectedTableNumbers } from '$lib/stores/gameStore';
 
   // Données des leaderboards chargées côté serveur
@@ -256,8 +257,9 @@
 
     if (userAnswerNum === correctAnswer) {
       // Réponse correcte
-      // Nouveau calcul du score basé sur le temps restant
-      score += cellTimer; // Ajoute le nombre de secondes restantes au score
+      // Calcul du score avec multiplicateur de difficulté
+      const earnedPoints = calculateScore(cellTimer, currentRow, currentCol, level);
+      score += earnedPoints;
 
       lastAnswerCorrect = true;
 
@@ -270,6 +272,7 @@
         row: currentRow,
         col: currentCol,
         result: correctAnswer,
+        points: earnedPoints, // Ajout des points gagnés pour affichage
         timestamp: Date.now()
       };
 

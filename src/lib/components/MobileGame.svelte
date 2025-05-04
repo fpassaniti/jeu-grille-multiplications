@@ -49,6 +49,9 @@
           {#each lastSolvedMultiplications as solved}
             <div class="solved-item">
               {solved.row} × {solved.col} = {solved.result}
+              {#if solved.points !== undefined}
+                <div class="points-earned">+{solved.points} pts</div>
+              {/if}
             </div>
           {/each}
         </div>
@@ -152,8 +155,15 @@
     border-radius: 5px;
     font-size: 14px;
     color: #2e7d32;
-    min-width: 80px;
+    min-width: 100px;
     text-align: center;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+
+  .points-earned {
+    font-size: 12px;
+    font-weight: bold;
+    color: #4caf50;
+    margin-top: 3px;
   }
 </style>
