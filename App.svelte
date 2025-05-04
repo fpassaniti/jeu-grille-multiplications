@@ -31,6 +31,14 @@
   let windowWidth = 0;
   let windowHeight = 0;
 
+  // Nouvelles variables pour la sélection des tables
+  let selectedTables = Array(10).fill(true); // Par défaut, toutes les tables sont sélectionnées
+
+  // Getter pour obtenir les nombres des tables sélectionnées
+  function getSelectedTableNumbers() {
+    return selectedTables.map((selected, index) => selected ? index + 1 : null).filter(num => num !== null);
+  }
+
   // Variable pour suivre les dernières multiplications résolues (pour le mode mobile)
   let lastSolvedMultiplications = [];
   const MAX_LAST_SOLVED = 10; // Nombre maximal de dernières multiplications à afficher
@@ -96,10 +104,32 @@
     }
   }
 
+  // Chargement des tables sélectionnées depuis localStorage
+  function loadSelectedTables() {
+    try {
+      const savedTables = localStorage.getItem('selectedMultiplicationTables');
+      if (savedTables) {
+        selectedTables = JSON.parse(savedTables);
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des tables sélectionnées:', error);
+    }
+  }
+
+  // Sauvegarde des tables sélectionnées dans localStorage
+  function saveSelectedTables() {
+    try {
+      localStorage.setItem('selectedMultiplicationTables', JSON.stringify(selectedTables));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des tables sélectionnées:', error);
+    }
+  }
+
   onMount(() => {
     updateDimensions();
     window.addEventListener('resize', updateDimensions);
     loadLeaderboards();
+    loadSelectedTables();
 
     return () => {
       window.removeEventListener('resize', updateDimensions);
@@ -116,6 +146,12 @@
     // Réinitialiser la grille et les cellules résolues
     grid = Array(10).fill().map(() => Array(10).fill(null));
     solvedCells = Array(10).fill().map(() => Array(10).fill(false));
+
+    // Si en mode enfant et aucune table sélectionnée, sélectionner toutes les tables
+    if (level === 'enfant' && getSelectedTableNumbers().length === 0) {
+      selectedTables = Array(10).fill(true);
+      saveSelectedTables();
+    }
 
     startGameTimer();
     selectNewMultiplication();
@@ -137,17 +173,30 @@
     if (isSelectingNewCell) return;
     isSelectingNewCell = true;
 
-    // Vérifier s'il reste des cellules non résolues
+    // Liste des nombres disponibles pour les tables (selon le mode et la sélection)
+    let availableRows = Array.from({length: 10}, (_, i) => i + 1);
+    let availableCols = Array.from({length: 10}, (_, i) => i + 1);
+
+    // En mode enfant, filtrer selon les tables sélectionnées
+    if (level === 'enfant') {
+      const selectedNums = getSelectedTableNumbers();
+      availableRows = selectedNums;
+      availableCols = selectedNums;
+    }
+
+    // Vérifier s'il reste des cellules non résolues parmi les disponibles
     const unsolvedCells = [];
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
+    for (let ri = 0; ri < availableRows.length; ri++) {
+      const r = availableRows[ri] - 1; // -1 car les indices de la grille commencent à 0
+      for (let ci = 0; ci < availableCols.length; ci++) {
+        const c = availableCols[ci] - 1;
         if (!solvedCells[r][c]) {
           unsolvedCells.push({row: r, col: c});
         }
       }
     }
 
-    // Si toutes les cellules sont résolues, terminer le jeu
+    // Si toutes les cellules disponibles sont résolues, terminer le jeu
     if (unsolvedCells.length === 0) {
       endGame();
       isSelectingNewCell = false;
@@ -313,6 +362,18 @@
     }
   }
 
+  // Fonction pour basculer la sélection d'une table
+  function toggleTable(index) {
+    selectedTables[index] = !selectedTables[index];
+    saveSelectedTables();
+  }
+
+  // Fonction pour sélectionner ou désélectionner toutes les tables
+  function selectAllTables(select) {
+    selectedTables = Array(10).fill(select);
+    saveSelectedTables();
+  }
+
   // Nettoyage des intervalles à la destruction du composant
   onDestroy(() => {
     clearInterval(gameTimerInterval);
@@ -348,13 +409,39 @@
 
   // Calcul du nombre de multiplications résolues
   function getSolvedCount() {
-    let count = 0;
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        if (solvedCells[r][c]) count++;
+    if (level === 'adulte') {
+      // En mode adulte, compte toutes les cellules résolues
+      let count = 0;
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (solvedCells[r][c]) count++;
+        }
       }
+      return count;
+    } else {
+      // En mode enfant, compte uniquement les cellules des tables sélectionnées
+      const selectedNums = getSelectedTableNumbers();
+      let count = 0;
+      let total = 0;
+
+      for (let ri = 0; ri < selectedNums.length; ri++) {
+        const r = selectedNums[ri] - 1;
+        for (let ci = 0; ci < selectedNums.length; ci++) {
+          const c = selectedNums[ci] - 1;
+          total++;
+          if (solvedCells[r][c]) count++;
+        }
+      }
+
+      return {count, total};
     }
-    return count;
+  }
+
+  // Vérifie si une cellule fait partie des tables sélectionnées (pour l'affichage de la grille)
+  function isSelectedTableCell(row, col) {
+    if (level === 'adulte') return true;
+    const selectedNums = getSelectedTableNumbers();
+    return selectedNums.includes(row + 1) && selectedNums.includes(col + 1);
   }
 </script>
 
@@ -376,6 +463,35 @@
           </p>
         </div>
 
+        {#if level === 'enfant'}
+          <div class="option-section">
+            <h2>Sélectionnez les tables à pratiquer:</h2>
+            <div class="tables-selection">
+              {#each Array(10) as _, i}
+                <div class="table-checkbox">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={selectedTables[i]}
+                      on:change={() => toggleTable(i)}
+                    />
+                    <span>Table de {i + 1}</span>
+                  </label>
+                </div>
+              {/each}
+            </div>
+            <div class="selection-actions">
+              <button on:click={() => selectAllTables(true)}>Tout sélectionner</button>
+              <button on:click={() => selectAllTables(false)}>Tout désélectionner</button>
+            </div>
+            <p class="option-description">
+              {getSelectedTableNumbers().length === 0
+                ? 'Veuillez sélectionner au moins une table.'
+                : `Tables sélectionnées: ${getSelectedTableNumbers().join(', ')}`}
+            </p>
+          </div>
+        {/if}
+
         <div class="option-section">
           <h2>Choisissez la durée:</h2>
           <div class="option-buttons">
@@ -386,7 +502,13 @@
         </div>
       </div>
 
-      <button class="start-button" on:click={startGame}>Commencer</button>
+      <button
+        class="start-button"
+        on:click={startGame}
+        disabled={level === 'enfant' && getSelectedTableNumbers().length === 0}
+      >
+        Commencer
+      </button>
 
       {#if isLoading}
         <div class="loading">Chargement des scores...</div>
@@ -429,11 +551,29 @@
       </div>
 
       <div class="progress-container">
-        <div class="progress-label">Multiplications résolues: {getSolvedCount()}/100</div>
-        <div class="progress-bar">
-          <div class="progress-fill" style="width: {getSolvedCount()}%"></div>
-        </div>
+        {#if level === 'adulte'}
+          <div class="progress-label">Multiplications résolues: {getSolvedCount()}/100</div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {getSolvedCount()}%"></div>
+          </div>
+        {:else}
+          {#if getSelectedTableNumbers().length > 0}
+            {@const solvedInfo = getSolvedCount()}
+            <div class="progress-label">Multiplications résolues: {solvedInfo.count}/{solvedInfo.total}</div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: {(solvedInfo.count / solvedInfo.total) * 100}%"></div>
+            </div>
+          {:else}
+            <div class="progress-label">Aucune table sélectionnée</div>
+          {/if}
+        {/if}
       </div>
+
+      {#if level === 'enfant'}
+        <div class="tables-info">
+          <span>Tables sélectionnées: {getSelectedTableNumbers().join(', ')}</span>
+        </div>
+      {/if}
 
       {#if isMobile}
         <!-- Version mobile - Affichage simplifié sans grille -->
@@ -495,20 +635,26 @@
             <!-- En-tête des colonnes -->
             <div class="grid-header-cell"></div>
             {#each Array(10) as _, colIndex}
-              <div class="grid-header-cell">{colIndex + 1}</div>
+              <div class="grid-header-cell" class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(colIndex + 1)}>
+                {colIndex + 1}
+              </div>
             {/each}
 
             <!-- Lignes avec en-têtes -->
             {#each Array(10) as _, rowIndex}
               <!-- En-tête de ligne -->
-              <div class="grid-header-cell">{rowIndex + 1}</div>
+              <div class="grid-header-cell" class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(rowIndex + 1)}>
+                {rowIndex + 1}
+              </div>
 
               <!-- Cellules de la grille -->
               {#each Array(10) as _, colIndex}
+                {@const isSelected = isSelectedTableCell(rowIndex, colIndex)}
                 <div
                   class="grid-cell"
                   class:current={rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
                   class:solved={solvedCells[rowIndex][colIndex]}
+                  class:inactive={!isSelected}
                 >
                   {#if solvedCells[rowIndex][colIndex]}
                     <span>{grid[rowIndex][colIndex]}</span>
@@ -526,7 +672,7 @@
                         autocomplete="off"
                       />
                     </form>
-                  {:else}
+                  {:else if isSelected}
                     <div class="cell-content">
                       <span class="multiplication-text">{rowIndex + 1}×{colIndex + 1}</span>
                     </div>
@@ -543,7 +689,14 @@
       <h1>Partie terminée!</h1>
       <p>Votre score: <span class="final-score">{score}</span></p>
       <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
-      <p>Multiplications résolues: <span class="final-solved">{getSolvedCount()}/100</span></p>
+
+      {#if level === 'adulte'}
+        <p>Multiplications résolues: <span class="final-solved">{getSolvedCount()}/100</span></p>
+      {:else}
+        {@const solvedInfo = getSolvedCount()}
+        <p>Multiplications résolues: <span class="final-solved">{solvedInfo.count}/{solvedInfo.total}</span></p>
+        <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
+      {/if}
 
       <div class="save-score">
         <h2>Enregistrer votre score</h2>
@@ -639,6 +792,60 @@
     margin-top: 5px;
   }
 
+  /* Style pour la sélection des tables */
+  .tables-selection {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .table-checkbox {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+    padding: 8px 12px;
+    transition: all 0.2s;
+  }
+
+  .table-checkbox label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .table-checkbox input {
+    margin-right: 8px;
+  }
+
+  .selection-actions {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .selection-actions button {
+    padding: 8px 15px;
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 5px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .selection-actions button:hover {
+    background-color: #d0d0d0;
+  }
+
+  .tables-info {
+    text-align: center;
+    margin-bottom: 15px;
+    color: #666;
+    font-style: italic;
+  }
+
   .start-button {
     padding: 15px 30px;
     background-color: #2196f3;
@@ -651,8 +858,13 @@
     margin-bottom: 30px;
   }
 
-  .start-button:hover {
+  .start-button:hover:not(:disabled) {
     background-color: #0b7dda;
+  }
+
+  .start-button:disabled {
+    background-color: #9e9e9e;
+    cursor: not-allowed;
   }
 
   /* Écran de jeu */
@@ -834,6 +1046,11 @@
     height: var(--grid-size);
   }
 
+  .grid-header-cell.inactive {
+    background-color: #e0e0e0;
+    color: #999;
+  }
+
   .grid-cell {
     width: var(--grid-size);
     height: var(--grid-size);
@@ -855,6 +1072,11 @@
   .grid-cell.solved {
     background-color: #c8e6c9;
     color: #2e7d32;
+  }
+
+  .grid-cell.inactive {
+    background-color: #f0f0f0;
+    color: #bdbdbd;
   }
 
   .cell-content {
@@ -919,6 +1141,11 @@
   .final-solved {
     font-weight: bold;
     color: #2196f3;
+  }
+
+  .final-tables {
+    font-weight: bold;
+    color: #ff9800;
   }
 
   .save-score {
@@ -1001,6 +1228,18 @@
     .option-buttons {
       flex-direction: column;
       gap: 10px;
+    }
+
+    /* Style responsive pour la sélection des tables */
+    .tables-selection {
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-checkbox {
+      width: 80%;
+      max-width: 250px;
     }
 
     .save-score input, .save-score button {
