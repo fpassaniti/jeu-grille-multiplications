@@ -15,13 +15,7 @@ const config = {
       // Ajouter ceci pour s'assurer que les alias fonctionnent correctement
       alias: {
         $lib: 'src/lib'
-      },
-      // Utilisez 'edge' pour un déploiement Edge Function plus rapide
-      // Ou 'nodejs18' pour un déploiement Node.js
-      runtime: 'nodejs18.x',
-
-      // Configuration pour les fonctions serverless
-      regions: ['cdg1'], // Optionnel: spécifiez les régions Vercel (exemple: CDG pour Paris)
+      }
     }),
 
     // Configuration de l'environnement
