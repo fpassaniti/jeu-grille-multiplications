@@ -403,39 +403,43 @@
   }
 
   // Fonction pour obtenir le leaderboard actuel selon le niveau
-  function getCurrentLeaderboard() {
-    return level === 'adulte' ? leaderboardAdult : leaderboardChild;
-  }
+  $: currentLeaderboard = level === 'adulte' ? leaderboardAdult : leaderboardChild;
 
-  // Calcul du nombre de multiplications résolues
-  function getSolvedCount() {
-    if (level === 'adulte') {
-      // En mode adulte, compte toutes les cellules résolues
-      let count = 0;
-      for (let r = 0; r < 10; r++) {
-        for (let c = 0; c < 10; c++) {
-          if (solvedCells[r][c]) count++;
-        }
+  // Variables réactives pour le suivi des multiplications résolues
+  $: solvedCountAdult = (() => {
+    if (level !== 'adulte') return 0;
+    let count = 0;
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        if (solvedCells[r][c]) count++;
       }
-      return count;
-    } else {
-      // En mode enfant, compte uniquement les cellules des tables sélectionnées
-      const selectedNums = getSelectedTableNumbers();
-      let count = 0;
-      let total = 0;
-
-      for (let ri = 0; ri < selectedNums.length; ri++) {
-        const r = selectedNums[ri] - 1;
-        for (let ci = 0; ci < selectedNums.length; ci++) {
-          const c = selectedNums[ci] - 1;
-          total++;
-          if (solvedCells[r][c]) count++;
-        }
-      }
-
-      return {count, total};
     }
-  }
+    return count;
+  })();
+
+  $: solvedCountChild = (() => {
+    if (level !== 'enfant') return { count: 0, total: 0 };
+    const selectedNums = getSelectedTableNumbers();
+    let count = 0;
+    let total = 0;
+
+    // Pour chaque paire de tables sélectionnées
+    for (let ri = 0; ri < selectedNums.length; ri++) {
+      const r = selectedNums[ri] - 1;
+      for (let ci = 0; ci < selectedNums.length; ci++) {
+        const c = selectedNums[ci] - 1;
+        total++;
+        if (solvedCells[r][c]) count++;
+      }
+    }
+
+    return { count, total };
+  })();
+
+  // Pour le pourcentage de progression
+  $: progressPercentage = level === 'adulte'
+    ? solvedCountAdult
+    : (solvedCountChild.total > 0 ? (solvedCountChild.count / solvedCountChild.total) * 100 : 0);
 
   // Vérifie si une cellule fait partie des tables sélectionnées (pour l'affichage de la grille)
   function isSelectedTableCell(row, col) {
@@ -475,7 +479,7 @@
                       checked={selectedTables[i]}
                       on:change={() => toggleTable(i)}
                     />
-                    <span>Table de {i + 1}</span>
+                    <span>{i + 1}</span>
                   </label>
                 </div>
               {/each}
@@ -515,7 +519,7 @@
       {:else}
         <div class="leaderboard">
           <h2>Meilleurs scores ({level === 'adulte' ? 'Adulte' : 'Enfant'})</h2>
-          {#if getCurrentLeaderboard().length > 0}
+          {#if currentLeaderboard.length > 0}
             <table>
               <thead>
               <tr>
@@ -526,7 +530,7 @@
               </tr>
               </thead>
               <tbody>
-              {#each getCurrentLeaderboard() as entry, i}
+              {#each currentLeaderboard as entry, i}
                 <tr>
                   <td>{i + 1}</td>
                   <td>{entry.name}</td>
@@ -552,16 +556,15 @@
 
       <div class="progress-container">
         {#if level === 'adulte'}
-          <div class="progress-label">Multiplications résolues: {getSolvedCount()}/100</div>
+          <div class="progress-label">Multiplications résolues: {solvedCountAdult}/100</div>
           <div class="progress-bar">
-            <div class="progress-fill" style="width: {getSolvedCount()}%"></div>
+            <div class="progress-fill" style="width: {progressPercentage}%"></div>
           </div>
         {:else}
           {#if getSelectedTableNumbers().length > 0}
-            {@const solvedInfo = getSolvedCount()}
-            <div class="progress-label">Multiplications résolues: {solvedInfo.count}/{solvedInfo.total}</div>
+            <div class="progress-label">Multiplications résolues: {solvedCountChild.count}/{solvedCountChild.total}</div>
             <div class="progress-bar">
-              <div class="progress-fill" style="width: {(solvedInfo.count / solvedInfo.total) * 100}%"></div>
+              <div class="progress-fill" style="width: {progressPercentage}%"></div>
             </div>
           {:else}
             <div class="progress-label">Aucune table sélectionnée</div>
@@ -691,10 +694,9 @@
       <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
 
       {#if level === 'adulte'}
-        <p>Multiplications résolues: <span class="final-solved">{getSolvedCount()}/100</span></p>
+        <p>Multiplications résolues: <span class="final-solved">{solvedCountAdult}/100</span></p>
       {:else}
-        {@const solvedInfo = getSolvedCount()}
-        <p>Multiplications résolues: <span class="final-solved">{solvedInfo.count}/{solvedInfo.total}</span></p>
+        <p>Multiplications résolues: <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
         <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
       {/if}
 
