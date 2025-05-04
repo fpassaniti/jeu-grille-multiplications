@@ -173,39 +173,42 @@
     if (isSelectingNewCell) return;
     isSelectingNewCell = true;
 
-    // Liste des nombres disponibles pour les tables (selon le mode et la sélection)
-    let availableRows = Array.from({length: 10}, (_, i) => i + 1);
-    let availableCols = Array.from({length: 10}, (_, i) => i + 1);
+    // Construire la liste des cellules disponibles selon le mode
+    const availableCells = [];
 
-    // En mode enfant, filtrer selon les tables sélectionnées
-    if (level === 'enfant') {
+    // En mode adulte, toutes les cellules sont disponibles
+    if (level === 'adulte') {
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (!solvedCells[r][c]) {
+            availableCells.push({row: r, col: c});
+          }
+        }
+      }
+    } else {
+      // En mode enfant, seules les cellules concernant les tables sélectionnées sont disponibles
       const selectedNums = getSelectedTableNumbers();
-      availableRows = selectedNums;
-      availableCols = selectedNums;
-    }
 
-    // Vérifier s'il reste des cellules non résolues parmi les disponibles
-    const unsolvedCells = [];
-    for (let ri = 0; ri < availableRows.length; ri++) {
-      const r = availableRows[ri] - 1; // -1 car les indices de la grille commencent à 0
-      for (let ci = 0; ci < availableCols.length; ci++) {
-        const c = availableCols[ci] - 1;
-        if (!solvedCells[r][c]) {
-          unsolvedCells.push({row: r, col: c});
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          // Une cellule est sélectionnable si sa ligne OU sa colonne fait partie des tables sélectionnées
+          if (!solvedCells[r][c] && (selectedNums.includes(r + 1) || selectedNums.includes(c + 1))) {
+            availableCells.push({row: r, col: c});
+          }
         }
       }
     }
 
     // Si toutes les cellules disponibles sont résolues, terminer le jeu
-    if (unsolvedCells.length === 0) {
+    if (availableCells.length === 0) {
       endGame();
       isSelectingNewCell = false;
       return;
     }
 
     // Sélectionner aléatoirement une cellule non résolue
-    const randomIndex = Math.floor(Math.random() * unsolvedCells.length);
-    const selectedCell = unsolvedCells[randomIndex];
+    const randomIndex = Math.floor(Math.random() * availableCells.length);
+    const selectedCell = availableCells[randomIndex];
 
     currentRow = selectedCell.row + 1; // +1 car les indices commencent à 0
     currentCol = selectedCell.col + 1;
@@ -423,13 +426,14 @@
     let count = 0;
     let total = 0;
 
-    // Pour chaque paire de tables sélectionnées
-    for (let ri = 0; ri < selectedNums.length; ri++) {
-      const r = selectedNums[ri] - 1;
-      for (let ci = 0; ci < selectedNums.length; ci++) {
-        const c = selectedNums[ci] - 1;
-        total++;
-        if (solvedCells[r][c]) count++;
+    // Pour chaque cellule du tableau 10x10
+    for (let r = 0; r < 10; r++) {
+      for (let c = 0; c < 10; c++) {
+        // Une cellule fait partie des tables sélectionnées si sa ligne OU sa colonne est dans les tables sélectionnées
+        if (selectedNums.includes(r + 1) || selectedNums.includes(c + 1)) {
+          total++;
+          if (solvedCells[r][c]) count++;
+        }
       }
     }
 
@@ -445,7 +449,7 @@
   function isSelectedTableCell(row, col) {
     if (level === 'adulte') return true;
     const selectedNums = getSelectedTableNumbers();
-    return selectedNums.includes(row + 1) && selectedNums.includes(col + 1);
+    return selectedNums.includes(row + 1) || selectedNums.includes(col + 1);
   }
 </script>
 
@@ -479,7 +483,7 @@
                       checked={selectedTables[i]}
                       on:change={() => toggleTable(i)}
                     />
-                    <span>{i + 1}</span>
+                    <span>x {i + 1}</span>
                   </label>
                 </div>
               {/each}
