@@ -1,0 +1,21 @@
+/* Styles globaux de l'application */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f5f5;
+    overflow-x: hidden; /* Empêche le défilement horizontal sur la page */
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: #333;
+    margin-top: 0;
+}
+
+button {
+    cursor: pointer;
+}
+
+input, button {
+    font-family: inherit;
+}
