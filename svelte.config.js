@@ -18,7 +18,7 @@ const config = {
       },
       // Utilisez 'edge' pour un déploiement Edge Function plus rapide
       // Ou 'nodejs18' pour un déploiement Node.js
-      runtime: 'nodejs18',
+      runtime: 'nodejs18.x',
 
       // Configuration pour les fonctions serverless
       regions: ['cdg1'], // Optionnel: spécifiez les régions Vercel (exemple: CDG pour Paris)
