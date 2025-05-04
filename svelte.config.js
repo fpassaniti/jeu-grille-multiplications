@@ -15,8 +15,7 @@ const config = {
       // Ajouter ceci pour s'assurer que les alias fonctionnent correctement
       alias: {
         $lib: 'src/lib'
-      },
-      runtime: 'nodejs18.x'
+      }
     }),
 
     // Configuration de l'environnement
