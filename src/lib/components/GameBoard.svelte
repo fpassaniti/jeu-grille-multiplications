@@ -16,7 +16,8 @@
   export let windowHeight;
 
   // Calculer la taille optimale de la grille en fonction de la fenêtre
-  $: gridSize = Math.min(windowWidth - 40, windowHeight - 250, 900) / 11;
+  // Réduire davantage la taille pour s'assurer que tout tient dans la fenêtre
+  $: gridSize = Math.min(windowWidth - 40, windowHeight - 230, 680) / 11;
 </script>
 
 <div class="grid-container">
@@ -52,7 +53,8 @@
           class:inactive={!isSelected}
         >
           {#if solvedCells[rowIndex][colIndex]}
-            <span>{grid[rowIndex][colIndex]}</span>
+            <span class="solved-result">{grid[rowIndex][colIndex]}</span>
+            <div class="confetti-explosion"></div>
           {:else if rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
             <form on:submit={handleSubmit} class="cell-form">
               <input
@@ -87,12 +89,13 @@
     align-items: center;
     margin: 0 auto;
     overflow: hidden; /* Supprime les barres de défilement */
+    padding: 5px; /* Réduit le padding pour gagner de l'espace vertical */
   }
 
   .grid {
     display: grid;
     grid-template-columns: repeat(11, var(--grid-size)); /* Utilise une variable CSS pour la taille */
-    gap: 3px;
+    gap: 1px; /* Réduit davantage l'espacement entre les cellules */
     margin: 0 auto;
   }
 
@@ -100,17 +103,19 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f0f0f0;
-    border-radius: 5px;
+    background-color: var(--bg-secondary);
+    border-radius: calc(var(--border-radius-sm) - 2px); /* Réduit davantage le border-radius */
     font-weight: bold;
-    color: #555;
+    color: var(--primary-dark);
     width: var(--grid-size);
     height: var(--grid-size);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03); /* Réduit davantage l'ombre */
+    font-size: calc(var(--grid-size) * 0.42); /* Ajuste légèrement la taille de police */
   }
 
   .grid-header-cell.inactive {
-    background-color: #e0e0e0;
-    color: #999;
+    background-color: var(--bg-primary);
+    color: var(--text-light);
   }
 
   .grid-cell {
@@ -119,26 +124,55 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #e0e0e0;
-    border-radius: 5px;
+    background-color: white;
+    border-radius: calc(var(--border-radius-sm) - 2px); /* Réduit davantage le border-radius */
     font-weight: bold;
     position: relative;
     box-sizing: border-box;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03); /* Réduit davantage l'ombre */
+    border: 1px solid var(--bg-secondary); /* Conserve l'épaisseur de la bordure minimale */
+    transition: all 0.2s;
+  }
+  
+  .grid-cell:hover:not(.inactive):not(.current):not(.solved) {
+    transform: translateY(-1px); /* Réduit l'effet de survol pour un design plus compact */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
   .grid-cell.current {
-    background-color: #bbdefb;
-    border: 2px solid #2196f3;
+    background-color: var(--info-light);
+    border: 1px solid var(--info);
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 6px rgba(79, 179, 255, 0.4); /* Réduit l'ombre */
+    z-index: 1;
   }
 
   .grid-cell.solved {
-    background-color: #c8e6c9;
-    color: #2e7d32;
+    background-color: var(--success-light);
+    color: var(--success-dark);
+    border-color: var(--success);
+  }
+  
+  .solved-result {
+    font-size: min(20px, calc(var(--grid-size) / 2));
+    font-weight: bold;
+  }
+  
+  .confetti-explosion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
   }
 
   .grid-cell.inactive {
-    background-color: #f0f0f0;
-    color: #bdbdbd;
+    background-color: var(--bg-primary);
+    color: var(--text-light);
+    border-color: var(--bg-primary);
+    opacity: 0.6;
   }
 
   .cell-content {
@@ -151,8 +185,8 @@
   }
 
   .multiplication-text {
-    font-size: min(12px, calc(var(--grid-size) / 4));
-    color: #757575;
+    font-size: min(12px, calc(var(--grid-size) / 3.5));
+    color: var(--text-secondary);
   }
 
   .cell-form {
@@ -168,19 +202,30 @@
     height: 80%;
     font-size: min(16px, calc(var(--grid-size) / 3));
     text-align: center;
-    border: 2px solid #ccc;
-    border-radius: 5px;
+    border: 2px solid var(--primary-light);
+    border-radius: var(--border-radius-sm);
     padding: 0;
     box-sizing: border-box;
   }
 
   input.correct {
-    border-color: #4caf50;
-    background-color: rgba(76, 175, 80, 0.1);
+    border-color: var(--success);
+    background-color: rgba(67, 215, 135, 0.1);
   }
 
   input.incorrect {
-    border-color: #f44336;
-    background-color: rgba(244, 67, 54, 0.1);
+    border-color: var(--secondary);
+    background-color: rgba(255, 107, 107, 0.1);
+  }
+  
+  @keyframes confetti {
+    0% { 
+      transform: translateY(0) rotate(0deg); 
+      opacity: 1;
+    }
+    100% { 
+      transform: translateY(-100px) rotate(720deg); 
+      opacity: 0;
+    }
   }
 </style>

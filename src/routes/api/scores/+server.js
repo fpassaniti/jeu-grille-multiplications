@@ -1,9 +1,10 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
+import { env } from '$env/dynamic/private';
 
 // Configuration Supabase avec les variables d'environnement serveur
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée
+const supabaseUrl = env.VITE_SUPABASE_URL;
+const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {

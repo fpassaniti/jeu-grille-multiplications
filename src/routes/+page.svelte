@@ -438,22 +438,35 @@
 </script>
 
 <svelte:head>
-  <title>Jeu de Multiplication</title>
-  <meta name="description" content="Améliorez vos compétences en multiplication avec ce jeu interactif" />
+  <title>MultyFun - Jeu de Multiplication</title>
+  <meta name="description" content="Améliorez vos compétences en multiplication avec ce jeu interactif amusant pour les enfants et les adultes!" />
 </svelte:head>
 
 <main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}">
   {#if gameState === 'notStarted'}
-    <div class="start-screen">
+    <div class="start-screen card">
+      <div class="logo-container">
+        <div class="logo">
+          <span class="logo-text">MultyFun</span>
+          <div class="logo-icon">
+            <span class="math-symbol">×</span>
+          </div>
+        </div>
+      </div>
+
       <h1>Jeu de Multiplication</h1>
-      <p>Résolvez autant de multiplications que possible avant la fin du temps!</p>
+      <p class="game-intro">Résous autant de multiplications que possible avant la fin du temps!</p>
 
       <div class="game-options">
-        <div class="option-section">
-          <h2>Choisissez le niveau:</h2>
+        <div class="option-section card-inset">
+          <h2>Choisis ton niveau:</h2>
           <div class="option-buttons">
-            <button class:active={level === 'adulte'} on:click={() => setLevel('adulte')}>Adulte</button>
-            <button class:active={level === 'enfant'} on:click={() => setLevel('enfant')}>Enfant</button>
+            <button class:active={level === 'adulte'} on:click={() => setLevel('adulte')}>
+              <span class="emoji">👨‍💼</span> Adulte
+            </button>
+            <button class:active={level === 'enfant'} on:click={() => setLevel('enfant')}>
+              <span class="emoji">👶</span> Enfant
+            </button>
           </div>
           <p class="option-description">
             {level === 'adulte' ? 'Temps de réponse: 5-15 secondes' : 'Temps de réponse: 15-45 secondes'}
@@ -461,19 +474,27 @@
         </div>
 
         {#if level === 'enfant'}
-          <TableSelector
-            {toggleTable}
-            {selectAllTables}
-            selectedNumbers={getSelectedTableNumbers()}
-          />
+          <div class="option-section card-inset">
+            <TableSelector
+              {toggleTable}
+              {selectAllTables}
+              selectedNumbers={getSelectedTableNumbers()}
+            />
+          </div>
         {/if}
 
-        <div class="option-section">
-          <h2>Choisissez la durée:</h2>
+        <div class="option-section card-inset">
+          <h2>Choisis la durée:</h2>
           <div class="option-buttons">
-            <button class:active={gameDuration === 2} on:click={() => setGameDuration(2)}>2 minutes</button>
-            <button class:active={gameDuration === 3} on:click={() => setGameDuration(3)}>3 minutes</button>
-            <button class:active={gameDuration === 5} on:click={() => setGameDuration(5)}>5 minutes</button>
+            <button class:active={gameDuration === 2} on:click={() => setGameDuration(2)}>
+              <span class="emoji">⏱️</span> 2 min
+            </button>
+            <button class:active={gameDuration === 3} on:click={() => setGameDuration(3)}>
+              <span class="emoji">⏱️</span> 3 min
+            </button>
+            <button class:active={gameDuration === 5} on:click={() => setGameDuration(5)}>
+              <span class="emoji">⏱️</span> 5 min
+            </button>
           </div>
         </div>
       </div>
@@ -483,106 +504,139 @@
         on:click={startGame}
         disabled={level === 'enfant' && getSelectedTableNumbers().length === 0}
       >
-        Commencer
+        <span class="emoji">🚀</span> Commencer
       </button>
 
-      <Leaderboard
-        {isLoading}
-        {level}
-        leaderboard={currentLeaderboard}
-      />
+      <div class="leaderboard-container">
+        <Leaderboard
+          {isLoading}
+          {level}
+          leaderboard={currentLeaderboard}
+        />
+      </div>
     </div>
   {:else if gameState === 'playing'}
     <div class="game-screen">
-      <div class="game-header">
-        <div class="timer">Temps: {formatTime(gameTimer)}</div>
-        <div class="level">Niveau: {level === 'adulte' ? 'Adulte' : 'Enfant'}</div>
-        <div class="score">Score: {score}</div>
-      </div>
-
-      <div class="progress-container">
-        {#if level === 'adulte'}
-          <div class="progress-label">Multiplications résolues: {solvedCountAdult}/100</div>
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: {progressPercentage}%"></div>
+      <div class="game-header-sticky card">
+        <div class="game-header">
+          <div class="timer">
+            <span class="emoji">⏱️</span> Temps: {formatTime(gameTimer)}
           </div>
-        {:else}
-          {#if getSelectedTableNumbers().length > 0}
-            <div class="progress-label">Multiplications résolues: {solvedCountChild.count}/{solvedCountChild.total}</div>
+          <div class="level">
+            <span class="emoji">{level === 'adulte' ? '👨‍💼' : '👶'}</span> Niveau: {level === 'adulte' ? 'Adulte' : 'Enfant'}
+          </div>
+          <div class="score">
+            <span class="emoji">🏆</span> Score: {score}
+          </div>
+        </div>
+
+        <div class="progress-container">
+          {#if level === 'adulte'}
+            <div class="progress-label">Multiplications résolues: {solvedCountAdult}/100</div>
             <div class="progress-bar">
               <div class="progress-fill" style="width: {progressPercentage}%"></div>
             </div>
           {:else}
-            <div class="progress-label">Aucune table sélectionnée</div>
+            {#if getSelectedTableNumbers().length > 0}
+              <div class="progress-label">Multiplications résolues: {solvedCountChild.count}/{solvedCountChild.total}</div>
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: {progressPercentage}%"></div>
+              </div>
+            {:else}
+              <div class="progress-label">Aucune table sélectionnée</div>
+            {/if}
           {/if}
+        </div>
+
+        {#if level === 'enfant'}
+          <div class="tables-info">
+            <span class="emoji">📋</span> Tables sélectionnées: {getSelectedTableNumbers().join(', ')}
+          </div>
+        {/if}
+
+        {#if !isMobile}
+          <div class="current-multiplication">
+            <span class="emoji">🎯</span> Multiplication actuelle: <span class="row-col">{currentRow} × {currentCol}</span>
+            <div class="cell-timer-container">
+              <div class="cell-timer" style="width: {(cellTimer / maxCellTimer) * 100}%"></div>
+            </div>
+          </div>
         {/if}
       </div>
 
-      {#if level === 'enfant'}
-        <div class="tables-info">
-          <span>Tables sélectionnées: {getSelectedTableNumbers().join(', ')}</span>
-        </div>
-      {/if}
-
-      {#if isMobile}
-        <MobileGame
-          {currentRow}
-          {currentCol}
-          bind:userAnswer
-          {handleAnswerChange}
-          {handleSubmit}
-          bind:inputRef
-          {lastAnswerCorrect}
-          {cellTimer}
-          {maxCellTimer}
-          {lastSolvedMultiplications}
-        />
-      {:else}
-        <div class="current-multiplication">
-          <span>Multiplication actuelle: {currentRow} × {currentCol}</span>
-          <div class="cell-timer-container">
-            <div class="cell-timer" style="width: {(cellTimer / maxCellTimer) * 100}%"></div>
-          </div>
-        </div>
-
-        <GameBoard
-          {grid}
-          {solvedCells}
-          {currentRow}
-          {currentCol}
-          bind:userAnswer
-          {handleAnswerChange}
-          {handleSubmit}
-          bind:inputRef
-          {lastAnswerCorrect}
-          {isSelectedTableCell}
-          {level}
-          {getSelectedTableNumbers}
-          {windowWidth}
-          {windowHeight}
-        />
-      {/if}
+      <div class="game-board-container card">
+        {#if isMobile}
+          <MobileGame
+            {currentRow}
+            {currentCol}
+            bind:userAnswer
+            {handleAnswerChange}
+            {handleSubmit}
+            bind:inputRef
+            {lastAnswerCorrect}
+            {cellTimer}
+            {maxCellTimer}
+            {lastSolvedMultiplications}
+          />
+        {:else}
+          <GameBoard
+            {grid}
+            {solvedCells}
+            {currentRow}
+            {currentCol}
+            bind:userAnswer
+            {handleAnswerChange}
+            {handleSubmit}
+            bind:inputRef
+            {lastAnswerCorrect}
+            {isSelectedTableCell}
+            {level}
+            {getSelectedTableNumbers}
+            {windowWidth}
+            {windowHeight}
+          />
+        {/if}
+      </div>
     </div>
   {:else if gameState === 'finished'}
-    <div class="end-screen">
-      <h1>Partie terminée!</h1>
-      <p>Votre score: <span class="final-score">{score}</span></p>
-      <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
+    <div class="end-screen card">
+      <h1>🎉 Partie terminée! 🎉</h1>
 
-      {#if level === 'adulte'}
-        <p>Multiplications résolues: <span class="final-solved">{solvedCountAdult}/100</span></p>
-      {:else}
-        <p>Multiplications résolues: <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
-        <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
-      {/if}
+      <div class="results-container">
+        <div class="result-card">
+          <div class="result-icon">🏆</div>
+          <p>Ton score: <span class="final-score">{score}</span></p>
+        </div>
 
-      <div class="save-score">
-        <h2>Enregistrer votre score</h2>
+        <div class="result-card">
+          <div class="result-icon">{level === 'adulte' ? '👨‍💼' : '👶'}</div>
+          <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
+        </div>
+
+        <div class="result-card">
+          <div class="result-icon">✅</div>
+          {#if level === 'adulte'}
+            <p>Multiplications résolues: <span class="final-solved">{solvedCountAdult}/100</span></p>
+          {:else}
+            <p>Multiplications résolues: <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
+          {/if}
+        </div>
+
+        {#if level === 'enfant'}
+          <div class="result-card">
+            <div class="result-icon">📚</div>
+            <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
+          </div>
+        {/if}
+      </div>
+
+      <div class="save-score card-inset">
+        <h2>Enregistre ton score</h2>
         <form on:submit|preventDefault={saveScore}>
           <input
             type="text"
             bind:value={playerName}
-            placeholder="Votre prénom"
+            placeholder="Ton prénom"
             required
             disabled={isLoading}
           />
@@ -592,231 +646,327 @@
         </form>
       </div>
 
-      <button class="restart-button" on:click={() => gameState = 'notStarted'}>Retour à l'accueil</button>
+      <button class="restart-button" on:click={() => gameState = 'notStarted'}>
+        <span class="emoji">🏠</span> Retour à l'accueil
+      </button>
     </div>
   {/if}
 </main>
 
 <style>
-  :global(body) {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    overflow-x: hidden; /* Empêche le défilement horizontal sur la page */
-  }
-
-  .container {
-    margin: 0 auto;
-    padding: 20px;
-    box-sizing: border-box;
-    width: 100%;
-  }
-
-  h1 {
-    color: #333;
-    text-align: center;
+  .logo-container {
+    display: flex;
+    justify-content: center;
     margin-bottom: 20px;
   }
 
-  h2 {
-    color: #555;
-    margin-bottom: 15px;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: bounce 2s ease-in-out infinite;
   }
 
-  /* Écran de démarrage */
+  .logo-text {
+    font-family: 'Baloo 2', cursive;
+    font-size: 2.8rem;
+    font-weight: bold;
+    color: var(--primary);
+    text-shadow: 3px 3px 0 var(--accent-light);
+  }
+
+  .logo-icon {
+    background: var(--accent);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 0 var(--accent-dark);
+  }
+
+  .math-symbol {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+  }
+
+  .game-intro {
+    font-size: 1.2rem;
+    margin-bottom: 30px;
+    color: var(--text-secondary);
+  }
+
   .start-screen {
     text-align: center;
+    padding: 30px;
+    margin: 20px auto;
+    background-color: white;
   }
 
   .game-options {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
     margin: 30px 0;
   }
 
   .option-section {
-    margin-bottom: 20px;
+    margin-bottom: 10px;
+  }
+
+  .card-inset {
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
   }
 
   .option-buttons {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-bottom: 10px;
-  }
-
-  .option-buttons button {
-    padding: 10px 20px;
-    background-color: #e0e0e0;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .option-buttons button.active {
-    background-color: #4caf50;
-    color: white;
+    margin: 15px 0;
   }
 
   .option-description {
-    font-size: 14px;
-    color: #666;
-    margin-top: 5px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 10px;
+  }
+
+  .emoji {
+    font-size: 1.2em;
+    margin-right: 5px;
+    display: inline-block;
   }
 
   .tables-info {
     text-align: center;
-    margin-bottom: 15px;
-    color: #666;
-    font-style: italic;
+    margin: 5px 0; /* Réduit les marges verticales */
+    padding: 5px; /* Réduit le padding pour gagner de l'espace vertical */
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+    color: var(--text-secondary);
+    font-size: 0.85rem; /* Réduit légèrement la taille de police */
   }
 
   .start-button {
-    padding: 15px 30px;
-    background-color: #2196f3;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    margin-bottom: 30px;
+    font-size: 1.3rem;
+    padding: 15px 40px;
+    background-color: var(--accent);
+    color: var(--text-primary);
+    margin: 20px 0;
+    box-shadow: 0 6px 0 var(--accent-dark);
   }
 
-  .start-button:hover:not(:disabled) {
-    background-color: #0b7dda;
+  .start-button:hover {
+    background-color: var(--accent-light);
   }
 
   .start-button:disabled {
-    background-color: #9e9e9e;
-    cursor: not-allowed;
+    background-color: #e0e0e0;
+    color: var(--text-light);
+    box-shadow: 0 4px 0 #bdbdbd;
   }
 
   /* Écran de jeu */
+  .game-screen {
+    margin: 10px auto; /* Réduit la marge pour gagner de l'espace vertical */
+    padding-top: 5px; /* Réduit le padding pour gagner de l'espace vertical */
+  }
+
+  .game-header-sticky {
+    position: relative;
+    z-index: 100;
+    margin-bottom: 10px; /* Réduit la marge pour gagner de l'espace vertical */
+    padding: 8px 15px; /* Réduit le padding pour gagner de l'espace vertical */
+    background-color: white;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+  }
+
   .game-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 20px;
-    font-size: 18px;
+    margin-bottom: 6px; /* Réduit la marge pour gagner de l'espace vertical */
+    font-size: 1rem; /* Réduit légèrement la taille de police */
     font-weight: bold;
   }
 
   .timer {
-    color: #f44336;
+    color: var(--secondary);
   }
 
   .level {
-    color: #9c27b0;
+    color: var(--primary);
   }
 
   .score {
-    color: #4caf50;
+    color: var(--success);
   }
 
   .progress-container {
-    margin-bottom: 20px;
+    margin-bottom: 5px; /* Réduit la marge pour gagner de l'espace vertical */
   }
 
   .progress-label {
-    font-size: 16px;
-    margin-bottom: 5px;
-    color: #555;
+    font-size: 0.85rem; /* Réduit légèrement la taille de police */
+    margin-bottom: 3px; /* Réduit la marge pour gagner de l'espace vertical */
+    color: var(--text-secondary);
   }
 
   .progress-bar {
-    height: 10px;
-    background-color: #e0e0e0;
-    border-radius: 5px;
+    height: 8px;
+    background-color: var(--bg-secondary);
+    border-radius: 4px;
     overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .progress-fill {
     height: 100%;
-    background-color: #4caf50;
+    background-color: var(--success);
     transition: width 0.3s ease;
   }
 
   .current-multiplication {
     text-align: center;
-    margin-bottom: 20px;
-    font-size: 20px;
+    margin: 5px 0 3px; /* Réduit les marges verticales */
+    font-size: 1rem; /* Réduit légèrement la taille de police */
     font-weight: bold;
+    color: var(--primary-dark);
+  }
+
+  .current-multiplication .row-col {
+    font-size: 1.5rem;
   }
 
   .cell-timer-container {
-    height: 10px;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    margin-top: 10px;
+    height: 6px;
+    background-color: var(--bg-secondary);
+    border-radius: 3px;
+    margin-top: 5px;
     overflow: hidden;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
   }
 
   .cell-timer {
     height: 100%;
-    background-color: #f44336;
+    background-color: var(--secondary);
     transition: width 0.1s linear;
+  }
+
+  .game-board-container {
+    padding: 10px 15px; /* Réduit le padding vertical pour gagner de l'espace */
+    background-color: white;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
   }
 
   /* Écran de fin */
   .end-screen {
     text-align: center;
+    padding: 30px;
+    margin: 20px auto;
+  }
+
+  .results-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin: 30px 0;
+  }
+
+  .result-card {
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    min-width: 200px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s;
+  }
+
+  .result-card:hover {
+    transform: translateY(-5px);
+  }
+
+  .result-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    animation: pulse 2s infinite;
   }
 
   .final-score {
-    font-size: 32px;
+    font-size: 1.8rem;
     font-weight: bold;
-    color: #4caf50;
+    color: var(--success);
   }
 
   .final-level {
     font-weight: bold;
-    color: #9c27b0;
+    color: var(--primary);
   }
 
   .final-solved {
     font-weight: bold;
-    color: #2196f3;
+    color: var(--info);
   }
 
   .final-tables {
     font-weight: bold;
-    color: #ff9800;
+    color: var(--secondary);
   }
 
   .save-score {
-    margin: 30px 0;
+    margin: 30px auto;
+    max-width: 500px;
+  }
+
+  .save-score form {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
   }
 
   .save-score input {
-    padding: 10px;
-    font-size: 16px;
-    margin-right: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 1rem;
   }
 
   .save-score button {
-    padding: 10px 20px;
-    background-color: #4caf50;
+    padding: 12px 20px;
+    background-color: var(--success);
     color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+    box-shadow: 0 4px 0 var(--success-dark);
+  }
+
+  .save-score button:hover {
+    background-color: var(--success-light);
   }
 
   .save-score button:disabled {
-    background-color: #a5d6a7;
-    cursor: not-allowed;
+    background-color: #e0e0e0;
+    box-shadow: 0 4px 0 #bdbdbd;
   }
 
   .restart-button {
     padding: 15px 30px;
-    background-color: #2196f3;
+    background-color: var(--primary);
     color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    cursor: pointer;
+    font-size: 1.2rem;
+    box-shadow: 0 6px 0 var(--primary-dark);
+  }
+
+  .restart-button:hover {
+    background-color: var(--primary-light);
+  }
+
+  .leaderboard-container {
+    margin-top: 30px;
   }
 
   /* Responsive */
@@ -836,9 +986,41 @@
       gap: 10px;
     }
 
+    .results-container {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .result-card {
+      width: 90%;
+    }
+
+    .save-score form {
+      flex-direction: column;
+    }
+
     .save-score input, .save-score button {
       width: 100%;
       margin: 5px 0;
+    }
+
+    .logo-text {
+      font-size: 2.2rem;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+    }
+
+    .math-symbol {
+      font-size: 1.6rem;
+    }
+
+    .game-header-sticky {
+      position: relative;
+      top: 0;
+      margin-bottom: 15px;
     }
   }
 </style>

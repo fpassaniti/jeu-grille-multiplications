@@ -7,97 +7,139 @@
   export let selectedNumbers = [];
 </script>
 
-<div class="option-section">
-  <h2>Sélectionnez les tables à pratiquer:</h2>
+<div class="table-selector">
+  <h2>Tables à pratiquer:</h2>
+  
   <div class="tables-selection">
     {#each Array(10) as _, i}
-      <div class="table-checkbox">
+      <div 
+        class="table-checkbox" 
+        class:selected={$selectedTables[i]}
+      >
         <label>
           <input
             type="checkbox"
             checked={$selectedTables[i]}
             on:change={() => toggleTable(i)}
           />
-          <span>x {i + 1}</span>
+          <span class="table-number">{i + 1}</span>
+          <span class="table-symbol">×</span>
         </label>
       </div>
     {/each}
   </div>
+  
   <div class="selection-actions">
-    <button on:click={() => selectAllTables(true)}>Tout sélectionner</button>
-    <button on:click={() => selectAllTables(false)}>Tout désélectionner</button>
+    <button on:click={() => selectAllTables(true)}>
+      <span class="emoji">✅</span> Tout sélectionner
+    </button>
+    <button on:click={() => selectAllTables(false)}>
+      <span class="emoji">❌</span> Tout désélectionner
+    </button>
   </div>
-  <p class="option-description">
+  
+  <p class="selection-info">
     {selectedNumbers.length === 0
-      ? 'Veuillez sélectionner au moins une table.'
+      ? 'Veuillez sélectionner au moins une table!'
       : `Tables sélectionnées: ${selectedNumbers.join(', ')}`}
   </p>
 </div>
 
 <style>
-  /* Style pour la sélection des tables */
+  .table-selector {
+    text-align: center;
+  }
+
   .tables-selection {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
-    gap: 10px;
-    margin-bottom: 15px;
+    gap: 12px;
+    margin: 15px 0;
   }
 
   .table-checkbox {
-    background-color: #f0f0f0;
-    border-radius: 5px;
-    padding: 8px 12px;
+    background-color: white;
+    border-radius: var(--border-radius-md);
+    padding: 10px 15px;
     transition: all 0.2s;
+    position: relative;
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08);
+    border: 2px solid var(--bg-secondary);
+  }
+  
+  .table-checkbox.selected {
+    border-color: var(--primary-light);
+    background-color: var(--bg-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0, 0, 0, 0.08);
   }
 
   .table-checkbox label {
     display: flex;
     align-items: center;
     cursor: pointer;
+    gap: 8px;
   }
 
   .table-checkbox input {
-    margin-right: 8px;
+    margin: 0;
+  }
+  
+  .table-number {
+    font-weight: bold;
+    font-size: 1.2rem;
+    color: var(--primary-dark);
+  }
+  
+  .table-symbol {
+    font-size: 1rem;
+    color: var(--text-light);
   }
 
   .selection-actions {
     display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-top: 10px;
+    gap: 15px;
+    margin-top: 15px;
   }
 
   .selection-actions button {
     padding: 8px 15px;
-    background-color: #e0e0e0;
-    border: none;
-    border-radius: 5px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+  
+  .emoji {
+    font-size: 1.1em;
+    margin-right: 5px;
   }
 
-  .selection-actions button:hover {
-    background-color: #d0d0d0;
+  .selection-info {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
   }
-
-  .option-description {
-    font-size: 14px;
-    color: #666;
-    margin-top: 5px;
-  }
-
+  
   /* Responsive */
   @media (max-width: 767px) {
     .tables-selection {
-      flex-direction: column;
-      align-items: center;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
       gap: 8px;
     }
-
+    
     .table-checkbox {
-      width: 80%;
+      padding: 8px 10px;
+    }
+    
+    .selection-actions {
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .selection-actions button {
+      width: 100%;
       max-width: 250px;
     }
   }

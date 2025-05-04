@@ -13,7 +13,8 @@
 </script>
 
 <div class="mobile-game">
-  <div class="current-multiplication-mobile">
+  <div class="current-multiplication-mobile card">
+    <div class="multiplication-icon">✨</div>
     <div class="multiplication-question">
       {currentRow} × {currentCol} = ?
     </div>
@@ -30,7 +31,7 @@
         max="100"
         autocomplete="off"
         inputmode="numeric"
-        placeholder="Votre réponse"
+        placeholder="Ta réponse"
       />
     </form>
 
@@ -39,16 +40,16 @@
     </div>
   </div>
 
-  <div class="mobile-solved-info">
-    <h3>Dernières multiplications résolues</h3>
+  <div class="mobile-solved-info card">
+    <h3><span class="emoji">🎯</span> Dernières multiplications résolues</h3>
     <div class="solved-list">
       {#if lastSolvedMultiplications.length === 0}
-        <p>Aucune multiplication résolue pour le moment.</p>
+        <p class="no-solved">Aucune multiplication résolue pour le moment.</p>
       {:else}
         <div class="solved-grid">
           {#each lastSolvedMultiplications as solved}
             <div class="solved-item">
-              {solved.row} × {solved.col} = {solved.result}
+              <span class="solved-operation">{solved.row} × {solved.col} = {solved.result}</span>
               {#if solved.points !== undefined}
                 <div class="points-earned">+{solved.points} pts</div>
               {/if}
@@ -72,98 +73,135 @@
 
   .current-multiplication-mobile {
     width: 100%;
-    max-width: 300px;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    max-width: 320px;
+    padding: 24px;
     text-align: center;
-    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .multiplication-icon {
+    font-size: 2rem;
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    opacity: 0.3;
+    animation: spin 10s linear infinite;
   }
 
   .multiplication-question {
-    font-size: 32px;
+    font-size: 2.5rem;
     font-weight: bold;
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 24px;
+    color: var(--primary-dark);
+    animation: pulse 2s infinite;
   }
 
   .mobile-form {
-    margin-bottom: 15px;
+    margin-bottom: 20px;
   }
 
   .mobile-form input {
     width: 100%;
     padding: 15px;
-    font-size: 24px;
+    font-size: 1.5rem;
     text-align: center;
-    border: 2px solid #ccc;
-    border-radius: 5px;
+    border: 3px solid var(--primary-light);
+    border-radius: var(--border-radius-md);
     box-sizing: border-box;
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
   }
 
   .mobile-form input.correct {
-    border-color: #4caf50;
-    background-color: rgba(76, 175, 80, 0.1);
+    border-color: var(--success);
+    background-color: rgba(67, 215, 135, 0.1);
   }
 
   .mobile-form input.incorrect {
-    border-color: #f44336;
-    background-color: rgba(244, 67, 54, 0.1);
+    border-color: var(--secondary);
+    background-color: rgba(255, 107, 107, 0.1);
   }
 
   .cell-timer-container {
     height: 10px;
-    background-color: #e0e0e0;
+    background-color: var(--bg-secondary);
     border-radius: 5px;
-    margin-top: 10px;
+    margin-top: 15px;
     overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .cell-timer {
     height: 100%;
-    background-color: #f44336;
+    background-color: var(--secondary);
     transition: width 0.1s linear;
   }
 
   .mobile-solved-info {
     width: 100%;
     max-width: 400px;
-    padding: 15px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
+    padding: 20px;
+  }
+  
+  .mobile-solved-info h3 {
+    margin-top: 0;
+    text-align: center;
+  }
+  
+  .emoji {
+    margin-right: 5px;
   }
 
   .solved-list {
-    max-height: 200px;
+    max-height: 250px;
     overflow-y: auto;
     padding: 5px;
+  }
+  
+  .no-solved {
+    text-align: center;
+    color: var(--text-light);
+    font-style: italic;
+    padding: 15px 0;
   }
 
   .solved-grid {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
     justify-content: center;
   }
 
   .solved-item {
-    background-color: #e8f5e9;
-    padding: 8px;
-    border-radius: 5px;
-    font-size: 14px;
-    color: #2e7d32;
-    min-width: 100px;
+    background-color: var(--success-light);
+    padding: 12px;
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    color: var(--success-dark);
+    min-width: 120px;
     text-align: center;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 3px 0 var(--success-dark);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+  }
+  
+  .solved-item:hover {
+    transform: translateY(-3px);
+  }
+  
+  .solved-operation {
+    font-weight: bold;
   }
 
   .points-earned {
-    font-size: 12px;
+    font-size: 0.85rem;
     font-weight: bold;
-    color: #4caf50;
-    margin-top: 3px;
+    color: var(--success-dark);
+    margin-top: 5px;
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    padding: 2px 8px;
+    display: inline-block;
   }
 </style>

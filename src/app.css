@@ -1,21 +1,194 @@
 /* Styles globaux de l'application */
+@import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&family=Comic+Neue:wght@400;700&display=swap');
+
+:root {
+  --primary: #4d57ff;
+  --primary-light: #8a90ff;
+  --primary-dark: #2c3ddf;
+  --secondary: #ff6b6b;
+  --secondary-light: #ff9999;
+  --secondary-dark: #e14747;
+  --accent: #ffce3e;
+  --accent-light: #ffe082;
+  --accent-dark: #ffb300;
+  --success: #43d787;
+  --success-light: #7df0b2;
+  --success-dark: #25b160;
+  --info: #4fb3ff;
+  --info-light: #89d1ff;
+  --info-dark: #1a96ff;
+  --bg-primary: #f9f7ff;
+  --bg-secondary: #fff8f3;
+  --text-primary: #333;
+  --text-secondary: #555;
+  --text-light: #777;
+  --border-radius-sm: 8px;
+  --border-radius-md: 12px;
+  --border-radius-lg: 20px;
+  --box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  --box-shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.15);
+  --box-shadow-active: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
 body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: #f5f5f5;
-    overflow-x: hidden; /* Empêche le défilement horizontal sur la page */
+  margin: 0;
+  padding: 0;
+  font-family: 'Baloo 2', 'Comic Neue', cursive, sans-serif;
+  background-color: var(--bg-primary);
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ceceff' fill-opacity='0.2'%3E%3Cpath d='M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10s-10-4.477-10-10 4.477-10 10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10c0 5.523-4.477 10-10 10S0 25.523 0 20s4.477-10 10-10zm10 8c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8zm40 40c4.418 0 8-3.582 8-8s-3.582-8-8-8-8 3.582-8 8 3.582 8 8 8z' /%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  overflow-x: hidden;
+  color: var(--text-primary);
 }
 
+/* Typographie */
 h1, h2, h3, h4, h5, h6 {
-    color: #333;
-    margin-top: 0;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 700;
+  margin-top: 0;
+  color: var(--primary-dark);
 }
 
+h1 {
+  font-size: 2.5rem;
+  text-shadow: 2px 2px 0px var(--accent-light);
+  letter-spacing: 0.02em;
+}
+
+h2 {
+  font-size: 1.8rem;
+  color: var(--secondary-dark);
+}
+
+h3 {
+  font-size: 1.4rem;
+  color: var(--primary);
+}
+
+p {
+  line-height: 1.6;
+}
+
+/* Boutons */
 button {
-    cursor: pointer;
+  font-family: 'Baloo 2', cursive;
+  font-weight: 600;
+  border-radius: var(--border-radius-md);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 12px 24px;
+  font-size: 1rem;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
+  position: relative;
+  top: 0;
 }
 
-input, button {
-    font-family: inherit;
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+
+button.active {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 0 var(--primary-dark);
+}
+
+button.active:hover {
+  background-color: var(--primary-light);
+  box-shadow: 0 6px 0 var(--primary-dark);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Formulaires */
+input {
+  font-family: 'Comic Neue', sans-serif;
+  font-size: 1rem;
+  padding: 12px 16px;
+  border: 2px solid var(--primary-light);
+  border-radius: var(--border-radius-md);
+  background-color: white;
+  transition: all 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(77, 87, 255, 0.2);
+}
+
+input.correct {
+  border-color: var(--success);
+  background-color: rgba(67, 215, 135, 0.1);
+}
+
+input.incorrect {
+  border-color: var(--secondary);
+  background-color: rgba(255, 107, 107, 0.1);
+}
+
+/* Classes utilitaires */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.card {
+  background-color: white;
+  border-radius: var(--border-radius-lg);
+  box-shadow: var(--box-shadow);
+  padding: 24px;
+  transition: all 0.3s;
+}
+
+.card:hover {
+  box-shadow: var(--box-shadow-hover);
+}
+
+/* Animations */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem;
+  }
+  
+  h2 {
+    font-size: 1.5rem;
+  }
+  
+  h3 {
+    font-size: 1.2rem;
+  }
+  
+  button {
+    padding: 10px 20px;
+  }
 }
