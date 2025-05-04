@@ -442,7 +442,7 @@
   <meta name="description" content="Améliorez vos compétences en multiplication avec ce jeu interactif amusant pour les enfants et les adultes!" />
 </svelte:head>
 
-<main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}">
+<main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}; width: 100%; box-sizing: border-box;">
   {#if gameState === 'notStarted'}
     <div class="start-screen card">
       <div class="logo-container">
@@ -633,16 +633,18 @@
       <div class="save-score card-inset">
         <h2>Enregistre ton score</h2>
         <form on:submit|preventDefault={saveScore}>
-          <input
-            type="text"
-            bind:value={playerName}
-            placeholder="Ton prénom"
-            required
-            disabled={isLoading}
-          />
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
-          </button>
+          <div class="save-score-wrapper">
+            <input
+              type="text"
+              bind:value={playerName}
+              placeholder="Ton prénom"
+              required
+              disabled={isLoading}
+            />
+            <button type="submit" disabled={isLoading}>
+              {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+            </button>
+          </div>
         </form>
       </div>
 
@@ -870,6 +872,8 @@
     text-align: center;
     padding: 30px;
     margin: 20px auto;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .results-container {
@@ -923,18 +927,30 @@
   .save-score {
     margin: 30px auto;
     max-width: 500px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .save-score form {
+    margin-top: 15px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .save-score-wrapper {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .save-score input {
     flex: 1;
     padding: 12px 16px;
     font-size: 1rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .save-score button {
@@ -942,6 +958,8 @@
     background-color: var(--success);
     color: white;
     box-shadow: 0 4px 0 var(--success-dark);
+    white-space: nowrap;
+    min-width: 110px;
   }
 
   .save-score button:hover {
@@ -973,6 +991,9 @@
   @media (max-width: 767px) {
     .container {
       padding: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: hidden;
     }
 
     .game-header {
@@ -995,13 +1016,27 @@
       width: 90%;
     }
 
+    .save-score {
+      padding: 15px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+    
     .save-score form {
+      width: 100%;
+      padding: 0;
+    }
+    
+    .save-score-wrapper {
       flex-direction: column;
+      width: 100%;
     }
 
     .save-score input, .save-score button {
       width: 100%;
       margin: 5px 0;
+      box-sizing: border-box;
     }
 
     .logo-text {
