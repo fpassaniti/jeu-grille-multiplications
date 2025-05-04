@@ -29,7 +29,9 @@ export async function POST({ request }) {
     // Avec le nouveau système de score qui utilise des multiplicateurs de difficulté,
     // le score maximum peut être plus élevé. On utilise un multiplicateur max de 3.0 pour la sécurité.
     // Note: duration est en minutes, donc on convertit en secondes (60 secondes par minute)
-    const maxPossibleScore = duration * 60 * 3.0; // Total max de points possibles
+    const maxTimePerCell = level === 'adulte' ? 15 : 45; // Valeurs maximales du timer par cellule
+    const maxMultiplier = 3.0; // Le multiplicateur maximum dans notre matrice de difficulté
+    const maxPossibleScore = duration * 60 * 3.0 * maxTimePerCell * maxMultiplier; // Total max de points possibles
     if (score > maxPossibleScore) {
       return json({
         error: 'Score invalide: dépasse le maximum théorique'
@@ -39,8 +41,6 @@ export async function POST({ request }) {
     // 2. Vérification cohérence avec les cellules résolues
     // Pour chaque cellule, on donne une estimation généreuse
     // Temps max par cellule (en secondes) × multiplicateur max × facteur de sécurité
-    const maxTimePerCell = level === 'adulte' ? 15 : 45; // Valeurs maximales du timer par cellule
-    const maxMultiplier = 3.0; // Le multiplicateur maximum dans notre matrice de difficulté
     const safetyFactor = 1.2; // Marge de sécurité
     const estimatedMaxScore = solvedCells * maxTimePerCell * maxMultiplier * safetyFactor;
 
