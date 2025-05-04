@@ -4,7 +4,7 @@ import { env } from '$env/dynamic/private';
 
 // Configuration Supabase avec les variables d'environnement serveur
 const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.VITE_SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée pour les opérations serveur
+const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée pour les opérations serveur
 
 export async function load({ locals }) {
   try {

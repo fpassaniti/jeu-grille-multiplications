@@ -31,4 +31,4 @@ vi.mock('@supabase/supabase-js', () => {
 
 // Mock des variables d'environnement
 process.env.VITE_SUPABASE_URL = 'https://fake-supabase-url.com';
-process.env.VITE_SUPABASE_SERVICE_KEY = 'fake-supabase-service-key';
+process.env.SUPABASE_SERVICE_KEY = 'fake-supabase-service-key';
