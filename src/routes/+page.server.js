@@ -2,16 +2,24 @@ import { createClient } from '@supabase/supabase-js';
 import { error } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
-// Configuration Supabase avec les variables d'environnement serveur
+// Configuration Supabase
 const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée pour les opérations serveur
+const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 export async function load({ locals }) {
   try {
-    // Créer le client Supabase côté serveur
+    // Créer le client Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Charger les scores des adultes
+    // Données par défaut
+    let userData = {
+      leaderboardAdult: [],
+      leaderboardChild: [],
+      user: null,
+      userProgress: null
+    };
+
+    // Chargement des leaderboards comme avant
     const { data: adultData, error: adultError } = await supabase
       .from('scores')
       .select('*')
@@ -20,8 +28,8 @@ export async function load({ locals }) {
       .limit(10);
 
     if (adultError) throw adultError;
+    userData.leaderboardAdult = adultData || [];
 
-    // Charger les scores des enfants
     const { data: childData, error: childError } = await supabase
       .from('scores')
       .select('*')
@@ -30,20 +38,44 @@ export async function load({ locals }) {
       .limit(10);
 
     if (childError) throw childError;
+    userData.leaderboardChild = childData || [];
 
-    // Retourner les données pour qu'elles soient disponibles à la page
-    return {
-      leaderboardAdult: adultData || [],
-      leaderboardChild: childData || []
-    };
+    // Si l'utilisateur est connecté, récupérer ses informations de progression
+    if (locals.user) {
+      userData.user = locals.user;
+
+      // Récupérer la progression
+      const { data: progressData, error: progressError } = await supabase
+        .from('user_progress')
+        .select('*')
+        .eq('user_id', locals.user.id)
+        .single();
+
+      if (!progressError && progressData) {
+        // Récupérer les infos du niveau actuel
+        const { data: levelData } = await supabase
+          .from('level_definitions')
+          .select('*')
+          .eq('level', progressData.level)
+          .single();
+
+        userData.userProgress = {
+          ...progressData,
+          currentLevel: levelData
+        };
+      }
+    }
+
+    return userData;
+
   } catch (err) {
-    console.error('Erreur lors du chargement des leaderboards:', err);
+    console.error('Erreur lors du chargement des données:', err);
 
-    // En cas d'erreur, retourner des tableaux vides
-    // Le client tentera de charger via le endpoint API
     return {
       leaderboardAdult: [],
-      leaderboardChild: []
+      leaderboardChild: [],
+      user: null,
+      userProgress: null
     };
   }
 }

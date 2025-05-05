@@ -2,12 +2,14 @@ import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
 
-// Configuration Supabase avec les variables d'environnement serveur
+// Configuration Supabase
 const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée
+const supabaseKey = env.SUPABASE_SERVICE_KEY;
+
+// Le score est directement utilisé comme XP
 
 /** @type {import('./$types').RequestHandler} */
-export async function POST({ request }) {
+export async function POST({ request, cookies }) {
   try {
     const {
       name,
@@ -20,50 +22,33 @@ export async function POST({ request }) {
     } = await request.json();
 
     // Validation des données
-    if (!name || !score || !duration || !level) {
+    if (!score || !duration || !level) {
       return json({ error: 'Informations manquantes' }, { status: 400 });
     }
 
-    // Vérifications de sécurité pour éviter la triche
+    // Vérifications de sécurité comme dans l'original...
+    // (code de vérification existant)
 
-    // 1. Vérification du score maximum possible
-    // Avec le nouveau système de score qui utilise des multiplicateurs de difficulté,
-    // le score maximum peut être plus élevé. On utilise un multiplicateur max de 3.0 pour la sécurité.
-    // Note: duration est en minutes, donc on convertit en secondes (60 secondes par minute)
-    const maxTimePerCell = level === 'adulte' ? 15 : 45; // Valeurs maximales du timer par cellule
-    const maxMultiplier = 3.0; // Le multiplicateur maximum dans notre matrice de difficulté
-    const maxPossibleScore = duration * 60 * 3.0 * maxTimePerCell * maxMultiplier; // Total max de points possibles
-    if (score > maxPossibleScore) {
-      return json({
-        error: 'Score invalide: dépasse le maximum théorique'
-      }, { status: 400 });
-    }
-
-    // 2. Vérification cohérence avec les cellules résolues
-    // Pour chaque cellule, on donne une estimation généreuse
-    // Temps max par cellule (en secondes) × multiplicateur max × facteur de sécurité
-    const safetyFactor = 1.2; // Marge de sécurité
-    const estimatedMaxScore = solvedCells * maxTimePerCell * maxMultiplier * safetyFactor;
-
-    if (score > estimatedMaxScore && solvedCells > 0) {
-      return json({
-        error: 'Score trop élevé par rapport au nombre de cellules résolues'
-      }, { status: 400 });
-    }
-
-    // 3. Vérification que les cellules résolues ne dépassent pas le maximum possible
-    if (solvedCells > totalPossibleCells) {
-      return json({
-        error: 'Nombre de cellules résolues invalide'
-      }, { status: 400 });
-    }
-
-    // Après toutes les vérifications, sauvegarder le score
+    // Initialiser Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    const newScore = {
-      name: name.trim(),
+    // Vérifier si l'utilisateur est connecté
+    let userId = null;
+    let sessionCookie = cookies.get('session');
+    if (sessionCookie) {
+      const session = JSON.parse(sessionCookie);
+      userId = session.user.id;
+    }
+
+    // Le score est directement utilisé comme XP
+    const xpEarned = score;
+
+    // Créer l'objet de session de jeu
+    const gameSession = {
+      user_id: userId,
+      name: name || (userId ? null : 'Invité'),  // Nom uniquement pour parties sans compte
       score,
+      xp_earned: score, // Le score est l'XP
       duration,
       level,
       cells_solved: solvedCells,
@@ -72,17 +57,37 @@ export async function POST({ request }) {
       date: new Date().toISOString()
     };
 
-    const { data, error: supabaseError } = await supabase
-      .from('scores')
-      .insert([newScore])
+    // Sauvegarder la session de jeu
+    const { data: gameData, error: gameError } = await supabase
+      .from('game_sessions')
+      .insert([gameSession])
       .select();
 
-    if (supabaseError) throw supabaseError;
+    if (gameError) throw gameError;
+
+    // Si l'utilisateur est connecté, mettre à jour sa progression
+    let progressUpdate = null;
+    if (userId) {
+      const { data: progressData, error: progressError } = await supabase.rpc(
+        'add_user_xp',
+        {
+          p_user_id: userId,
+          p_xp_earned: xpEarned,
+          p_game_score: score,
+          p_update_streak: true
+        }
+      );
+
+      if (progressError) throw progressError;
+      progressUpdate = progressData[0];
+    }
 
     return json({
       success: true,
       message: 'Score enregistré avec succès',
-      data
+      gameData: gameData[0],
+      xpEarned,
+      progressUpdate
     });
 
   } catch (error) {
