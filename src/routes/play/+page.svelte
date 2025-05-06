@@ -300,7 +300,7 @@
     if (!isLoggedIn && playerName.trim() === '') return;
 
     const gameData = {
-      name: isLoggedIn ? null : playerName,
+      name: isLoggedIn ? data.user.username : playerName,
       score: score,
       duration: gameDuration,
       level: level,

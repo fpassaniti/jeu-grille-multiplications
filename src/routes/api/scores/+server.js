@@ -51,11 +51,19 @@ export async function POST({ request, cookies }) {
 
     // Vérifier si l'utilisateur est connecté
     let userId = null;
+    let userDisplayName = null;
     let sessionCookie = cookies.get('session');
     if (sessionCookie) {
       const session = JSON.parse(sessionCookie);
       userId = session.user.id;
+      userDisplayName = session.user.displayName || session.user.username;
     }
+
+    // Déterminer le nom à utiliser:
+    // - Si un nom spécifique est fourni dans la requête, l'utiliser
+    // - Sinon, pour les utilisateurs connectés, utiliser leur nom d'affichage
+    // - Pour les invités, utiliser "Invité"
+    const playerName = name || (userId ? userDisplayName : 'Invité');
 
     // Le score est directement utilisé comme XP
     const xpEarned = score;
@@ -63,7 +71,7 @@ export async function POST({ request, cookies }) {
     // Créer l'objet de session de jeu
     const gameSession = {
       user_id: userId,
-      name: name || (userId ? null : 'Invité'),  // Nom uniquement pour parties sans compte
+      name: playerName,
       score,
       xp_earned: score, // Le score est l'XP
       duration: parseInt(duration, 10), // S'assurer que la durée est un entier
@@ -85,8 +93,7 @@ export async function POST({ request, cookies }) {
     // Sauvegarder également dans la table scores pour le leaderboard
     // S'assurer que les tables_used sont bien un tableau JSON
     const scoreData = {
-      //user_id: userId,
-      name: name || (userId ? null : 'Invité'),
+      name: playerName,
       score,
       duration: parseInt(duration, 10),
       level,
