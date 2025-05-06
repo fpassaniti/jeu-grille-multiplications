@@ -94,6 +94,7 @@
               imageUrl={data.userProgress?.currentLevel?.image_url}
               colorTheme={data.userProgress?.currentLevel?.color_theme}
               size="large"
+              shape="rectangle"
               isLocked={false}
             />
           </div>
@@ -223,7 +224,7 @@
   }
 
   .level-image {
-    flex: 0 0 150px;
+    flex: 0 0 200px;
     display: flex;
     align-items: center;
     justify-content: center;

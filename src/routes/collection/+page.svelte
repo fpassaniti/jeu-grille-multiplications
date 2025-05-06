@@ -120,6 +120,7 @@
                 imageUrl={level.image_url}
                 colorTheme={level.color_theme}
                 size="medium"
+                shape="circle"
                 isLocked={!level.unlocked}
               />
             </div>

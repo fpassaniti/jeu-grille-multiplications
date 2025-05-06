@@ -69,6 +69,7 @@
               imageUrl={data.userProgress?.currentLevel?.image_url}
               colorTheme={data.userProgress?.currentLevel?.color_theme}
               size="medium"
+              shape="circle"
             />
           </div>
           <h2 class="level-info">

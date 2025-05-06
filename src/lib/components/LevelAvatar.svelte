@@ -3,15 +3,22 @@
   export let level = 1;
   export let imageUrl = null;
   export let colorTheme = null;
-  export let size = 'medium'; // small, medium, large
+  export let size = 'large'; // small, medium, large
   export let isLocked = false;
+  export let shape = 'circle'; // 'circle' pour rond, 'rectangle' pour 3:4
 
   // Calculer la taille
   $: dimensions = {
-    small: '60px',
-    medium: '80px',
-    large: '120px'
-  }[size] || '80px';
+    small: shape === 'circle' ? '60px' : '100%',
+    medium: shape === 'circle' ? '80px' : '100%',
+    large: shape === 'circle' ? '120px' : '100%'
+  }[size] || '100%';
+
+  $: height = {
+    small: shape === 'circle' ? '60px' : '100%',
+    medium: shape === 'circle' ? '80px' : '100%',
+    large: shape === 'circle' ? '120px' : '100%'
+  }[size] || '100%';
 
   $: fontSize = {
     small: '1.5rem',
@@ -49,7 +56,10 @@
   }
 </script>
 
-<div class="level-avatar {size}" style="--avatar-size: {dimensions}; --font-size: {fontSize};">
+<div
+  class="level-avatar {size} {shape}"
+  style="--avatar-width: {dimensions}; --avatar-height: {height}; --font-size: {fontSize};"
+>
   {#if isLocked}
     <div class="locked-avatar">
       <span class="emoji">🔒</span>
@@ -73,8 +83,8 @@
 
 <style>
   .level-avatar {
-    width: var(--avatar-size);
-    height: var(--avatar-size);
+    width: var(--avatar-width);
+    height: var(--avatar-height);
     position: relative;
   }
 
@@ -82,9 +92,16 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 50%;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
     border: 3px solid #4d57ff;
+  }
+
+  .circle .avatar-image {
+    border-radius: 50%;
+  }
+
+  .rectangle .avatar-image {
+    border-radius: 12px;
   }
 
   .fallback-avatar {
@@ -94,11 +111,18 @@
     color: white;
     font-size: var(--font-size);
     font-weight: bold;
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  }
+
+  .circle .fallback-avatar {
+    border-radius: 50%;
+  }
+
+  .rectangle .fallback-avatar {
+    border-radius: 12px;
   }
 
   .locked-avatar {
@@ -107,26 +131,55 @@
     background-color: var(--bg-secondary);
     color: var(--text-light);
     font-size: var(--font-size);
-    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: 0.7;
   }
 
+  .circle .locked-avatar {
+    border-radius: 50%;
+  }
+
+  .rectangle .locked-avatar {
+    border-radius: 12px;
+  }
+
   /* Tailles prédéfinies */
   .small {
-    --avatar-size: 60px;
-    --font-size: 1.5rem;
+    --avatar-width: 60px;
   }
 
   .medium {
-    --avatar-size: 80px;
-    --font-size: 1.8rem;
+    --avatar-width: 80px;
   }
 
   .large {
-    --avatar-size: 120px;
-    --font-size: 2.5rem;
+    --avatar-width: 120px;
+  }
+
+  /* Hauteurs spécifiques pour la forme rectangle */
+  .small.circle {
+    --avatar-height: 60px;
+  }
+
+  .medium.circle {
+    --avatar-height: 80px;
+  }
+
+  .large.circle {
+    --avatar-height: 120px;
+  }
+
+  .small.rectangle {
+    --avatar-height: 80px;
+  }
+
+  .medium.rectangle {
+    --avatar-height: 106px;
+  }
+
+  .large.rectangle {
+    --avatar-height: 160px;
   }
 </style>
