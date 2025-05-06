@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import LevelAvatar from '$lib/components/LevelAvatar.svelte';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -114,14 +115,13 @@
 
           <div class="level-content">
             <div class="level-image">
-              {#if level.unlocked}
-                <!-- Image du niveau -->
-                <div class="avatar-image">{level.level}</div>
-              {:else}
-                <div class="locked-image">
-                  <span class="emoji">🔒</span>
-                </div>
-              {/if}
+              <LevelAvatar
+                level={level.level}
+                imageUrl={level.image_url}
+                colorTheme={level.color_theme}
+                size="medium"
+                isLocked={!level.unlocked}
+              />
             </div>
 
             <div class="level-details">
@@ -163,8 +163,29 @@
           <div class="print-level-title">{selectedLevel.title}</div>
 
           <div class="print-level-image">
-            <!-- Image représentant le niveau -->
-            <div class="print-avatar">{selectedLevel.level}</div>
+            <!-- Note: Pour l'impression, nous gardons l'approche simple pour garantir la compatibilité -->
+            {#if selectedLevel.image_url}
+              <img
+                src={selectedLevel.image_url}
+                alt="Niveau {selectedLevel.level}"
+                class="print-avatar-img"
+              />
+              <div class="print-avatar" style="display: none; background-image: {
+                selectedLevel.color_theme ?
+                `linear-gradient(45deg, var(--${selectedLevel.color_theme}), var(--${selectedLevel.color_theme}-light))` :
+                'linear-gradient(45deg, #4a6da7, #7a9fd7)'
+              }">
+                {selectedLevel.level}
+              </div>
+            {:else}
+              <!-- Image représentant le niveau (fallback) -->
+              <div class="print-avatar" style={selectedLevel.color_theme ?
+                `background-image: linear-gradient(45deg, var(--${selectedLevel.color_theme}), var(--${selectedLevel.color_theme}-light))` :
+                'background-image: linear-gradient(45deg, #4a6da7, #7a9fd7)'
+              }>
+                {selectedLevel.level}
+              </div>
+            {/if}
           </div>
 
           <div class="print-level-description">
@@ -336,33 +357,6 @@
     justify-content: center;
   }
 
-  .avatar-image {
-    width: 80px;
-    height: 80px;
-    background-color: var(--primary);
-    color: white;
-    font-size: 1.8rem;
-    font-weight: bold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  .locked-image {
-    width: 80px;
-    height: 80px;
-    background-color: var(--bg-secondary);
-    color: var(--text-light);
-    font-size: 2rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0.7;
-  }
-
   .level-details {
     flex: 1;
   }
@@ -490,6 +484,15 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      margin: 0 auto;
+    }
+
+    .print-avatar-img {
+      width: 30mm;
+      height: 30mm;
+      object-fit: cover;
+      border-radius: 50%;
+      border: 2mm solid #4a6da7;
       margin: 0 auto;
     }
 

@@ -1,6 +1,7 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import LevelAvatar from '$lib/components/LevelAvatar.svelte';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -88,8 +89,13 @@
 
         <div class="level-card">
           <div class="level-image">
-            <!-- Image du niveau actuel -->
-            <div class="placeholder-avatar">{data.userProgress?.level || 1}</div>
+            <LevelAvatar
+              level={data.userProgress?.level || 1}
+              imageUrl={data.userProgress?.currentLevel?.image_url}
+              colorTheme={data.userProgress?.currentLevel?.color_theme}
+              size="large"
+              isLocked={false}
+            />
           </div>
 
           <div class="level-info">
@@ -221,20 +227,6 @@
     display: flex;
     align-items: center;
     justify-content: center;
-  }
-
-  .placeholder-avatar {
-    width: 120px;
-    height: 120px;
-    background-color: var(--primary);
-    color: white;
-    font-size: 2.5rem;
-    font-weight: bold;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
   }
 
   .level-info {

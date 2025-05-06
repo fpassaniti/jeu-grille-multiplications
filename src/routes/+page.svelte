@@ -2,6 +2,7 @@
   import {onMount} from 'svelte';
   import {goto} from '$app/navigation';
   import {page} from '$app/stores';
+  import LevelAvatar from '$lib/components/LevelAvatar.svelte';
 
   // Données utilisateur venant du serveur (fournies via +layout.server.js)
   export let data;
@@ -61,10 +62,20 @@
       <!-- Utilisateur connecté -->
       <div class="welcome-message">
         <p>Bienvenue, <span class="username">{data.user.displayName}</span>!</p>
-        <h2 class="level-info">
-          Niveau {data.userProgress?.level || 1}:
-          <span class="level-title">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</span>
-        </h2>
+        <div class="current-level-display">
+          <div class="level-avatar-container">
+            <LevelAvatar
+              level={data.userProgress?.level || 1}
+              imageUrl={data.userProgress?.currentLevel?.image_url}
+              colorTheme={data.userProgress?.currentLevel?.color_theme}
+              size="medium"
+            />
+          </div>
+          <h2 class="level-info">
+            Niveau {data.userProgress?.level || 1}:
+            <span class="level-title">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</span>
+          </h2>
+        </div>
       </div>
 
       <div class="action-buttons">
@@ -108,7 +119,7 @@
         <div class="feature-card">
           <div class="feature-icon">🏅</div>
           <h3>Collectionne des titres</h3>
-          <p>Débloque 30 titres uniques de champion!</p>
+          <p>Débloque 10 titres uniques de champion!</p>
         </div>
 
         <div class="feature-card">
@@ -198,6 +209,18 @@
     padding: 20px;
     margin: 20px 0;
     box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .current-level-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+  }
+
+  .level-avatar-container {
+    margin-bottom: 5px;
   }
 
   .username {

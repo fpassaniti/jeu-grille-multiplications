@@ -1,4 +1,3 @@
-<!-- src/lib/components/LevelAvatar.svelte -->
 <script>
   // Props
   export let level = 1;
@@ -25,13 +24,13 @@
 
   // Fonctions utilitaires
   function getColorGradient(theme) {
-    // Correspondance des thèmes aux variables CSS
+    // Correspondance des thèmes aux gradients spécifiques (sans utiliser de variables CSS)
     const themeMap = {
-      'blue': 'linear-gradient(45deg, var(--primary), var(--primary-light))',
-      'green': 'linear-gradient(45deg, var(--success), var(--success-light))',
+      'blue': 'linear-gradient(45deg, #4d57ff, #8a90ff)',
+      'green': 'linear-gradient(45deg, #43d787, #7df0b2)',
       'purple': 'linear-gradient(45deg, #9c5fff, #c29aff)',
       'orange': 'linear-gradient(45deg, #ff8f3e, #ffb585)',
-      'red': 'linear-gradient(45deg, var(--secondary), var(--secondary-light))',
+      'red': 'linear-gradient(45deg, #ff6b6b, #ff9999)',
       'teal': 'linear-gradient(45deg, #26c0c0, #7fe7e7)',
       'indigo': 'linear-gradient(45deg, #4f46e5, #a5b4fc)',
       'pink': 'linear-gradient(45deg, #ec4899, #f9a8d4)',
@@ -39,7 +38,14 @@
       'gold': 'linear-gradient(45deg, #d4af37, #f9e29c)'
     };
 
-    return themeMap[theme] || 'linear-gradient(45deg, var(--primary), var(--primary-light))';
+    return themeMap[theme] || 'linear-gradient(45deg, #4d57ff, #8a90ff)';
+  }
+
+  // Vérifier si l'image est valide
+  let imageError = false;
+
+  function handleImageError() {
+    imageError = true;
   }
 </script>
 
@@ -48,19 +54,13 @@
     <div class="locked-avatar">
       <span class="emoji">🔒</span>
     </div>
-  {:else if imageUrl}
+  {:else if imageUrl && !imageError}
     <img
       src={imageUrl}
       alt="Niveau {level}"
       class="avatar-image"
-      onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+      on:error={handleImageError}
     />
-    <div
-      class="fallback-avatar"
-      style="background-image: {gradient}; display: none;"
-    >
-      {level}
-    </div>
   {:else}
     <div
       class="fallback-avatar"
@@ -84,14 +84,13 @@
     object-fit: cover;
     border-radius: 50%;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    border: 3px solid var(--primary);
+    border: 3px solid #4d57ff;
   }
 
   .fallback-avatar {
     width: 100%;
     height: 100%;
-    background-color: var(--primary);
-    background-image: linear-gradient(45deg, var(--primary), var(--primary-light));
+    background-color: #4d57ff;
     color: white;
     font-size: var(--font-size);
     font-weight: bold;
