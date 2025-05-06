@@ -85,7 +85,7 @@ export async function POST({ request, cookies }) {
     // Sauvegarder également dans la table scores pour le leaderboard
     // S'assurer que les tables_used sont bien un tableau JSON
     const scoreData = {
-      user_id: userId,
+      //user_id: userId,
       name: name || (userId ? null : 'Invité'),
       score,
       duration: parseInt(duration, 10),
@@ -95,9 +95,6 @@ export async function POST({ request, cookies }) {
       tables_used: level === 'enfant' ? selectedTables : [],
       date: new Date().toISOString()
     };
-
-    // Logguer les données pour débogage
-    console.log('Enregistrement du score avec tables_used:', scoreData.tables_used);
 
     const { data: leaderboardData, error: leaderboardError } = await supabase
       .from('scores')
@@ -117,7 +114,6 @@ export async function POST({ request, cookies }) {
         {
           p_user_id: userId,
           p_xp_earned: xpEarned,
-          p_game_score: score,
           p_update_streak: true
         }
       );

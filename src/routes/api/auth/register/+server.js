@@ -16,7 +16,7 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Nom d\'utilisateur et caractère de mot de passe requis' }, { status: 400 });
     }
 
-    if (passwordChar.length !== 1) {
+    if (passwordChar.length > 2) {
       return json({ error: 'Le mot de passe doit être un seul caractère' }, { status: 400 });
     }
 

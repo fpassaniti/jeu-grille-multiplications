@@ -112,11 +112,6 @@
                 <span class="stat-label">XP totale</span>
                 <span class="stat-value">{data.userProgress?.xp || 0}</span>
               </div>
-
-              <div class="stat-item">
-                <span class="stat-label">Score total</span>
-                <span class="stat-value">{data.userProgress?.total_score || 0}</span>
-              </div>
             </div>
 
             {#if data.userProgress?.nextLevel}
@@ -167,7 +162,7 @@
                 </div>
                 <div class="game-details">
                   <div class="game-score">
-                    <span class="emoji">🏆</span> {game.score} pts / XP
+                    <span class="emoji">🏆</span> {game.score} XP
                   </div>
                 </div>
                 <div class="game-level">
