@@ -4,15 +4,20 @@
   // Props
   export let isLoading = false;
   export let level = 'adulte';
+  export let duration = 5;
   export let leaderboard = [];
 
   // Déterminer le niveau à afficher pour le titre
   $: levelLabel = level === 'adulte' ? 'Adulte' : 'Enfant';
+  $: durationLabel = `${duration} min`;
   $: rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 </script>
 
 <div class="leaderboard card-inset">
-  <h2><span class="emoji">🏆</span> Meilleurs scores ({levelLabel})</h2>
+  <h2>
+    <span class="emoji">🏆</span>
+    Meilleurs scores ({levelLabel}, {durationLabel})
+  </h2>
 
   {#if isLoading}
     <div class="loading">
@@ -27,7 +32,9 @@
           <th></th>
           <th>Nom</th>
           <th>Score</th>
-          <th>Durée</th>
+          {#if level === 'enfant'}
+            <th class="hide-mobile">Tables</th>
+          {/if}
           <th class="hide-mobile">Date</th>
         </tr>
         </thead>
@@ -39,7 +46,15 @@
             </td>
             <td>{entry.name}</td>
             <td class="score-cell">{entry.score}</td>
-            <td>{entry.duration} min</td>
+            {#if level === 'enfant'}
+              <td class="hide-mobile tables-cell">
+                {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
+                  <span class="tables-all">Tables {entry.tables_used.sort((a, b) => a - b).join(', ')}</span>
+                {:else}
+                  <span class="tables-all">Toutes les tables</span>
+                {/if}
+              </td>
+            {/if}
             <td class="hide-mobile">{formatDate(entry.date)}</td>
           </tr>
         {/each}
@@ -49,7 +64,7 @@
   {:else}
     <div class="empty-state">
       <div class="empty-icon">🏅</div>
-      <p>Aucun score enregistré pour ce niveau.</p>
+      <p>Aucun score enregistré pour ce niveau et cette durée.</p>
       <p class="empty-message">Sois le premier à relever le défi!</p>
     </div>
   {/if}
@@ -60,7 +75,7 @@
     width: 100%;
     margin-top: 30px;
   }
-  
+
   .emoji {
     margin-right: 5px;
   }
@@ -84,7 +99,7 @@
     padding: 12px 15px;
     text-align: left;
   }
-  
+
   th {
     background-color: var(--primary-light);
     color: white;
@@ -93,30 +108,30 @@
     font-size: 0.9rem;
     letter-spacing: 1px;
   }
-  
+
   tr {
     border-bottom: 1px solid var(--bg-secondary);
     transition: background-color 0.2s;
   }
-  
+
   tr:last-child {
     border-bottom: none;
   }
-  
+
   tr:hover:not(.top-three) {
     background-color: var(--bg-primary);
   }
-  
+
   .top-three {
     background-color: var(--bg-secondary);
     font-weight: bold;
   }
-  
+
   .rank-cell {
     text-align: center;
     font-weight: bold;
   }
-  
+
   .score-cell {
     font-weight: bold;
     color: var(--success-dark);
@@ -130,7 +145,7 @@
     justify-content: center;
     gap: 10px;
   }
-  
+
   .loading-spinner {
     width: 20px;
     height: 20px;
@@ -139,30 +154,51 @@
     border-top-color: var(--primary);
     animation: spin 1s linear infinite;
   }
-  
+
   .empty-state {
     padding: 30px 0;
     text-align: center;
     color: var(--text-secondary);
   }
-  
+
   .empty-icon {
     font-size: 3rem;
     margin-bottom: 15px;
     opacity: 0.7;
   }
-  
+
   .empty-message {
     font-style: italic;
     margin-top: 5px;
     color: var(--text-light);
   }
-  
+
+  .tables-cell {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tables-list {
+    font-size: 0.9rem;
+    background-color: var(--success-light);
+    color: var(--success-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  .tables-all {
+    font-size: 0.9rem;
+    font-style: italic;
+    color: var(--text-light);
+  }
+
   @media (max-width: 767px) {
     .hide-mobile {
       display: none;
     }
-    
+
     th, td {
       padding: 10px;
     }

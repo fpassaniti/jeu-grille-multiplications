@@ -1,18 +1,79 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
+
+  // Initialisation au chargement de la page
+  onMount(async () => {
+    // Initialiser les données avec celles reçues du serveur
+    leaderboardData = {
+      adulte: data.leaderboardAdult || [],
+      enfant: data.leaderboardChild || []
+    };
+
+    // Charger les données les plus récentes (sans montrer l'indicateur de chargement)
+    await updateLeaderboard(false);
+  });
 
   // Données chargées depuis le serveur
   export let data;
 
   // État UI
   let isLoading = false;
-  let currentLevel = 'adulte';
+  let currentLevel = data.currentLevel || 'adulte';
+  let currentDuration = data.currentDuration || 5;
+  let leaderboardData = {
+    adulte: data.leaderboardAdult || [],
+    enfant: data.leaderboardChild || []
+  };
+
+  // Options de durée disponibles
+  const durationOptions = [
+    { value: 2, label: '2 minutes' },
+    { value: 3, label: '3 minutes' },
+    { value: 5, label: '5 minutes' }
+  ];
 
   // Fonctions d'interaction
-  function toggleLevel() {
-    currentLevel = currentLevel === 'adulte' ? 'enfant' : 'adulte';
+  async function toggleLevel(level) {
+    if (level !== currentLevel) {
+      currentLevel = level;
+      await updateLeaderboard(true);
+    }
+  }
+
+  async function setDuration(duration) {
+    if (duration !== currentDuration) {
+      currentDuration = duration;
+      await updateLeaderboard(true);
+    }
+  }
+
+  // Met à jour l'URL et charge les données du classement
+  async function updateLeaderboard() {
+    const url = `/leaderboard?level=${currentLevel}&duration=${currentDuration}`;
+    goto(url, { replaceState: true });
+
+    try {
+      const response = await fetch(`/api/leaderboard?level=${currentLevel}&duration=${currentDuration}`);
+      if (!response.ok) throw new Error('Erreur de chargement');
+
+      const data = await response.json();
+
+      if (currentLevel === 'adulte') {
+        leaderboardData.adulte = data.scores;
+      } else {
+        leaderboardData.enfant = data.scores;
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement du classement:', error);
+      if (currentLevel === 'adulte') {
+        leaderboardData.adulte = [];
+      } else {
+        leaderboardData.enfant = [];
+      }
+    }
   }
 
   // Navigation
@@ -36,31 +97,51 @@
       <h1>Classement des Meilleurs Scores</h1>
     </div>
 
-    <div class="level-toggle">
-      <button
-        class="toggle-button {currentLevel === 'adulte' ? 'active' : ''}"
-        on:click={() => currentLevel = 'adulte'}
-      >
-        <span class="emoji">👨‍💼</span> Niveau Adulte
-      </button>
-      <button
-        class="toggle-button {currentLevel === 'enfant' ? 'active' : ''}"
-        on:click={() => currentLevel = 'enfant'}
-      >
-        <span class="emoji">🧒</span> Niveau Enfant
-      </button>
+    <div class="filters-container">
+      <div class="level-toggle">
+        <h3>Niveau</h3>
+        <div class="toggle-buttons">
+          <button
+            class="toggle-button {currentLevel === 'adulte' ? 'active' : ''}"
+            on:click={() => toggleLevel('adulte')}
+          >
+            <span class="emoji">👨‍💼</span> Niveau Adulte
+          </button>
+          <button
+            class="toggle-button {currentLevel === 'enfant' ? 'active' : ''}"
+            on:click={() => toggleLevel('enfant')}
+          >
+            <span class="emoji">🧒</span> Niveau Enfant
+          </button>
+        </div>
+      </div>
+
+      <div class="duration-selector">
+        <h3>Durée</h3>
+        <div class="toggle-buttons">
+          {#each durationOptions as option}
+            <button
+              class="toggle-button {currentDuration === option.value ? 'active' : ''}"
+              on:click={() => setDuration(option.value)}
+            >
+              <span class="emoji">⏱️</span> {option.label}
+            </button>
+          {/each}
+        </div>
+      </div>
     </div>
 
     <div class="leaderboard-container">
       <Leaderboard
         isLoading={isLoading}
         level={currentLevel}
-        leaderboard={currentLevel === 'adulte' ? data.leaderboardAdult : data.leaderboardChild}
+        duration={currentDuration}
+        leaderboard={currentLevel === 'adulte' ? leaderboardData.adulte : leaderboardData.enfant}
       />
     </div>
 
     <div class="page-footer">
-      <p>Les scores sont mis à jour après chaque partie terminée.</p>
+      <p>Les scores sont filtrés par niveau et durée de jeu.</p>
       <p class="challenge-text">
         <span class="emoji">🚀</span> Relève le défi et inscris ton nom dans le classement !
       </p>
@@ -91,17 +172,36 @@
     font-size: 2rem;
   }
 
-  .level-toggle {
+  .filters-container {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     gap: 20px;
     margin-bottom: 30px;
+  }
+
+  .level-toggle, .duration-selector {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .level-toggle h3, .duration-selector h3 {
+    color: var(--primary);
+    margin: 0;
+  }
+
+  .toggle-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
   }
 
   .toggle-button {
     padding: 12px 20px;
     border-radius: var(--border-radius-md);
-    font-size: 1.1rem;
+    font-size: 1rem;
     background-color: var(--bg-secondary);
     color: var(--text-secondary);
     transition: all 0.3s;
@@ -156,9 +256,13 @@
       gap: 15px;
     }
 
-    .level-toggle {
+    .filters-container {
+      gap: 15px;
+    }
+
+    .toggle-buttons {
       flex-direction: column;
-      gap: 10px;
+      width: 100%;
     }
 
     .toggle-button {

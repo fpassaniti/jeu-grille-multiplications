@@ -1,39 +1,40 @@
-import { createClient } from '@supabase/supabase-js';
+// src/routes/leaderboard/+page.server.js
 import { error } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
 
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
-
-export async function load() {
+// Fonction chargée côté serveur pour récupérer les données initiales
+export async function load({ fetch, url }) {
   try {
-    // Créer le client Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Récupérer les paramètres de l'URL (ou utiliser les valeurs par défaut)
+    const level = url.searchParams.get('level') || 'adulte';
+    const duration = url.searchParams.get('duration') || '5';
 
-    // Charger les scores des adultes
-    const { data: adultData, error: adultError } = await supabase
-      .from('scores')
-      .select('id, name, score, duration, level, date')
-      .eq('level', 'adulte')
-      .order('score', { ascending: false })
-      .limit(10);
+    // Préparer les URL pour récupérer différents jeux de données
+    const durations = ['2', '3', '5'];
+    const results = {};
 
-    if (adultError) throw adultError;
+    // Récupérer les scores pour le niveau et la durée actuels
+    const leaderboardResponse = await fetch(`/api/leaderboard?level=${level}&duration=${duration}`);
 
-    // Charger les scores des enfants
-    const { data: childData, error: childError } = await supabase
-      .from('scores')
-      .select('id, name, score, duration, level, date')
-      .eq('level', 'enfant')
-      .order('score', { ascending: false })
-      .limit(10);
+    if (!leaderboardResponse.ok) {
+      throw new Error('Erreur lors de la récupération des scores');
+    }
 
-    if (childError) throw childError;
+    const leaderboardData = await leaderboardResponse.json();
+
+    // Préparer les données pour les différents niveaux et la durée actuelle
+    results.adultData = level === 'adulte' ? leaderboardData.scores : [];
+    results.childData = level === 'enfant' ? leaderboardData.scores : [];
+
+    // Ajouter le niveau et la durée sélectionnés aux données
+    results.currentLevel = level;
+    results.currentDuration = parseInt(duration, 10);
+    results.tables_used = leaderboardData.tables_used
 
     return {
-      leaderboardAdult: adultData || [],
-      leaderboardChild: childData || []
+      leaderboardAdult: results.adultData,
+      leaderboardChild: results.childData,
+      currentLevel: level,
+      currentDuration: parseInt(duration, 10)
     };
 
   } catch (err) {

@@ -1,3 +1,4 @@
+// src/routes/api/leaderboard/+server.js
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
@@ -7,35 +8,50 @@ const supabaseUrl = env.VITE_SUPABASE_URL;
 const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée
 
 /** @type {import('./$types').RequestHandler} */
-export async function GET() {
+export async function GET({ url }) {
   try {
+    // Extraire les paramètres de requête
+    const level = url.searchParams.get('level') || 'adulte';
+    const duration = url.searchParams.get('duration') || '5'; // Par défaut 5 minutes
+
     // Créer le client Supabase côté serveur
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Charger les scores des adultes (avec rate limiting pour éviter les abus)
-    const { data: adultData, error: adultError } = await supabase
+    // Charger les scores avec filtrage par niveau et durée
+    const { data: scoresData, error: scoresError } = await supabase
       .from('scores')
-      .select('id, name, score, duration, level, date')
-      .eq('level', 'adulte')
+      .select('id, name, score, duration, level, date, tables_used')
+      .eq('level', level)
+      .eq('duration', parseInt(duration, 10))
       .order('score', { ascending: false })
       .limit(10);
 
-    if (adultError) throw adultError;
+    if (scoresError) throw scoresError;
 
-    // Charger les scores des enfants
-    const { data: childData, error: childError } = await supabase
-      .from('scores')
-      .select('id, name, score, duration, level, date')
-      .eq('level', 'enfant')
-      .order('score', { ascending: false })
-      .limit(10);
+    // S'assurer que les tables_used sont parsées correctement
+    const processedScores = scoresData?.map(score => {
+      // Si tables_used est une chaîne JSON, la parser
+      if (score.tables_used && typeof score.tables_used === 'string') {
+        try {
+          score.tables_used = JSON.parse(score.tables_used);
+        } catch (e) {
+          console.error("Erreur de parsing tables_used:", e);
+          score.tables_used = [];
+        }
+      }
+      // Si tables_used est null, mettre un tableau vide
+      else if (score.tables_used === null) {
+        score.tables_used = [];
+      }
 
-    if (childError) throw childError;
+      return score;
+    }) || [];
 
     // Retourner les données
     return json({
-      adult: adultData || [],
-      child: childData || []
+      scores: processedScores,
+      level,
+      duration: parseInt(duration, 10)
     });
   } catch (err) {
     console.error('Erreur lors du chargement des leaderboards:', err);
