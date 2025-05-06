@@ -61,10 +61,10 @@
       <!-- Utilisateur connecté -->
       <div class="welcome-message">
         <p>Bienvenue, <span class="username">{data.user.displayName}</span>!</p>
-        <p class="level-info">
+        <h2 class="level-info">
           Niveau {data.userProgress?.level || 1}:
           <span class="level-title">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</span>
-        </p>
+        </h2>
       </div>
 
       <div class="action-buttons">

@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { GET } from './+server.js';
+import { json } from '@sveltejs/kit';
 
 // Mock des fonctions de SvelteKit
 vi.mock('@sveltejs/kit', async () => {
-  const actual = await vi.importActual('@sveltejs/kit');
   return {
-    ...actual,
-    json: vi.fn((data, options) => ({ status: options?.status || 200, body: data }))
+    json: vi.fn((data, options = {}) => {
+      return {
+        status: options.status || 200,
+        body: data
+      };
+    })
   };
 });
 
@@ -65,11 +69,34 @@ vi.mock('@supabase/supabase-js', () => {
                       error: null
                     }))
                   };
+                } else if (value === 11) {
+                  return {
+                    maybeSingle: vi.fn(() => Promise.resolve({
+                      data: null,
+                      error: null
+                    }))
+                  };
                 }
+                return {
+                  maybeSingle: vi.fn(() => Promise.resolve({
+                    data: null,
+                    error: null
+                  }))
+                };
               })
             }))
           };
         }
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(() => Promise.resolve({
+                data: null,
+                error: null
+              }))
+            }))
+          }))
+        };
       })
     }))
   };
@@ -77,7 +104,6 @@ vi.mock('@supabase/supabase-js', () => {
 
 describe('API Progression Utilisateur', () => {
   let mockCookies;
-  let mockLocals;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -85,16 +111,6 @@ describe('API Progression Utilisateur', () => {
     // Créer un mock des cookies
     mockCookies = {
       get: vi.fn()
-    };
-
-    // Créer un mock des locals
-    mockLocals = {
-      user: {
-        id: 'user-id',
-        username: 'testuser',
-        displayName: 'Test User'
-      },
-      authenticated: true
     };
   });
 
@@ -175,33 +191,98 @@ describe('API Progression Utilisateur', () => {
       }
     }));
 
-    // Modifier temporairement le mock pour simuler une erreur
-    const supabaseModule = await import('@supabase/supabase-js');
-    const originalCreateClient = supabaseModule.createClient;
-
-    supabaseModule.createClient = vi.fn(() => ({
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            single: vi.fn(() => Promise.resolve({
-              data: null,
-              error: { message: 'Erreur de base de données simulée' }
-            }))
-          }))
+    // Mock spécifique pour ce test qui lance une erreur
+    vi.mock('@supabase/supabase-js', () => {
+      return {
+        createClient: vi.fn(() => ({
+          from: vi.fn(() => {
+            throw new Error('Erreur de base de données simulée');
+          })
         }))
-      }))
-    }));
+      };
+    }, { virtual: true });
 
     const response = await GET({ cookies: mockCookies });
 
-    // Restaurer le mock original
-    supabaseModule.createClient = originalCreateClient;
-
     expect(response.status).toBe(500);
     expect(response.body).toHaveProperty('error', 'Erreur lors de la récupération de la progression');
-  });
+  }, { retry: 0 });
 
   it('devrait gérer le cas où l\'utilisateur est au niveau maximum', async () => {
+    // Remplacer le mock pour ce test spécifique
+    vi.mock('@supabase/supabase-js', () => {
+      return {
+        createClient: vi.fn(() => ({
+          from: vi.fn((table) => {
+            if (table === 'user_progress') {
+              return {
+                select: vi.fn(() => ({
+                  eq: vi.fn(() => ({
+                    single: vi.fn(() => Promise.resolve({
+                      data: {
+                        user_id: 'user-id',
+                        level: 10, // Niveau max
+                        xp: 50000,
+                        games_played: 100,
+                        streak_days: 30,
+                        total_score: 100000,
+                        last_played_at: new Date().toISOString()
+                      },
+                      error: null
+                    }))
+                  }))
+                }))
+              };
+            } else if (table === 'level_definitions') {
+              return {
+                select: vi.fn(() => ({
+                  eq: vi.fn((field, value) => {
+                    if (value === 10) {
+                      return {
+                        single: vi.fn(() => Promise.resolve({
+                          data: {
+                            level: 10,
+                            title: 'Virtuose Mathématique',
+                            description: 'Tu as atteint le sommet!',
+                            min_xp: 45000,
+                            rewards: []
+                          },
+                          error: null
+                        }))
+                      };
+                    } else if (value === 11) {
+                      return {
+                        maybeSingle: vi.fn(() => Promise.resolve({
+                          data: null, // Aucun niveau supérieur
+                          error: null
+                        }))
+                      };
+                    }
+                    return {
+                      maybeSingle: vi.fn(() => Promise.resolve({
+                        data: null,
+                        error: null
+                      }))
+                    };
+                  })
+                }))
+              };
+            }
+            return {
+              select: vi.fn(() => ({
+                eq: vi.fn(() => ({
+                  single: vi.fn(() => Promise.resolve({
+                    data: null,
+                    error: null
+                  }))
+                }))
+              }))
+            };
+          })
+        }))
+      };
+    }, { virtual: true });
+
     // Simuler un cookie de session avec un utilisateur connecté
     mockCookies.get.mockReturnValue(JSON.stringify({
       user: {
@@ -211,73 +292,12 @@ describe('API Progression Utilisateur', () => {
       }
     }));
 
-    // Modifier temporairement le mock pour simuler un utilisateur niveau 10 (max)
-    const supabaseModule = await import('@supabase/supabase-js');
-    const originalCreateClient = supabaseModule.createClient;
-
-    supabaseModule.createClient = vi.fn(() => ({
-      from: vi.fn((table) => {
-        if (table === 'user_progress') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn(() => ({
-                single: vi.fn(() => Promise.resolve({
-                  data: {
-                    user_id: 'user-id',
-                    level: 10, // Niveau max
-                    xp: 50000,
-                    games_played: 100,
-                    streak_days: 30,
-                    total_score: 100000,
-                    last_played_at: new Date().toISOString()
-                  },
-                  error: null
-                }))
-              }))
-            }))
-          };
-        } else if (table === 'level_definitions') {
-          return {
-            select: vi.fn(() => ({
-              eq: vi.fn((field, value) => {
-                if (value === 10) {
-                  return {
-                    single: vi.fn(() => Promise.resolve({
-                      data: {
-                        level: 10,
-                        title: 'Virtuose Mathématique',
-                        description: 'Tu as atteint le sommet. Tu es maintenant un virtuose des mathématiques!',
-                        min_xp: 45000,
-                        rewards: []
-                      },
-                      error: null
-                    }))
-                  };
-                } else if (value === 11) {
-                  return {
-                    maybeSingle: vi.fn(() => Promise.resolve({
-                      data: null, // Aucun niveau supérieur
-                      error: null
-                    }))
-                  };
-                }
-              })
-            }))
-          };
-        }
-      })
-    }));
-
     const response = await GET({ cookies: mockCookies });
-
-    // Restaurer le mock original
-    supabaseModule.createClient = originalCreateClient;
 
     expect(response.status).toBe(200);
     expect(response.body.progress.nextLevel).toBeNull();
     expect(response.body.progress.xpForNextLevel).toBeNull();
     expect(response.body.progress.xpUntilNextLevel).toBeNull();
-    // Pas de progression de niveau pour le niveau max
     expect(response.body.progress.levelProgress).toBe(0);
-  });
+  }, { retry: 0 });
 });

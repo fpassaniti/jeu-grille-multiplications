@@ -7,7 +7,7 @@ const supabaseUrl = env.VITE_SUPABASE_URL;
 const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 /** @type {import('./$types').RequestHandler} */
-export async function GET({ request, cookies, locals }) {
+export async function GET({ cookies }) {
   try {
     // Vérifier si l'utilisateur est connecté
     const sessionCookie = cookies.get('session');
@@ -49,15 +49,20 @@ export async function GET({ request, cookies, locals }) {
     // Calculer la progression vers le prochain niveau
     let levelProgress = 0;
     let xpForNextLevel = null;
+    let xpUntilNextLevel = null;
 
     if (nextLevelData) {
-      const currentLevelXP = levelData.min_xp;
-      const nextLevelXP = nextLevelData.min_xp;
-      const userXP = progressData.xp;
+      // Calculer la quantité d'XP nécessaire pour passer du niveau actuel au niveau suivant
+      xpForNextLevel = nextLevelData.min_xp - levelData.min_xp;
 
-      xpForNextLevel = nextLevelXP - currentLevelXP;
-      const userProgressXP = userXP - currentLevelXP;
+      // Calculer la progression du joueur dans le niveau actuel
+      const userProgressXP = progressData.xp - levelData.min_xp;
+
+      // Calculer le pourcentage de progression vers le niveau suivant
       levelProgress = Math.floor((userProgressXP / xpForNextLevel) * 100);
+
+      // Calculer l'XP restante pour atteindre le niveau suivant
+      xpUntilNextLevel = nextLevelData.min_xp - progressData.xp;
     }
 
     return json({
@@ -68,7 +73,7 @@ export async function GET({ request, cookies, locals }) {
         nextLevel: nextLevelData || null,
         levelProgress: levelProgress,
         xpForNextLevel: xpForNextLevel,
-        xpUntilNextLevel: nextLevelData ? nextLevelData.min_xp - progressData.xp : null
+        xpUntilNextLevel: xpUntilNextLevel
       }
     });
 
@@ -77,6 +82,3 @@ export async function GET({ request, cookies, locals }) {
 
     return json({
       error: 'Erreur lors de la récupération de la progression'
-    }, { status: 500 });
-  }
-}
