@@ -30,7 +30,6 @@
     }
   });
 
-  // Fonction de connexion
   async function handleLogin() {
     if (!username || !passwordChar) {
       error = "Veuillez remplir tous les champs";
@@ -55,8 +54,8 @@
       if (!response.ok) {
         error = data.error || "Erreur lors de la connexion";
       } else {
-        // Redirection vers le tableau de bord
-        goto('/dashboard');
+        // Forcer un rechargement complet pour mettre à jour tous les composants
+        window.location.href = '/dashboard';
       }
     } catch (err) {
       console.error("Erreur de connexion:", err);

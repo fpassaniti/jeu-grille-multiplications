@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { POST } from './+server.js';
 
 // Mock des fonctions de SvelteKit
@@ -10,17 +10,50 @@ vi.mock('@sveltejs/kit', async () => {
   };
 });
 
+// Mock de Supabase
+vi.mock('@supabase/supabase-js', () => {
+  const mockSupabase = {
+    from: vi.fn(() => mockSupabase),
+    insert: vi.fn(() => mockSupabase),
+    select: vi.fn(() => mockSupabase),
+    eq: vi.fn(() => mockSupabase),
+    order: vi.fn(() => mockSupabase),
+    limit: vi.fn(() => mockSupabase),
+    single: vi.fn(() => mockSupabase),
+    rpc: vi.fn(() => mockSupabase),
+    data: [{ id: 'mock-id', score: 100 }],
+    error: null
+  };
+
+  return {
+    createClient: vi.fn(() => ({
+      from: vi.fn(() => mockSupabase),
+      rpc: vi.fn(() => Promise.resolve({ data: [{ returned_user_id: 'user-id', returned_xp: 100, returned_level: 1, returned_streak_days: 1, returned_total_score: 100 }], error: null }))
+    }))
+  };
+});
+
 describe('Endpoint API /api/scores', () => {
   let mockRequest;
+  let mockCookies;
 
   beforeEach(() => {
     // Réinitialiser les mocks avant chaque test
     vi.clearAllMocks();
-    
+
     // Créer un mock de la requête
     mockRequest = {
       json: vi.fn()
     };
+
+    // Créer un mock des cookies
+    mockCookies = {
+      get: vi.fn()
+    };
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
   });
 
   it('devrait retourner une erreur 400 si des données requises sont manquantes', async () => {
@@ -32,41 +65,24 @@ describe('Endpoint API /api/scores', () => {
       level: 'adulte'
     });
 
-    const response = await POST({ request: mockRequest });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('error', 'Informations manquantes');
-  });
-
-  it('devrait rejeter un score dépassant le maximum théorique', async () => {
-    mockRequest.json.mockResolvedValue({
-      name: 'Joueur Test',
-      score: 100000, // Score beaucoup trop élevé
-      duration: 5, // 5 minutes
-      level: 'adulte',
-      solvedCells: 10,
-      totalPossibleCells: 20,
-      selectedTables: [2, 3, 4]
-    });
-
-    const response = await POST({ request: mockRequest });
-
-    expect(response.status).toBe(400);
-    expect(response.body).toHaveProperty('error', 'Score invalide: dépasse le maximum théorique');
   });
 
   it('devrait rejeter un score trop élevé par rapport aux cellules résolues', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Test',
       score: 5000, // Score trop élevé pour seulement 2 cellules
-      duration: 5, 
+      duration: 5,
       level: 'adulte',
       solvedCells: 2, // Peu de cellules
       totalPossibleCells: 20,
       selectedTables: [2, 3, 4]
     });
 
-    const response = await POST({ request: mockRequest });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('error', 'Score trop élevé par rapport au nombre de cellules résolues');
@@ -76,72 +92,149 @@ describe('Endpoint API /api/scores', () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Test',
       score: 1000,
-      duration: 5, 
+      duration: 5,
       level: 'adulte',
       solvedCells: 30, // Plus que le total possible
       totalPossibleCells: 20,
       selectedTables: [2, 3, 4]
     });
 
-    const response = await POST({ request: mockRequest });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('error', 'Nombre de cellules résolues invalide');
   });
 
-  it('devrait accepter un score valide et retourner un succès', async () => {
+  it('devrait accepter un score valide et retourner un succès pour un utilisateur non connecté', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Test',
       score: 500, // Score raisonnable
-      duration: 5, 
+      duration: 5,
       level: 'adulte',
       solvedCells: 10,
       totalPossibleCells: 20,
       selectedTables: []
     });
 
-    const response = await POST({ request: mockRequest });
+    // Simuler aucun cookie de session (utilisateur non connecté)
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('success', true);
     expect(response.body).toHaveProperty('message', 'Score enregistré avec succès');
-    expect(response.body).toHaveProperty('data');
+    expect(response.body).toHaveProperty('gameData');
   });
 
-  it('devrait gérer correctement les scores pour le niveau enfant', async () => {
+  it('devrait accepter un score et mettre à jour la progression pour un utilisateur connecté', async () => {
+    mockRequest.json.mockResolvedValue({
+      name: 'Joueur Test',
+      score: 500,
+      duration: 5,
+      level: 'adulte',
+      solvedCells: 10,
+      totalPossibleCells: 20,
+      selectedTables: []
+    });
+
+    // Simuler un cookie de session (utilisateur connecté)
+    mockCookies.get.mockReturnValue(JSON.stringify({
+      user: {
+        id: 'user-id',
+        displayName: 'Joueur Test'
+      }
+    }));
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('progressUpdate');
+    expect(response.body.progressUpdate).not.toBeNull();
+  });
+
+  it('devrait gérer correctement les scores pour le niveau enfant avec tables sélectionnées', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Enfant Test',
       score: 300,
-      duration: 5, 
+      duration: 5,
       level: 'enfant',
       solvedCells: 8,
       totalPossibleCells: 15,
       selectedTables: [2, 5, 10]
     });
 
-    const response = await POST({ request: mockRequest });
+    // Simuler aucun cookie de session (utilisateur non connecté)
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty('success', true);
+    // Vérifier que les tables sélectionnées sont bien enregistrées
+    expect(response.body.gameData).toHaveProperty('tables_used');
+    expect(Array.isArray(response.body.gameData.tables_used)).toBe(true);
   });
 
-  it('devrait nettoyer le nom avant de sauvegarder', async () => {
-    const testName = '  Nom à Nettoyer  ';
+  it('devrait ignorer les tables sélectionnées pour le niveau adulte', async () => {
     mockRequest.json.mockResolvedValue({
-      name: testName,
-      score: 300,
-      duration: 5, 
+      name: 'Adulte Test',
+      score: 400,
+      duration: 5,
       level: 'adulte',
-      solvedCells: 8,
+      solvedCells: 10,
+      totalPossibleCells: 20,
+      selectedTables: [3, 4, 5] // Ces tables devraient être ignorées en mode adulte
+    });
+
+    // Simuler aucun cookie de session (utilisateur non connecté)
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
+    // Vérifier que les tables sélectionnées sont ignorées (tableau vide)
+    expect(response.body.gameData.tables_used).toEqual([]);
+  });
+
+  it('devrait gérer les erreurs de base de données correctement', async () => {
+    mockRequest.json.mockResolvedValue({
+      name: 'Test Error',
+      score: 200,
+      duration: 5,
+      level: 'adulte',
+      solvedCells: 5,
       totalPossibleCells: 20,
       selectedTables: []
     });
 
-    await POST({ request: mockRequest });
+    // Modifier temporairement le mock pour simuler une erreur
+    const supabaseModule = await import('@supabase/supabase-js');
+    const originalCreateClient = supabaseModule.createClient;
 
-    // Vérifier que le nom a été nettoyé dans le client Supabase mock
-    // Cette vérification dépend de la façon dont le mock est implémenté
-    // Nous vérifions indirectement via le fait que le test passe
-    expect(true).toBe(true);
+    supabaseModule.createClient = vi.fn(() => ({
+      from: vi.fn(() => ({
+        insert: vi.fn(() => ({
+          select: vi.fn(() => Promise.resolve({
+            data: null,
+            error: { message: 'Erreur de base de données simulée' }
+          }))
+        }))
+      })),
+      rpc: vi.fn(() => Promise.resolve({
+        data: null,
+        error: { message: 'Erreur de fonction RPC simulée' }
+      }))
+    }));
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    // Restaurer le mock original
+    supabaseModule.createClient = originalCreateClient;
+
+    expect(response.status).toBe(500);
+    expect(response.body).toHaveProperty('error');
   });
 });

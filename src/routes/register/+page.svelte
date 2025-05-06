@@ -14,10 +14,9 @@
   // Caractères disponibles pour le mot de passe visuel (identique à l'écran de login)
   const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉'];
 
-  // Fonction d'inscription
   async function handleRegister() {
     submitted = true;
-    
+
     if (!username || !passwordChar) {
       error = 'Le prénom et le caractère secret sont obligatoires';
       return;
@@ -48,9 +47,9 @@
       // Inscription réussie
       success = true;
 
-      // Rediriger vers le dashboard après 2 secondes
+      // Rediriger vers le dashboard après 2 secondes avec rechargement complet
       setTimeout(() => {
-        goto('/dashboard');
+        window.location.href = '/dashboard';
       }, 2000);
 
     } catch (err) {

@@ -76,20 +76,6 @@
 
 <main class="container">
   <div class="dashboard-container">
-    <nav class="dashboard-nav card">
-      <button class="nav-button" on:click={goToHome}>
-        <span class="emoji">🏠</span> Accueil
-      </button>
-
-      <div class="nav-user">
-        <span class="user-name">{data.user?.displayName || 'Joueur'}</span>
-      </div>
-
-      <button class="nav-button" on:click={handleLogout} disabled={loading}>
-        <span class="emoji">🚪</span> Déconnexion
-      </button>
-    </nav>
-
     {#if error}
       <div class="error-message">
         <span class="emoji">⚠️</span> {error}
@@ -208,27 +194,6 @@
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
-  }
-
-  .dashboard-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    margin-bottom: 30px;
-  }
-
-  .nav-button {
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    padding: 8px 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.9rem;
-  }
-
-  .nav-user {
-    font-weight: bold;
-    color: var(--primary);
   }
 
   .dashboard-content {

@@ -3,3 +3,6 @@
 /.vite/
 .env
 **/.claude/settings.local.json
+/.vercel/
+/.svelte-kit/
+/.idea/

@@ -3,7 +3,7 @@
   import {goto} from '$app/navigation';
   import {page} from '$app/stores';
 
-  // Données utilisateur venant du serveur (fournies via +page.server.js)
+  // Données utilisateur venant du serveur (fournies via +layout.server.js)
   export let data;
 
   // État UI
@@ -31,6 +31,10 @@
 
   function goToDashboard() {
     goto('/dashboard');
+  }
+
+  function goToLeaderboard() {
+    goto('/leaderboard');
   }
 </script>
 
@@ -119,6 +123,14 @@
           <p>Sur ordinateur, tablette ou téléphone!</p>
         </div>
       </div>
+    </div>
+
+    <div class="leaderboard-section">
+      <h2>Découvre les meilleurs joueurs!</h2>
+      <p>Vois qui est en tête du classement et défie-les!</p>
+      <button class="leaderboard-button" on:click={goToLeaderboard}>
+        <span class="emoji">🏆</span> Voir le classement
+      </button>
     </div>
   </div>
 </main>
@@ -286,10 +298,6 @@
     transition: transform 0.3s;
   }
 
-  .feature-card:hover {
-    transform: translateY(-5px);
-  }
-
   .feature-icon {
     font-size: 2.5rem;
     margin-bottom: 15px;
@@ -305,6 +313,39 @@
   .feature-card p {
     color: var(--text-secondary);
     font-size: 0.9rem;
+  }
+
+  .leaderboard-section {
+    margin-top: 60px;
+    background-color: var(--bg-secondary);
+    padding: 30px;
+    border-radius: var(--border-radius-lg);
+    box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+
+  .leaderboard-section h2 {
+    color: var(--primary-dark);
+    margin-bottom: 15px;
+  }
+
+  .leaderboard-section p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+
+  .leaderboard-button {
+    background-color: var(--primary);
+    color: white;
+    padding: 12px 25px;
+    font-size: 1.1rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 0 var(--primary-dark);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .leaderboard-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 0 var(--primary-dark);
   }
 
   @media (max-width: 767px) {

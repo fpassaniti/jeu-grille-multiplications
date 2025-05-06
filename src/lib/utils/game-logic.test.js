@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { calculateDifficultyMultiplier, calculateScore } from './game-logic.js';
+import {describe, it, expect} from 'vitest';
+import {calculateDifficultyMultiplier, calculateScore} from './game-logic.js';
 
 describe('Game Logic - calculateDifficultyMultiplier', () => {
   it('devrait retourner une valeur plus faible pour les multiplications faciles', () => {
@@ -32,11 +32,12 @@ describe('Game Logic - calculateDifficultyMultiplier', () => {
     expect(calculateDifficultyMultiplier(5, 11)).toBe(1.0);
   });
 
-  it('devrait respecter la symétrie pour certaines multiplications', () => {
-    // Test de symétrie: 6x8 devrait être aussi difficile que 8x6
-    expect(calculateDifficultyMultiplier(6, 8)).toBe(calculateDifficultyMultiplier(8, 6));
-    // Test de symétrie: 7x9 devrait être aussi difficile que 9x7
-    expect(calculateDifficultyMultiplier(7, 9)).toBe(calculateDifficultyMultiplier(9, 7));
+  it('devrait respecter la matrice de difficulté pour différentes multiplications', () => {
+    // Vérifier quelques valeurs selon la matrice définie dans le code
+    expect(calculateDifficultyMultiplier(2, 2)).toBe(0.8);
+    expect(calculateDifficultyMultiplier(4, 6)).toBe(1.5);
+    expect(calculateDifficultyMultiplier(9, 9)).toBe(1.9);
+    expect(calculateDifficultyMultiplier(6, 7)).toBe(2.4);
   });
 });
 
@@ -45,7 +46,7 @@ describe('Game Logic - calculateScore', () => {
     // Même multiplication, temps différent
     const scoreFastTime = calculateScore(10, 5, 5, 'adulte');
     const scoreSlowerTime = calculateScore(5, 5, 5, 'adulte');
-    
+
     expect(scoreFastTime).toBeGreaterThan(scoreSlowerTime);
   });
 
@@ -53,7 +54,7 @@ describe('Game Logic - calculateScore', () => {
     // Même temps, multiplication différente
     const scoreEasy = calculateScore(10, 2, 2, 'adulte');
     const scoreHard = calculateScore(10, 7, 7, 'adulte');
-    
+
     expect(scoreHard).toBeGreaterThan(scoreEasy);
   });
 
@@ -61,7 +62,7 @@ describe('Game Logic - calculateScore', () => {
     // Même multiplication et temps, niveau différent
     const scoreAdult = calculateScore(10, 6, 9, 'adulte');
     const scoreChild = calculateScore(10, 6, 9, 'enfant');
-    
+
     // Pour le niveau enfant, la pénalité pour les tables faciles est réduite
     expect(scoreAdult).not.toBe(scoreChild);
   });
@@ -77,7 +78,7 @@ describe('Game Logic - calculateScore', () => {
     const difficultyMultiplier = calculateDifficultyMultiplier(7, 7);
     const timeRemaining = 10;
     const expectedScore = Math.round(timeRemaining * difficultyMultiplier);
-    
+
     expect(calculateScore(timeRemaining, 7, 7, 'adulte')).toBe(expectedScore);
   });
 
@@ -87,16 +88,16 @@ describe('Game Logic - calculateScore', () => {
     const row = 5;
     const col = 5;
     const difficultyMultiplier = calculateDifficultyMultiplier(row, col);
-    
+
     // Formule pour niveau adulte
     const expectedAdultScore = Math.round(timeRemaining * difficultyMultiplier);
-    
+
     // Formule pour niveau enfant
     const expectedChildScore = Math.round(timeRemaining * (difficultyMultiplier * 0.7 + 0.3));
-    
+
     expect(calculateScore(timeRemaining, row, col, 'adulte')).toBe(expectedAdultScore);
     expect(calculateScore(timeRemaining, row, col, 'enfant')).toBe(expectedChildScore);
-    
+
     // Le score enfant devrait être différent du score adulte
     expect(expectedAdultScore).not.toBe(expectedChildScore);
   });

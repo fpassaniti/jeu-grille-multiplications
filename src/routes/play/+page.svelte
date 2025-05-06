@@ -6,7 +6,6 @@
   // Importation des composants
   import GameBoard from '$lib/components/GameBoard.svelte';
   import MobileGame from '$lib/components/MobileGame.svelte';
-  import Leaderboard from '$lib/components/Leaderboard.svelte';
   import TableSelector from '$lib/components/TableSelector.svelte';
 
   // Importation des stores et utilitaires
@@ -29,8 +28,6 @@
   let userAnswer = '';
   let gameTimerInterval;
   let cellTimerInterval;
-  let leaderboardAdult = [];
-  let leaderboardChild = [];
   let playerName = '';
   let inputRef;
   let lastAnswerCorrect = null;
@@ -57,16 +54,6 @@
   // Grille pour suivre les cellules déjà résolues
   let solvedCells = Array(10).fill().map(() => Array(10).fill(false));
 
-  // Mettre à jour les leaderboards depuis les données chargées côté serveur
-  $: {
-    if (data.leaderboardAdult) {
-      leaderboardAdult = data.leaderboardAdult;
-    }
-    if (data.leaderboardChild) {
-      leaderboardChild = data.leaderboardChild;
-    }
-  }
-
   // Vérifier l'état de connexion
   onMount(() => {
     updateDimensions();
@@ -91,40 +78,6 @@
     windowWidth = window.innerWidth;
     windowHeight = window.innerHeight;
     isMobile = windowWidth < 768;
-  }
-
-  // Chargement des leaderboards (mise à jour en temps réel)
-  async function loadLeaderboards() {
-    try {
-      isLoading = true;
-      const response = await fetch('/api/leaderboard');
-      if (!response.ok) throw new Error('Erreur réseau');
-
-      const leaderboardData = await response.json();
-      leaderboardAdult = leaderboardData.adult;
-      leaderboardChild = leaderboardData.child;
-    } catch (e) {
-      console.error('Erreur lors du chargement des leaderboards:', e);
-      // Fallback sur localStorage (utilisé uniquement en cas d'erreur réseau)
-      if (browser) {
-        try {
-          const savedLeaderboardAdult = localStorage.getItem('multiplicationLeaderboardAdult');
-          const savedLeaderboardChild = localStorage.getItem('multiplicationLeaderboardChild');
-
-          if (savedLeaderboardAdult) {
-            leaderboardAdult = JSON.parse(savedLeaderboardAdult);
-          }
-
-          if (savedLeaderboardChild) {
-            leaderboardChild = JSON.parse(savedLeaderboardChild);
-          }
-        } catch (localError) {
-          console.error('Erreur lors du chargement du leaderboard local:', localError);
-        }
-      }
-    } finally {
-      isLoading = false;
-    }
   }
 
   // Chargement des tables sélectionnées depuis localStorage
@@ -400,9 +353,6 @@
       // Marquer le score comme sauvegardé
       scoreSaved = true;
 
-      // Recharger les leaderboards après sauvegarde
-      await loadLeaderboards();
-
     } catch (e) {
       console.error('Erreur lors de la sauvegarde du score:', e);
       alert(`Erreur: ${e.message || 'Impossible de sauvegarder le score en ligne'}. Essayez à nouveau plus tard.`);
@@ -419,6 +369,11 @@
   // Fonction pour aller au tableau de bord
   function goToDashboard() {
     goto('/dashboard');
+  }
+
+  // Navigation vers la page leaderboard
+  function goToLeaderboard() {
+    goto('/leaderboard');
   }
 
   // Fonction pour redémarrer le jeu
@@ -443,9 +398,6 @@
   function setLevel(newLevel) {
     level = newLevel;
   }
-
-  // Fonction pour obtenir le leaderboard actuel selon le niveau
-  $: currentLeaderboard = level === 'adulte' ? leaderboardAdult : leaderboardChild;
 
   // Variables réactives pour le suivi des multiplications résolues
   $: solvedCountAdult = (() => {
@@ -516,36 +468,6 @@
 </svelte:head>
 
 <main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}; width: 100%; box-sizing: border-box;">
-  {#if gameState === 'notStarted' || gameState === 'playing' || gameState === 'finished'}
-    <nav class="game-nav card">
-      <button class="nav-button" on:click={() => goto('/')}>
-        <span class="emoji">🏠</span> Accueil
-      </button>
-
-      <div class="nav-user-info">
-        {#if isLoggedIn}
-          <div class="user-name">
-            <span class="emoji">👤</span> {data.user?.displayName || 'Joueur'}
-          </div>
-        {:else}
-          <div class="nav-title">
-            MultyFun
-          </div>
-        {/if}
-      </div>
-
-      {#if isLoggedIn}
-        <button class="nav-button" on:click={() => goto('/dashboard')}>
-          <span class="emoji">📊</span> Tableau de bord
-        </button>
-      {:else}
-        <button class="nav-button" on:click={() => goto('/login')}>
-          <span class="emoji">🔑</span> Connexion
-        </button>
-      {/if}
-    </nav>
-  {/if}
-
   {#if gameState === 'notStarted'}
     <div class="start-screen card">
       <div class="logo-container">
@@ -610,12 +532,11 @@
         <span class="emoji">🚀</span> Commencer
       </button>
 
-      <div class="leaderboard-container">
-        <Leaderboard
-          {isLoading}
-          {level}
-          leaderboard={currentLeaderboard}
-        />
+      <div class="leaderboard-link-section">
+        <h3>Envie de voir les meilleurs scores?</h3>
+        <button class="leaderboard-link" on:click={goToLeaderboard}>
+          <span class="emoji">🏆</span> Voir le classement complet
+        </button>
       </div>
     </div>
   {:else if gameState === 'playing'}
@@ -810,41 +731,6 @@
 </main>
 
 <style>
-  .game-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    margin-bottom: 30px;
-    background-color: white;
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
-  }
-
-  .nav-button {
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    padding: 8px 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.9rem;
-  }
-
-  .nav-title {
-    font-weight: bold;
-    color: var(--primary);
-    font-size: 1.2rem;
-  }
-
-  .nav-user-info {
-    text-align: center;
-  }
-
-  .user-name {
-    font-weight: bold;
-    color: var(--primary);
-    font-size: 1rem;
-  }
-
   .logo-container {
     display: flex;
     justify-content: center;
@@ -1172,8 +1058,27 @@
     background-color: var(--primary-light);
   }
 
-  .leaderboard-container {
-    margin-top: 30px;
+  .leaderboard-link-section {
+    text-align: center;
+    margin: 30px 0;
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+  }
+
+  .leaderboard-link {
+    background-color: var(--primary);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md);
+    margin-top: 15px;
+    box-shadow: 0 4px 0 var(--primary-dark);
+    transition: all 0.2s;
+  }
+
+  .leaderboard-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--primary-dark);
   }
 
   /* Nouveaux styles pour la gamification */
