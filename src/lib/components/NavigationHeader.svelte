@@ -4,29 +4,38 @@
   // Props
   export let user = null;
 
+  // État du menu mobile
+  let mobileMenuOpen = false;
+
   // Fonctions de navigation
   function goToHome() {
     goto('/');
+    closeMobileMenu();
   }
 
   function goToPlay() {
     goto('/play');
+    closeMobileMenu();
   }
 
   function goToDashboard() {
     goto('/dashboard');
+    closeMobileMenu();
   }
 
   function goToLeaderboard() {
     goto('/leaderboard');
+    closeMobileMenu();
   }
 
   function goToLogin() {
     goto('/login');
+    closeMobileMenu();
   }
 
   function goToRegister() {
     goto('/register');
+    closeMobileMenu();
   }
 
   // Fonction de déconnexion
@@ -43,47 +52,120 @@
       console.error('Erreur lors de la déconnexion:', err);
     }
   }
+
+  // Ouvrir/fermer le menu mobile
+  function toggleMobileMenu() {
+    mobileMenuOpen = !mobileMenuOpen;
+  }
+
+  // Fermer le menu mobile
+  function closeMobileMenu() {
+    mobileMenuOpen = false;
+  }
 </script>
 
 <header class="app-header">
   <div class="header-container">
-    <div class="logo" on:click={goToHome}>
-      <span class="logo-text">MultyFun</span>
-      <span class="logo-icon">×</span>
+    <div class="header-main">
+      <div class="logo" on:click={goToHome}>
+        <span class="logo-text">MultyFun</span>
+        <span class="logo-icon">×</span>
+      </div>
+
+      <!-- Bouton hamburger pour mobile -->
+      <button class="hamburger-button" on:click={toggleMobileMenu} aria-label="Menu">
+        <span class="hamburger-icon">☰</span>
+      </button>
+
+      <!-- Navigation sur desktop -->
+      <nav class="navigation desktop-nav">
+        <ul class="nav-links">
+          <li>
+            <button class="nav-link" on:click={goToHome}>Accueil</button>
+          </li>
+          <li>
+            <button class="nav-link" on:click={goToPlay}>Jouer</button>
+          </li>
+          <li>
+            <button class="nav-link" on:click={goToLeaderboard}>Classement</button>
+          </li>
+          {#if user}
+            <li>
+              <button class="nav-link" on:click={goToDashboard}>Tableau de bord</button>
+            </li>
+          {/if}
+        </ul>
+      </nav>
+
+      <!-- Boutons d'authentification sur desktop -->
+      <div class="auth-buttons desktop-auth">
+        {#if user}
+          <span class="user-greeting">Bonjour, {user.displayName}!</span>
+          <button class="logout-button" on:click={handleLogout} title="Déconnexion">
+            <span class="logout-icon">🚪</span>
+          </button>
+        {:else}
+          <button class="login-button" on:click={goToLogin}>Connexion</button>
+          <button class="register-button" on:click={goToRegister}>Inscription</button>
+        {/if}
+      </div>
     </div>
 
-    <nav class="navigation">
-      <ul class="nav-links">
-        <li>
-          <button class="nav-link" on:click={goToHome}>Accueil</button>
-        </li>
-        <li>
-          <button class="nav-link" on:click={goToPlay}>Jouer</button>
-        </li>
-        <li>
-          <button class="nav-link" on:click={goToLeaderboard}>Classement</button>
-        </li>
-        {#if user}
+    <!-- Menu mobile (déplié lorsque mobileMenuOpen est true) -->
+    <div class="mobile-menu" class:open={mobileMenuOpen}>
+      <nav class="mobile-nav">
+        <ul class="mobile-nav-links">
           <li>
-            <button class="nav-link" on:click={goToDashboard}>Tableau de bord</button>
+            <button class="mobile-nav-link" on:click={goToHome}>
+              <span class="nav-icon">🏠</span> Accueil
+            </button>
           </li>
-        {/if}
-      </ul>
-    </nav>
+          <li>
+            <button class="mobile-nav-link" on:click={goToPlay}>
+              <span class="nav-icon">🎮</span> Jouer
+            </button>
+          </li>
+          <li>
+            <button class="mobile-nav-link" on:click={goToLeaderboard}>
+              <span class="nav-icon">🏆</span> Classement
+            </button>
+          </li>
+          {#if user}
+            <li>
+              <button class="mobile-nav-link" on:click={goToDashboard}>
+                <span class="nav-icon">📊</span> Tableau de bord
+              </button>
+            </li>
+          {/if}
+        </ul>
 
-    <div class="auth-buttons">
-      {#if user}
-        <span class="user-greeting">Bonjour, {user.displayName}!</span>
-        <button class="logout-button" on:click={handleLogout} title="Déconnexion">
-          <span class="logout-icon">🚪</span>
-        </button>
-      {:else}
-        <button class="login-button" on:click={goToLogin}>Connexion</button>
-        <button class="register-button" on:click={goToRegister}>Inscription</button>
-      {/if}
+        <div class="mobile-auth">
+          {#if user}
+            <div class="mobile-user-info">
+              <span class="mobile-greeting">Connecté en tant que</span>
+              <span class="mobile-username">{user.displayName}</span>
+            </div>
+            <button class="mobile-logout-button" on:click={handleLogout}>
+              <span class="nav-icon">🚪</span> Déconnexion
+            </button>
+          {:else}
+            <button class="mobile-login-button" on:click={goToLogin}>
+              <span class="nav-icon">🔑</span> Connexion
+            </button>
+            <button class="mobile-register-button" on:click={goToRegister}>
+              <span class="nav-icon">📝</span> Inscription
+            </button>
+          {/if}
+        </div>
+      </nav>
     </div>
   </div>
 </header>
+
+<!-- Overlay pour fermer le menu en cliquant en dehors -->
+{#if mobileMenuOpen}
+  <div class="mobile-menu-overlay" on:click={closeMobileMenu}></div>
+{/if}
 
 <style>
   .app-header {
@@ -99,6 +181,9 @@
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 20px;
+  }
+
+  .header-main {
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -131,7 +216,8 @@
     font-size: 1.2rem;
   }
 
-  .navigation {
+  /* Navigation desktop */
+  .desktop-nav {
     flex: 1;
     display: flex;
     justify-content: center;
@@ -161,7 +247,8 @@
     color: var(--primary);
   }
 
-  .auth-buttons {
+  /* Auth buttons desktop */
+  .desktop-auth {
     display: flex;
     gap: 10px;
     align-items: center;
@@ -222,28 +309,143 @@
     font-size: 1.2rem;
   }
 
+  /* Bouton hamburger (masqué sur desktop) */
+  .hamburger-button {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--primary);
+    padding: 5px;
+  }
+
+  /* Menu mobile (masqué par défaut) */
+  .mobile-menu {
+    display: none;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+  }
+
+  .mobile-menu.open {
+    max-height: 500px;
+    border-top: 1px solid var(--bg-secondary);
+  }
+
+  .mobile-nav-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .mobile-nav-link {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 15px 20px;
+    background: none;
+    border: none;
+    text-align: left;
+    font-size: 1rem;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--bg-secondary);
+    cursor: pointer;
+  }
+
+  .mobile-nav-link:hover {
+    background-color: var(--bg-secondary);
+  }
+
+  .nav-icon {
+    margin-right: 10px;
+    font-size: 1.2rem;
+  }
+
+  .mobile-auth {
+    padding: 15px 20px;
+  }
+
+  .mobile-user-info {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+  }
+
+  .mobile-greeting {
+    font-size: 0.9rem;
+    color: var(--text-light);
+  }
+
+  .mobile-username {
+    font-weight: bold;
+    color: var(--primary);
+    font-size: 1.1rem;
+  }
+
+  .mobile-logout-button,
+  .mobile-login-button,
+  .mobile-register-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+  }
+
+  .mobile-logout-button {
+    background-color: var(--secondary-light);
+    color: white;
+  }
+
+  .mobile-login-button {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+  }
+
+  .mobile-register-button {
+    background-color: var(--primary);
+    color: white;
+  }
+
+  .mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 99;
+  }
+
+  /* Media queries pour le responsive */
   @media (max-width: 768px) {
+    /* Cacher navigation et auth desktop */
+    .desktop-nav, .desktop-auth {
+      display: none;
+    }
+
+    /* Afficher le bouton hamburger */
+    .hamburger-button {
+      display: block;
+    }
+
+    /* Préparer le menu mobile */
+    .mobile-menu {
+      display: block;
+    }
+
+    /* Ajuster le header pour mobile */
+    .app-header {
+      padding: 5px 0;
+    }
+
     .header-container {
-      flex-direction: column;
-      gap: 10px;
-      padding: 10px;
-    }
-
-    .navigation {
-      order: 2;
-      width: 100%;
-    }
-
-    .nav-links {
-      justify-content: space-around;
-      width: 100%;
-    }
-
-    .auth-buttons {
-      order: 3;
-      width: 100%;
-      justify-content: center;
-      margin-top: 10px;
+      padding: 0 15px;
     }
   }
 </style>
