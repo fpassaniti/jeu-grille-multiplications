@@ -1,7 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
   import { page } from '$app/stores';
-  import { _ } from '$lib/utils/i18n';
 
   // État du formulaire
   let username = '';
@@ -19,7 +18,7 @@
     submitted = true;
 
     if (!username || !passwordChar) {
-      error = _('auth.requiredFields');
+      error = 'Le prénom et le caractère secret sont obligatoires';
       return;
     }
 
@@ -42,7 +41,7 @@
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || _('auth.registrationError'));
+        throw new Error(data.error || 'Erreur d\'inscription');
       }
 
       // Inscription réussie
@@ -55,7 +54,7 @@
 
     } catch (err) {
       console.error('Erreur d\'inscription:', err);
-      error = err.message || _('auth.accountCreationError');
+      error = err.message || 'Erreur lors de la création du compte. Essaie à nouveau.';
     } finally {
       loading = false;
     }
@@ -73,25 +72,25 @@
 </script>
 
 <svelte:head>
-  <title>{_('auth.registerTitle')} - {_('common.appName')}</title>
+  <title>Créer un compte - MultyFun</title>
 </svelte:head>
 
 <main class="container">
   <div class="register-container card">
     <button class="back-button" on:click={goToHome}>
-      <span class="emoji">🏠</span> {_('common.home')}
+      <span class="emoji">🏠</span> Accueil
     </button>
 
     <div class="register-header">
-      <h1>{_('auth.registerTitle')}</h1>
-      <p class="register-subheader">{_('auth.registerSubtitle')}</p>
+      <h1>Créer un compte</h1>
+      <p class="register-subheader">Commence ton aventure mathématique!</p>
     </div>
 
     {#if success}
       <div class="success-message">
         <div class="success-icon">🎉</div>
-        <h2>{_('auth.accountCreated')}</h2>
-        <p>{_('auth.welcomeMessage')}</p>
+        <h2>Compte créé avec succès!</h2>
+        <p>Bienvenue dans l'aventure MultyFun! Tu vas être redirigé vers ton tableau de bord...</p>
       </div>
     {:else}
       <form on:submit|preventDefault={handleRegister} class="register-form">
@@ -102,33 +101,33 @@
         {/if}
 
         <div class="form-group">
-          <label for="username">{_('auth.firstName')}</label>
+          <label for="username">Ton prénom</label>
           <input
             type="text"
             id="username"
             bind:value={username}
-            placeholder={_('auth.firstNamePlaceholder')}
+            placeholder="Entre ton prénom"
             disabled={loading}
             autocomplete="off"
           />
-          <p class="input-help">{_('auth.firstNameHelp')}</p>
+          <p class="input-help">C'est le nom que tu utiliseras pour te connecter</p>
         </div>
 
         <div class="form-group">
-          <label for="displayName">{_('auth.displayName')}</label>
+          <label for="displayName">Nom d'affichage (optionnel)</label>
           <input
             type="text"
             id="displayName"
             bind:value={displayName}
-            placeholder={_('auth.displayNamePlaceholder')}
+            placeholder="Comment veux-tu qu'on t'appelle?"
             disabled={loading}
             autocomplete="off"
           />
-          <p class="input-help">{_('auth.displayNameHelp')}</p>
+          <p class="input-help">C'est le nom qui sera affiché dans le jeu</p>
         </div>
 
         <div class="form-group">
-          <label for="passwordChar">{_('auth.secretCharacterHelp')}</label>
+          <label for="passwordChar">Ton caractère secret</label>
           <div class="password-container">
             {#each passwordChars as char}
               <button 
@@ -143,24 +142,24 @@
             {/each}
           </div>
           {#if submitted && !passwordChar}
-            <div class="error-text">{_('auth.chooseSecretCharacter')}</div>
+            <div class="error-text">Choisis un caractère secret</div>
           {/if}
-          <p class="input-help">{_('auth.emojiPassword')}</p>
+          <p class="input-help">Choisis un emoji comme mot de passe. Tu utiliseras celui-ci pour te connecter.</p>
         </div>
 
         <button type="submit" class="register-button" disabled={loading}>
           {#if loading}
-            {_('auth.creatingAccount')}
+            Création en cours...
           {:else}
-            <span class="emoji">🚀</span> {_('auth.createAccount')}
+            <span class="emoji">🚀</span> Créer mon compte
           {/if}
         </button>
       </form>
 
       <div class="register-footer">
-        <p>{_('auth.alreadyHaveAccount')}</p>
+        <p>Tu as déjà un compte?</p>
         <button class="login-link" on:click={goToLogin}>
-          {_('common.login')}
+          Se connecter
         </button>
       </div>
     {/if}

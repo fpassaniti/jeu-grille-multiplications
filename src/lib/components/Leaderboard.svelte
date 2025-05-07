@@ -1,56 +1,60 @@
 <script>
   import { formatDate } from '$lib/utils/formatters';
-  import { _ } from '$lib/utils/i18n';
 
   // Props
-  export let scores = [];
   export let isLoading = false;
-  export let level = 'child';
+  export let level = 'adulte';
+  export let duration = 5;
+  export let leaderboard = [];
 
-  // Définir les émojis pour les rangs
+  // Déterminer le niveau à afficher pour le titre
+  $: levelLabel = level === 'adulte' ? 'Adulte' : 'Enfant';
+  $: durationLabel = `${duration} min`;
   $: rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 </script>
 
 <div class="leaderboard card-inset">
   <h2>
     <span class="emoji">🏆</span>
-    {_('leaderboard.title')}
+    Meilleurs scores ({levelLabel}, {durationLabel})
   </h2>
 
   {#if isLoading}
     <div class="loading">
       <div class="loading-spinner"></div>
-      <span>{_('leaderboard.loading')}</span>
+      <span>Chargement des scores...</span>
     </div>
-  {:else if scores.length > 0}
+  {:else if leaderboard.length > 0}
     <div class="leaderboard-table">
       <table>
         <thead>
         <tr>
           <th></th>
-          <th>{_('leaderboard.nameHeader')}</th>
-          <th>{_('leaderboard.scoreHeader')}</th>
-          <th class="hide-mobile">{_('leaderboard.tablesHeader')}</th>
-          <th class="hide-mobile">{_('leaderboard.dateHeader')}</th>
+          <th>Nom</th>
+          <th>Score</th>
+          {#if level === 'enfant'}
+            <th class="hide-mobile">Tables</th>
+          {/if}
+          <th class="hide-mobile">Date</th>
         </tr>
         </thead>
         <tbody>
-        {#each scores as entry, i}
+        {#each leaderboard as entry, i}
           <tr class:top-three={i < 3}>
             <td class="rank-cell">
               <span class="rank">{rankEmojis[i] || (i + 1)}</span>
             </td>
             <td>{entry.name}</td>
             <td class="score-cell">{entry.score}</td>
-            <td class="hide-mobile tables-cell">
-              {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
-                <span class="tables-list">
-                  {_('leaderboard.tablesHeader')} {entry.tables_used.sort((a, b) => a - b).join(', ')}
-                </span>
-              {:else}
-                <span class="tables-all">{_('leaderboard.allTables')}</span>
-              {/if}
-            </td>
+            {#if level === 'enfant'}
+              <td class="hide-mobile tables-cell">
+                {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
+                  <span class="tables-all">Tables {entry.tables_used.sort((a, b) => a - b).join(', ')}</span>
+                {:else}
+                  <span class="tables-all">Toutes les tables</span>
+                {/if}
+              </td>
+            {/if}
             <td class="hide-mobile">{formatDate(entry.date)}</td>
           </tr>
         {/each}
@@ -60,8 +64,8 @@
   {:else}
     <div class="empty-state">
       <div class="empty-icon">🏅</div>
-      <p>{_('leaderboard.noScores')}</p>
-      <p class="empty-message">{_('leaderboard.beFirst')}</p>
+      <p>Aucun score enregistré pour ce niveau et cette durée.</p>
+      <p class="empty-message">Sois le premier à relever le défi!</p>
     </div>
   {/if}
 </div>
