@@ -1,7 +1,7 @@
 <script>
   import {goto} from '$app/navigation';
   import LanguagePicker from './LanguagePicker.svelte';
-  import { _, setLanguage } from '$lib/utils/i18n';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let user = null;

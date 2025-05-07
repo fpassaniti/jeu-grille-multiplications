@@ -1,7 +1,6 @@
 <script>
   import {onMount} from 'svelte';
   import {goto} from '$app/navigation';
-  import {page} from '$app/stores';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
   import { _ } from '$lib/utils/i18n';
 
