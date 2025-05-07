@@ -1,5 +1,6 @@
 <script>
   import { selectedTables } from '$lib/stores/gameStore';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let toggleTable;
@@ -8,7 +9,7 @@
 </script>
 
 <div class="table-selector">
-  <h2>Tables à pratiquer:</h2>
+  <h2>{_('tableSelector.title')}</h2>
   
   <div class="tables-selection">
     {#each Array(10) as _, i}
@@ -31,17 +32,17 @@
   
   <div class="selection-actions">
     <button on:click={() => selectAllTables(true)}>
-      <span class="emoji">✅</span> Tout sélectionner
+      <span class="emoji">✅</span> {_('tableSelector.selectAll')}
     </button>
     <button on:click={() => selectAllTables(false)}>
-      <span class="emoji">❌</span> Tout désélectionner
+      <span class="emoji">❌</span> {_('tableSelector.deselectAll')}
     </button>
   </div>
   
   <p class="selection-info">
     {selectedNumbers.length === 0
-      ? 'Veuillez sélectionner au moins une table!'
-      : `Tables sélectionnées: ${selectedNumbers.join(', ')}`}
+      ? _('tableSelector.errorMessage')
+      : `${_('tableSelector.selectedTables')} ${selectedNumbers.join(', ')}`}
   </p>
 </div>
 

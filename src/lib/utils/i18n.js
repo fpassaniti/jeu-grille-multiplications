@@ -1,4 +1,4 @@
-import { getTranslation } from '$lib/translations';
+import { getTranslation as getTranslationFromFile } from '$lib/translations';
 import languageStore from '$lib/stores/languageStore';
 import { get } from 'svelte/store';
 
@@ -6,7 +6,7 @@ import { get } from 'svelte/store';
 export function t(node, options) {
   const update = (key, params = {}) => {
     const lang = get(languageStore);
-    node.textContent = getTranslation(lang, key, params);
+    node.textContent = getTranslationFromFile(lang, key, params);
   };
 
   if (typeof options === 'string') {
@@ -43,7 +43,7 @@ export function t(node, options) {
 // Helper function to get a translation
 export function _(key, params = {}) {
   const lang = get(languageStore);
-  return getTranslation(lang, key, params);
+  return getTranslationFromFile(lang, key, params);
 }
 
 // Function to change the language
@@ -53,5 +53,10 @@ export function setLanguage(lang) {
 
 // Function to get the current language
 export function getLanguage() {
-  return languageStore.get();
+  return get(languageStore);
+}
+
+// Function to get translations for a specific locale
+export function getTranslation(locale) {
+  return (key, params = {}) => getTranslationFromFile(locale, key, params);
 }
