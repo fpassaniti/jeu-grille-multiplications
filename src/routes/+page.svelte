@@ -87,23 +87,23 @@
     {:else}
       <!-- Utilisateur non connecté -->
       <div class="start-options">
-        <div class="option-card" on:click={goToRegister}>
+        <a href="/register" class="option-card" >
           <div class="option-icon">🚀</div>
           <h3>Commencer l'aventure</h3>
           <p>Crée un compte et gagne des niveaux!</p>
-        </div>
+        </a>
 
-        <div class="option-card" on:click={goToLogin}>
+        <a href="/login" class="option-card" >
           <div class="option-icon">🔑</div>
           <h3>Se connecter</h3>
           <p>Continue ton aventure mathématique!</p>
-        </div>
+        </a>
 
-        <div class="option-card" on:click={goToQuickPlay}>
+        <a href="/play" class="option-card" >
           <div class="option-icon">⚡</div>
           <h3>Partie rapide</h3>
           <p>Joue sans créer de compte</p>
-        </div>
+        </a>
       </div>
     {/if}
 
@@ -278,7 +278,7 @@
     text-align: center;
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s, box-shadow 0.3s;
-    cursor: pointer;
+    text-decoration: none;
   }
 
   .option-card:hover {
