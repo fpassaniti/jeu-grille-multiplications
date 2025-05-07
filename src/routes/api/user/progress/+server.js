@@ -82,3 +82,6 @@ export async function GET({ cookies }) {
 
     return json({
       error: 'Erreur lors de la récupération de la progression'
+    }, { status: 500 });
+  }
+}
