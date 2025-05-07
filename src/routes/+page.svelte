@@ -89,7 +89,7 @@
         <div class="feature-card">
           <div class="feature-icon">🏅</div>
           <h3>Collectionne des titres</h3>
-          <p>Débloque 10 titres uniques de champion!</p>
+          <p>Débloque 30 titres uniques de champion!</p>
         </div>
 
         <div class="feature-card">
