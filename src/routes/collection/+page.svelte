@@ -63,19 +63,6 @@
 
 <main class="container">
   <div class="collection-container">
-    <nav class="collection-nav card">
-      <button class="nav-button" on:click={goToHome}>
-        <span class="emoji">🏠</span> Accueil
-      </button>
-
-      <div class="nav-title">
-        Ma Collection
-      </div>
-
-      <button class="nav-button" on:click={goToDashboard}>
-        <span class="emoji">📊</span> Tableau de bord
-      </button>
-    </nav>
 
     {#if error}
       <div class="error-message">

@@ -1,6 +1,7 @@
 <script>
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import {goto} from '$app/navigation';
+  import {onMount} from 'svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // État du formulaire
   let username = '';
@@ -9,7 +10,7 @@
   let error = '';
   let showPassword = false;
   let submitted = false;
-  
+
   // Caractères disponibles pour le mot de passe visuel
   const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉'];
 
@@ -20,7 +21,7 @@
         method: 'GET'
       });
       const data = await response.json();
-      
+
       if (data.user) {
         // Rediriger vers le tableau de bord si déjà connecté
         goto('/dashboard');
@@ -46,7 +47,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, passwordChar })
+        body: JSON.stringify({username, passwordChar})
       });
 
       const data = await response.json();
@@ -77,45 +78,45 @@
 </script>
 
 <svelte:head>
-  <title>Connexion - MultyFun</title>
+  <title>{_('auth.loginTitle')} - {_('common.appName')}</title>
 </svelte:head>
 
 <main class="container">
   <div class="login-container">
     <div class="login-header">
-      <h1>Connexion</h1>
+      <h1>{_('auth.loginTitle')}</h1>
       <div class="logo-container">
         <div class="game-logo">
           <span class="logo-text">×</span>
         </div>
       </div>
-      <p class="subtitle">Connecte-toi pour suivre ta progression et débloquer des récompenses !</p>
+      <p class="subtitle">{_('auth.loginSubtitle')}</p>
     </div>
 
     <div class="card login-card">
       <form on:submit|preventDefault={handleLogin} class="login-form">
         <div class="form-group">
-          <label for="username">Nom d'utilisateur</label>
-          <input 
-            type="text" 
-            id="username" 
-            bind:value={username} 
+          <label for="username">{_('auth.username')}</label>
+          <input
+            type="text"
+            id="username"
+            bind:value={username}
             autocomplete="username"
             class:input-error={submitted && !username}
             disabled={loading}
           />
           {#if submitted && !username}
-            <div class="error-text">Nom d'utilisateur requis</div>
+            <div class="error-text">{_('auth.requiredFields')}</div>
           {/if}
         </div>
 
         <div class="form-group">
-          <label for="password">Caractère secret</label>
+          <label for="password">{_('auth.secretCharacter')}</label>
           <div class="password-container">
             {#each passwordChars as char}
-              <button 
-                type="button" 
-                class="password-char-btn" 
+              <button
+                type="button"
+                class="password-char-btn"
                 class:selected={passwordChar === char}
                 on:click={() => passwordChar = char}
                 disabled={loading}
@@ -125,10 +126,10 @@
             {/each}
           </div>
           {#if submitted && !passwordChar}
-            <div class="error-text">Choisis un caractère secret</div>
+            <div class="error-text">{_('auth.secretCharacter')}</div>
           {/if}
           <div class="password-help">
-            Clique sur l'émoji que tu utilises comme mot de passe
+            {_('auth.clickEmoji')}
           </div>
         </div>
 
@@ -141,9 +142,9 @@
         <div class="form-actions">
           <button type="submit" class="primary-button login-button" disabled={loading}>
             {#if loading}
-              <span class="spinner"></span> Connexion...
+              <span class="spinner"></span> {_('auth.loggingIn')}
             {:else}
-              <span class="emoji">🚪</span> Se connecter
+              <span class="emoji">🚪</span> {_('auth.loginButton')}
             {/if}
           </button>
         </div>
@@ -151,10 +152,10 @@
 
       <div class="alternative-actions">
         <button type="button" class="text-button" on:click={goToRegister}>
-          Pas encore de compte ? Inscris-toi ici
+          {_('auth.noAccount')}
         </button>
         <button type="button" class="text-button" on:click={goToHome}>
-          <span class="emoji">🏠</span> Retour à l'accueil
+          <span class="emoji">🏠</span> {_('common.backToHome')}
         </button>
       </div>
     </div>
@@ -339,7 +340,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .error-message {

@@ -20,7 +20,7 @@
       console.error('languageStore.set is not a function');
     }
     isOpen = false;
-    window.location.href = '/'
+    window.location.reload()
   }
 
   // Fermer le dropdown quand on clique ailleurs
