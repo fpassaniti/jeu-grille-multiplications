@@ -3,9 +3,6 @@
   // Import avec verification
   import languageStore from '$lib/stores/languageStore';
   import {languages, defaultLanguage} from "$lib/translations/index.js";
-  // Affichage en console pour debug
-  console.log('Languages object:', languages);
-  console.log('Current language store value:', $languageStore);
 
   // État du dropdown
   let isOpen = false;
@@ -34,7 +31,7 @@
   }
 
   // Ajouter et supprimer l'écouteur d'événements
-  import { onMount, onDestroy } from 'svelte';
+  import {onMount, onDestroy} from 'svelte';
 
   onMount(() => {
     document.addEventListener('click', handleClickOutside);
