@@ -370,16 +370,6 @@
     goto('/dashboard');
   }
 
-  // Fonction pour aller au tableau de bord
-  function goToDashboard() {
-    goto('/dashboard');
-  }
-
-  // Navigation vers la page leaderboard
-  function goToLeaderboard() {
-    goto('/leaderboard');
-  }
-
   // Fonction pour redémarrer le jeu
   function restartGame() {
     scoreSaved = false;
@@ -538,9 +528,9 @@
 
       <div class="leaderboard-link-section">
         <h3>Envie de voir les meilleurs scores?</h3>
-        <button class="leaderboard-link" on:click={goToLeaderboard}>
+        <a href="/leaderboard" class="button leaderboard-link">
           <span class="emoji">🏆</span> Voir le classement complet
-        </button>
+        </a>
       </div>
     </div>
   {:else if gameState === 'playing'}
@@ -725,9 +715,9 @@
         </button>
 
         {#if isLoggedIn && scoreSaved}
-          <button class="dashboard-button" on:click={goToDashboard}>
+          <a href="/dashboard" class="button dashboard-button">
             <span class="emoji">📊</span> Tableau de bord
-          </button>
+          </a>
         {/if}
       </div>
     </div>
