@@ -72,11 +72,6 @@
         <span class="logo-icon">×</span>
       </div>
 
-      <!-- Bouton hamburger pour mobile -->
-      <button class="hamburger-button" on:click={toggleMobileMenu} aria-label="Menu">
-        <span class="hamburger-icon">☰</span>
-      </button>
-
       <!-- Navigation sur desktop -->
       <nav class="navigation desktop-nav">
         <ul class="nav-links">
@@ -109,6 +104,11 @@
           <button class="register-button" on:click={goToRegister}>Inscription</button>
         {/if}
       </div>
+
+      <!-- Bouton hamburger pour mobile (affiché en fixed) -->
+      <button class="hamburger-button" on:click={toggleMobileMenu} aria-label="Menu">
+        <span class="hamburger-icon">☰</span>
+      </button>
     </div>
 
     <!-- Menu mobile (déplié lorsque mobileMenuOpen est true) -->
@@ -172,8 +172,7 @@
     background-color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 10px 0;
-    position: sticky;
-    top: 0;
+    position: relative; /* Non-sticky */
     z-index: 100;
   }
 
@@ -309,15 +308,19 @@
     font-size: 1.2rem;
   }
 
-  /* Bouton hamburger (masqué sur desktop) */
+  /* Bouton hamburger */
   .hamburger-button {
     display: none;
-    background: none;
+    background-color: white;
     border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
     font-size: 1.5rem;
     cursor: pointer;
     color: var(--primary);
-    padding: 5px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 110;
   }
 
   /* Menu mobile (masqué par défaut) */
@@ -429,9 +432,14 @@
       display: none;
     }
 
-    /* Afficher le bouton hamburger */
+    /* Afficher le bouton hamburger en position fixe */
     .hamburger-button {
-      display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: fixed;
+      top: 10px;
+      right: 10px;
     }
 
     /* Préparer le menu mobile */
@@ -441,11 +449,12 @@
 
     /* Ajuster le header pour mobile */
     .app-header {
-      padding: 5px 0;
+      padding: 10px 0;
     }
 
-    .header-container {
-      padding: 0 15px;
+    /* Ajouter de l'espace à droite pour le bouton hamburger */
+    .header-main {
+      padding-right: 45px;
     }
   }
 </style>
