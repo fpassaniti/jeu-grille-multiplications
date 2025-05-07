@@ -1,6 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // État du formulaire
   let username = '';
@@ -32,7 +33,7 @@
 
   async function handleLogin() {
     if (!username || !passwordChar) {
-      error = "Veuillez remplir tous les champs";
+      error = _('auth.fillAllFields');
       return;
     }
 
@@ -52,14 +53,14 @@
       const data = await response.json();
 
       if (!response.ok) {
-        error = data.error || "Erreur lors de la connexion";
+        error = data.error || _('auth.loginError');
       } else {
         // Forcer un rechargement complet pour mettre à jour tous les composants
         window.location.href = '/dashboard';
       }
     } catch (err) {
       console.error("Erreur de connexion:", err);
-      error = "Problème de connexion au serveur";
+      error = _('auth.connectionError');
     } finally {
       loading = false;
     }
@@ -77,25 +78,25 @@
 </script>
 
 <svelte:head>
-  <title>Connexion - MultyFun</title>
+  <title>{_('auth.loginTitle')} - {_('common.appName')}</title>
 </svelte:head>
 
 <main class="container">
   <div class="login-container">
     <div class="login-header">
-      <h1>Connexion</h1>
+      <h1>{_('auth.loginTitle')}</h1>
       <div class="logo-container">
         <div class="game-logo">
           <span class="logo-text">×</span>
         </div>
       </div>
-      <p class="subtitle">Connecte-toi pour suivre ta progression et débloquer des récompenses !</p>
+      <p class="subtitle">{_('auth.loginSubtitle')}</p>
     </div>
 
     <div class="card login-card">
       <form on:submit|preventDefault={handleLogin} class="login-form">
         <div class="form-group">
-          <label for="username">Nom d'utilisateur</label>
+          <label for="username">{_('auth.username')}</label>
           <input 
             type="text" 
             id="username" 
@@ -105,12 +106,12 @@
             disabled={loading}
           />
           {#if submitted && !username}
-            <div class="error-text">Nom d'utilisateur requis</div>
+            <div class="error-text">{_('auth.username')} {_('common.required')}</div>
           {/if}
         </div>
 
         <div class="form-group">
-          <label for="password">Caractère secret</label>
+          <label for="password">{_('auth.secretCharacter')}</label>
           <div class="password-container">
             {#each passwordChars as char}
               <button 
@@ -125,10 +126,10 @@
             {/each}
           </div>
           {#if submitted && !passwordChar}
-            <div class="error-text">Choisis un caractère secret</div>
+            <div class="error-text">{_('auth.chooseSecretCharacter')}</div>
           {/if}
           <div class="password-help">
-            Clique sur l'émoji que tu utilises comme mot de passe
+            {_('auth.clickEmoji')}
           </div>
         </div>
 
@@ -141,9 +142,9 @@
         <div class="form-actions">
           <button type="submit" class="primary-button login-button" disabled={loading}>
             {#if loading}
-              <span class="spinner"></span> Connexion...
+              <span class="spinner"></span> {_('auth.loggingIn')}
             {:else}
-              <span class="emoji">🚪</span> Se connecter
+              <span class="emoji">🚪</span> {_('auth.loginButton')}
             {/if}
           </button>
         </div>
@@ -151,10 +152,10 @@
 
       <div class="alternative-actions">
         <button type="button" class="text-button" on:click={goToRegister}>
-          Pas encore de compte ? Inscris-toi ici
+          {_('auth.noAccount')}
         </button>
         <button type="button" class="text-button" on:click={goToHome}>
-          <span class="emoji">🏠</span> Retour à l'accueil
+          <span class="emoji">🏠</span> {_('common.backToHome')}
         </button>
       </div>
     </div>

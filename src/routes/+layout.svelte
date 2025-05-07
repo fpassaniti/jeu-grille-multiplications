@@ -1,21 +1,35 @@
 <script>
   import '../app.css';
   import NavigationHeader from '$lib/components/NavigationHeader.svelte';
+  import { browser } from '$app/environment';
+  import { onMount } from 'svelte';
+  import { _ } from '$lib/utils/i18n';
+  import languageStore from '$lib/stores/languageStore';
 
   // Récupérer les données du layout server
   export let data;
+  
+  // Initialize language from localStorage if in browser
+  onMount(() => {
+    if (browser) {
+      const storedLanguage = localStorage.getItem('language');
+      if (storedLanguage) {
+        languageStore.set(storedLanguage);
+      }
+    }
+  });
 </script>
 
 <NavigationHeader user={data.user} />
 
-<main>
+<main style="padding-top: 60px;">
   <slot />
 </main>
 
 <footer class="app-footer">
   <div class="footer-container">
     <div class="footer-content">
-      <p>&copy; {new Date().getFullYear()} MultyFun - Apprends les multiplications en t'amusant!</p>
+      <p>{_('common.copyright', { year: new Date().getFullYear(), appName: _('common.appName') })}</p>
     </div>
   </div>
 </footer>

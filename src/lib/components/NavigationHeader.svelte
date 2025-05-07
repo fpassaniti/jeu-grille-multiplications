@@ -1,5 +1,7 @@
 <script>
   import {goto} from '$app/navigation';
+  import LanguagePicker from './LanguagePicker.svelte';
+  import { _, setLanguage } from '$lib/utils/i18n';
 
   // Props
   export let user = null;
@@ -49,7 +51,7 @@
       // Cela garantit que tous les composants seront actualisés avec le nouvel état d'authentification
       window.location.href = '/';
     } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err);
+      console.error(_('dashboard.logoutError'), err);
     }
   }
 
@@ -68,7 +70,7 @@
   <div class="header-container">
     <div class="header-main">
       <div class="logo" on:click={goToHome}>
-        <span class="logo-text">MultyFun</span>
+        <span class="logo-text">{_('common.appName')}</span>
         <span class="logo-icon">×</span>
       </div>
 
@@ -76,17 +78,17 @@
       <nav class="navigation desktop-nav">
         <ul class="nav-links">
           <li>
-            <button class="nav-link" on:click={goToHome}>Accueil</button>
+            <button class="nav-link" on:click={goToHome}>{_('common.home')}</button>
           </li>
           <li>
-            <button class="nav-link" on:click={goToPlay}>Jouer</button>
+            <button class="nav-link" on:click={goToPlay}>{_('common.play')}</button>
           </li>
           <li>
-            <button class="nav-link" on:click={goToLeaderboard}>Classement</button>
+            <button class="nav-link" on:click={goToLeaderboard}>{_('common.leaderboard')}</button>
           </li>
           {#if user}
             <li>
-              <button class="nav-link" on:click={goToDashboard}>Tableau de bord</button>
+              <button class="nav-link" on:click={goToDashboard}>{_('common.dashboard')}</button>
             </li>
           {/if}
         </ul>
@@ -94,14 +96,19 @@
 
       <!-- Boutons d'authentification sur desktop -->
       <div class="auth-buttons desktop-auth">
+        <!-- Language Picker -->
+        <div class="language-picker-container">
+          <LanguagePicker />
+        </div>
+        
         {#if user}
-          <span class="user-greeting">Bonjour, {user.displayName}!</span>
-          <button class="logout-button" on:click={handleLogout} title="Déconnexion">
+          <span class="user-greeting">{_('common.greeting', { name: user.displayName })}</span>
+          <button class="logout-button" on:click={handleLogout} title={_('navigation.logoutTitle')}>
             <span class="logout-icon">🚪</span>
           </button>
         {:else}
-          <button class="login-button" on:click={goToLogin}>Connexion</button>
-          <button class="register-button" on:click={goToRegister}>Inscription</button>
+          <button class="login-button" on:click={goToLogin}>{_('common.login')}</button>
+          <button class="register-button" on:click={goToRegister}>{_('common.register')}</button>
         {/if}
       </div>
 
@@ -117,43 +124,52 @@
         <ul class="mobile-nav-links">
           <li>
             <button class="mobile-nav-link" on:click={goToHome}>
-              <span class="nav-icon">🏠</span> Accueil
+              <span class="nav-icon">🏠</span> {_('common.home')}
             </button>
           </li>
           <li>
             <button class="mobile-nav-link" on:click={goToPlay}>
-              <span class="nav-icon">🎮</span> Jouer
+              <span class="nav-icon">🎮</span> {_('common.play')}
             </button>
           </li>
           <li>
             <button class="mobile-nav-link" on:click={goToLeaderboard}>
-              <span class="nav-icon">🏆</span> Classement
+              <span class="nav-icon">🏆</span> {_('common.leaderboard')}
             </button>
           </li>
           {#if user}
             <li>
               <button class="mobile-nav-link" on:click={goToDashboard}>
-                <span class="nav-icon">📊</span> Tableau de bord
+                <span class="nav-icon">📊</span> {_('common.dashboard')}
               </button>
             </li>
           {/if}
+          <!-- Language Picker in mobile menu -->
+          <li class="mobile-language-item">
+            <div class="mobile-language-label">
+              <span class="nav-icon">🌐</span> {_('common.language')}:
+            </div>
+            <div class="mobile-language-picker">
+              <LanguagePicker />
+            </div>
+          </li>
         </ul>
 
         <div class="mobile-auth">
           {#if user}
             <div class="mobile-user-info">
-              <span class="mobile-greeting">Connecté en tant que</span>
+              <span class="mobile-greeting">{_('common.loggedInAs')}</span>
               <span class="mobile-username">{user.displayName}</span>
             </div>
             <button class="mobile-logout-button" on:click={handleLogout}>
-              <span class="nav-icon">🚪</span> Déconnexion
+              <span class="nav-icon">🚪</span> {_('common.logout')}
             </button>
           {:else}
             <button class="mobile-login-button" on:click={goToLogin}>
-              <span class="nav-icon">🔑</span> Connexion
+              <span class="nav-icon">🔑</span> {_('common.login')}
             </button>
             <button class="mobile-register-button" on:click={goToRegister}>
-              <span class="nav-icon">📝</span> Inscription
+              <span class="nav-icon">📝</span> {_('common.register')}
             </button>
           {/if}
         </div>
@@ -172,10 +188,11 @@
     background-color: white;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     padding: 10px 0;
-    position: relative; /* Non-sticky */
+    position: fixed; /* Non-sticky */
+    width: 100%;
     z-index: 100;
   }
-
+  
   .header-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -251,6 +268,10 @@
     display: flex;
     gap: 10px;
     align-items: center;
+  }
+  
+  .language-picker-container {
+    margin-right: 10px;
   }
 
   .user-greeting {
@@ -333,7 +354,7 @@
   }
 
   .mobile-menu.open {
-    max-height: 500px;
+    max-height: 550px; /* Increased for language picker */
     border-top: 1px solid var(--bg-secondary);
   }
 
@@ -359,6 +380,25 @@
 
   .mobile-nav-link:hover {
     background-color: var(--bg-secondary);
+  }
+  
+  .mobile-language-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--bg-secondary);
+  }
+  
+  .mobile-language-label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+  
+  .mobile-language-picker {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .nav-icon {
@@ -432,7 +472,7 @@
       display: none;
     }
 
-    /* Afficher le bouton hamburger en position fixe */
+    /* Afficher le bouton hamburger en position absolute */
     .hamburger-button {
       display: flex;
       align-items: center;

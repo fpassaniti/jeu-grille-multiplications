@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -42,7 +43,7 @@
       goto('/');
     } catch (err) {
       console.error('Erreur de déconnexion:', err);
-      error = 'Erreur lors de la déconnexion';
+      error = _('dashboard.logoutError');
     } finally {
       loading = false;
     }
@@ -55,7 +56,7 @@
 </script>
 
 <svelte:head>
-  <title>Tableau de bord - MultyFun</title>
+  <title>{_('dashboard.title')}</title>
   <style media="print">
     /* Style spécifique pour l'impression */
     body * {
@@ -85,7 +86,7 @@
 
     <div class="dashboard-content">
       <div class="dashboard-main card">
-        <h1>Bonjour, {data.user?.displayName || 'Aventurier'}!</h1>
+        <h1>{_('dashboard.welcome', { name: data.user?.displayName || _('common.defaultPlayerName', 'Aventurier') })}</h1>
 
         <div class="level-card">
           <div class="level-image">
@@ -101,22 +102,22 @@
 
           <div class="level-info">
             <div class="level-title">
-              <span class="level-number">Niveau {data.userProgress?.level || 1}</span>
-              <h2 class="level-name">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</h2>
+              <span class="level-number">{_('dashboard.levelNumber', { level: data.userProgress?.level || 1 })}</span>
+              <h2 class="level-name">{data.userProgress?.currentLevel?.title || _('dashboard.defaultLevelName')}</h2>
             </div>
 
             <p class="level-description">
-              {data.userProgress?.currentLevel?.description || 'Tu as commencé ton voyage dans le monde des mathématiques!'}
+              {data.userProgress?.currentLevel?.description || _('dashboard.defaultLevelDescription')}
             </p>
 
             <div class="level-stats">
               <div class="stat-item">
-                <span class="stat-label">Parties jouées</span>
+                <span class="stat-label">{_('dashboard.gamesPlayed')}</span>
                 <span class="stat-value">{data.userProgress?.games_played || 0}</span>
               </div>
 
               <div class="stat-item">
-                <span class="stat-label">XP totale</span>
+                <span class="stat-label">{_('dashboard.totalXp')}</span>
                 <span class="stat-value">{data.userProgress?.xp || 0}</span>
               </div>
             </div>
@@ -124,19 +125,19 @@
             {#if data.userProgress?.nextLevel}
               <div class="xp-progress">
                 <div class="progress-label">
-                  <span>Niveau suivant: {data.userProgress.nextLevel.title}</span>
-                  <span>{data.userProgress.xp}/{data.userProgress.nextLevel.min_xp} XP</span>
+                  <span>{_('dashboard.nextLevel', { title: data.userProgress.nextLevel.title })}</span>
+                  <span>{data.userProgress.xp}/{data.userProgress.nextLevel.min_xp} {_('common.xp')}</span>
                 </div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {data.userProgress.levelProgress}%"></div>
                 </div>
                 <div class="progress-info">
-                  {data.userProgress.xpUntilNextLevel} XP nécessaires pour le niveau suivant
+                  {_('dashboard.xpUntilNextLevel', { xp: data.userProgress.xpUntilNextLevel })}
                 </div>
               </div>
             {:else}
               <div class="max-level">
-                <span class="emoji">🏆</span> Tu as atteint le niveau maximum!
+                <span class="emoji">🏆</span> {_('dashboard.maxLevel')}
               </div>
             {/if}
           </div>
@@ -144,21 +145,21 @@
 
         <div class="action-buttons">
           <button class="primary-button" on:click={goToPlay}>
-            <span class="emoji">🎮</span> Jouer
+            <span class="emoji">🎮</span> {_('dashboard.playButton')}
           </button>
 
           <button class="secondary-button" on:click={goToCollection}>
-            <span class="emoji">📚</span> Collection
+            <span class="emoji">📚</span> {_('dashboard.collectionButton')}
           </button>
 
           <button class="tertiary-button" on:click={printLevelCard}>
-            <span class="emoji">🖨️</span> Imprimer ma carte
+            <span class="emoji">🖨️</span> {_('dashboard.printCardButton')}
           </button>
         </div>
       </div>
 
       <div class="recent-games card">
-        <h2>Parties récentes</h2>
+        <h2>{_('dashboard.recentGames')}</h2>
 
         {#if data.recentGames && data.recentGames.length > 0}
           <div class="games-list">
@@ -180,9 +181,9 @@
           </div>
         {:else}
           <div class="no-games">
-            <p>Tu n'as pas encore joué de parties.</p>
+            <p>{_('dashboard.noGames')}</p>
             <button class="play-now-button" on:click={goToPlay}>
-              Jouer maintenant!
+              {_('dashboard.playNow')}
             </button>
           </div>
         {/if}

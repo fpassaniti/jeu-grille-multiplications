@@ -1,271 +1,201 @@
 <script>
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
   import { page } from '$app/stores';
+  import { goto } from '$app/navigation';
+  import { _ } from '$lib/utils/i18n';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
-
-  // Initialisation au chargement de la page
-  onMount(async () => {
-    // Initialiser les données avec celles reçues du serveur
-    leaderboardData = {
-      adulte: data.leaderboardAdult || [],
-      enfant: data.leaderboardChild || []
-    };
-
-    // Charger les données les plus récentes (sans montrer l'indicateur de chargement)
-    await updateLeaderboard(false);
-  });
-
-  // Données chargées depuis le serveur
+  
   export let data;
 
-  // État UI
-  let isLoading = false;
-  let currentLevel = data.currentLevel || 'adulte';
-  let currentDuration = data.currentDuration || 5;
-  let leaderboardData = {
-    adulte: data.leaderboardAdult || [],
-    enfant: data.leaderboardChild || []
-  };
+  // State variables
+  let selectedLevel = 'child'; // Default level is child
+  let selectedDuration = 30; // Default duration is 30 seconds
+  let scores = [];
+  let isLoading = true;
 
-  // Options de durée disponibles
-  const durationOptions = [
-    { value: 2, label: '2 minutes' },
-    { value: 3, label: '3 minutes' },
-    { value: 5, label: '5 minutes' }
-  ];
-
-  // Fonctions d'interaction
-  async function toggleLevel(level) {
-    if (level !== currentLevel) {
-      currentLevel = level;
-      await updateLeaderboard(true);
-    }
+  // Initialize scores by loading from server data
+  $: {
+    isLoading = true;
+    scores = data.scores[selectedLevel]?.[selectedDuration] || [];
+    isLoading = false;
   }
 
-  async function setDuration(duration) {
-    if (duration !== currentDuration) {
-      currentDuration = duration;
-      await updateLeaderboard(true);
-    }
-  }
-
-  // Met à jour l'URL et charge les données du classement
-  async function updateLeaderboard() {
-    const url = `/leaderboard?level=${currentLevel}&duration=${currentDuration}`;
-    goto(url, { replaceState: true });
-
-    try {
-      const response = await fetch(`/api/leaderboard?level=${currentLevel}&duration=${currentDuration}`);
-      if (!response.ok) throw new Error('Erreur de chargement');
-
-      const data = await response.json();
-
-      if (currentLevel === 'adulte') {
-        leaderboardData.adulte = data.scores;
-      } else {
-        leaderboardData.enfant = data.scores;
-      }
-    } catch (error) {
-      console.error('Erreur lors du chargement du classement:', error);
-      if (currentLevel === 'adulte') {
-        leaderboardData.adulte = [];
-      } else {
-        leaderboardData.enfant = [];
-      }
-    }
-  }
-
-  // Navigation
-  function goToHome() {
-    goto('/');
-  }
-
+  // Navigation to play
   function goToPlay() {
     goto('/play');
   }
 </script>
 
 <svelte:head>
-  <title>Classement des meilleurs scores - MultyFun</title>
-  <meta name="description" content="Découvre les meilleurs joueurs de MultyFun et leurs scores impressionnants!" />
+  <title>{_('leaderboard.pageTitle')}</title>
+  <meta name="description" content={_('leaderboard.metaDescription')} />
 </svelte:head>
 
-<main class="container">
-  <div class="leaderboard-page card">
-    <div class="page-header">
-      <h1>Classement des Meilleurs Scores</h1>
-    </div>
+<div class="container narrow">
+  <div class="leaderboard-page">
+    <h1>{_('leaderboard.title')}</h1>
 
-    <div class="filters-container">
-      <div class="level-toggle">
-        <h3>Niveau</h3>
-        <div class="toggle-buttons">
-          <button
-            class="toggle-button {currentLevel === 'adulte' ? 'active' : ''}"
-            on:click={() => toggleLevel('adulte')}
+    <div class="filter-controls">
+      <div class="filter-group">
+        <label for="level-filter">{_('leaderboard.levelLabel')}</label>
+        <div class="button-group">
+          <button 
+            class="filter-button" 
+            class:active={selectedLevel === 'adult'} 
+            on:click={() => selectedLevel = 'adult'}
           >
-            <span class="emoji">👨‍💼</span> Niveau Adulte
+            {_('leaderboard.adultLevel')}
           </button>
-          <button
-            class="toggle-button {currentLevel === 'enfant' ? 'active' : ''}"
-            on:click={() => toggleLevel('enfant')}
+          <button 
+            class="filter-button" 
+            class:active={selectedLevel === 'child'} 
+            on:click={() => selectedLevel = 'child'}
           >
-            <span class="emoji">🧒</span> Niveau Enfant
+            {_('leaderboard.childLevel')}
           </button>
         </div>
       </div>
 
-      <div class="duration-selector">
-        <h3>Durée</h3>
-        <div class="toggle-buttons">
-          {#each durationOptions as option}
-            <button
-              class="toggle-button {currentDuration === option.value ? 'active' : ''}"
-              on:click={() => setDuration(option.value)}
-            >
-              <span class="emoji">⏱️</span> {option.label}
-            </button>
-          {/each}
+      <div class="filter-group">
+        <label for="duration-filter">{_('leaderboard.durationLabel')}</label>
+        <div class="button-group">
+          <button 
+            class="filter-button" 
+            class:active={selectedDuration === 30} 
+            on:click={() => selectedDuration = 30}
+          >
+            30s
+          </button>
+          <button 
+            class="filter-button" 
+            class:active={selectedDuration === 60} 
+            on:click={() => selectedDuration = 60}
+          >
+            60s
+          </button>
+          <button 
+            class="filter-button" 
+            class:active={selectedDuration === 120} 
+            on:click={() => selectedDuration = 120}
+          >
+            120s
+          </button>
         </div>
       </div>
     </div>
 
-    <div class="leaderboard-container">
-      <Leaderboard
-        isLoading={isLoading}
-        level={currentLevel}
-        duration={currentDuration}
-        leaderboard={currentLevel === 'adulte' ? leaderboardData.adulte : leaderboardData.enfant}
-      />
-    </div>
+    <p class="filter-explainer">{_('leaderboard.filterExplanation')}</p>
 
-    <div class="page-footer">
-      <p>Les scores sont filtrés par niveau et durée de jeu.</p>
-      <p class="challenge-text">
-        <span class="emoji">🚀</span> Relève le défi et inscris ton nom dans le classement !
-      </p>
-      <button class="play-button" on:click={goToPlay}>
-        Jouer maintenant
+    <Leaderboard {scores} {isLoading} level={selectedLevel} />
+
+    <div class="leaderboard-footer">
+      <p>{_('leaderboard.challenge')}</p>
+      <button class="cta-button" on:click={goToPlay}>
+        {_('leaderboard.playNow')}
       </button>
     </div>
   </div>
-</main>
+</div>
 
 <style>
   .leaderboard-page {
-    max-width: 900px;
-    margin: 40px auto;
+    background-color: white;
+    border-radius: var(--border-radius-lg);
     padding: 30px;
+    margin: 20px 0;
+    box-shadow: var(--shadow-md);
   }
 
-  .page-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 30px;
-  }
-
-  .page-header h1 {
-    color: var(--primary-dark);
+  h1 {
     text-align: center;
-    font-size: 2rem;
-  }
-
-  .filters-container {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    color: var(--primary-dark);
     margin-bottom: 30px;
   }
 
-  .level-toggle, .duration-selector {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
-  }
-
-  .level-toggle h3, .duration-selector h3 {
-    color: var(--primary);
-    margin: 0;
-  }
-
-  .toggle-buttons {
+  .filter-controls {
     display: flex;
     flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
+    gap: 20px;
+    margin-bottom: 15px;
   }
 
-  .toggle-button {
-    padding: 12px 20px;
-    border-radius: var(--border-radius-md);
-    font-size: 1rem;
-    background-color: var(--bg-secondary);
+  .filter-group {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  label {
+    font-weight: bold;
     color: var(--text-secondary);
-    transition: all 0.3s;
+    margin-bottom: 8px;
+    display: block;
   }
 
-  .toggle-button.active {
+  .button-group {
+    display: flex;
+    border-radius: var(--border-radius-md);
+    overflow: hidden;
+    background-color: var(--bg-secondary);
+  }
+
+  .filter-button {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 10px 15px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+
+  .filter-button:not(:last-child) {
+    border-right: 1px solid rgba(0,0,0,0.1);
+  }
+
+  .filter-button:hover {
+    background-color: rgba(0,0,0,0.05);
+  }
+
+  .filter-button.active {
     background-color: var(--primary);
     color: white;
-    box-shadow: 0 4px 0 var(--primary-dark);
+    font-weight: bold;
   }
 
-  .toggle-button:hover:not(.active) {
-    background-color: var(--bg-primary);
-    transform: translateY(-3px);
-  }
-
-  .leaderboard-container {
+  .filter-explainer {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    text-align: center;
     margin-bottom: 30px;
   }
 
-  .page-footer {
-    text-align: center;
+  .leaderboard-footer {
     margin-top: 40px;
+    text-align: center;
+  }
+
+  .leaderboard-footer p {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
     color: var(--text-secondary);
   }
 
-  .challenge-text {
-    font-weight: bold;
-    color: var(--primary);
-    margin: 15px 0;
-    font-size: 1.1rem;
-  }
-
-  .play-button {
+  .cta-button {
     background-color: var(--accent);
     color: white;
-    padding: 12px 25px;
     font-size: 1.1rem;
+    padding: 12px 30px;
     border-radius: var(--border-radius-md);
-    margin-top: 15px;
     box-shadow: 0 4px 0 var(--accent-dark);
+    transition: all 0.2s;
   }
 
-  .play-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 7px 0 var(--accent-dark);
+  .cta-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 0 var(--accent-dark);
   }
 
   @media (max-width: 768px) {
-    .page-header {
-      flex-direction: column;
-      gap: 15px;
-    }
-
-    .filters-container {
-      gap: 15px;
-    }
-
-    .toggle-buttons {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .toggle-button {
+    .filter-group, .button-group {
       width: 100%;
     }
   }

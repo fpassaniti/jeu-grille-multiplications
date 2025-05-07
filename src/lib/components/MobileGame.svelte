@@ -1,4 +1,6 @@
 <script>
+  import { _ } from '$lib/utils/i18n';
+  
   // Props
   export let currentRow;
   export let currentCol;
@@ -31,7 +33,7 @@
         max="100"
         autocomplete="off"
         inputmode="numeric"
-        placeholder="Ta réponse"
+        placeholder={_('game.answerPlaceholder')}
       />
     </form>
 
@@ -41,17 +43,17 @@
   </div>
 
   <div class="mobile-solved-info card">
-    <h3><span class="emoji">🎯</span> Dernières multiplications résolues</h3>
+    <h3><span class="emoji">🎯</span> {_('game.recentlySolved')}</h3>
     <div class="solved-list">
       {#if lastSolvedMultiplications.length === 0}
-        <p class="no-solved">Aucune multiplication résolue pour le moment.</p>
+        <p class="no-solved">{_('game.noSolved')}</p>
       {:else}
         <div class="solved-grid">
           {#each lastSolvedMultiplications as solved}
             <div class="solved-item">
               <span class="solved-operation">{solved.row} × {solved.col} = {solved.result}</span>
               {#if solved.points !== undefined}
-                <div class="points-earned">+{solved.points} pts</div>
+                <div class="points-earned">{_('game.pointsEarned', { points: solved.points })}</div>
               {/if}
             </div>
           {/each}

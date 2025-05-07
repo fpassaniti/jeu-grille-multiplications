@@ -2,6 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
   import { goto } from '$app/navigation';
+  import { _ } from '$lib/utils/i18n';
 
   // Importation des composants
   import GameBoard from '$lib/components/GameBoard.svelte';
@@ -463,8 +464,8 @@
 </script>
 
 <svelte:head>
-  <title>MultyFun - Jeu de Multiplication</title>
-  <meta name="description" content="Améliorez vos compétences en multiplication avec ce jeu interactif amusant pour les enfants et les adultes!" />
+  <title>{_('play.pageTitle')}</title>
+  <meta name="description" content={_('play.metaDescription')} />
 </svelte:head>
 
 <main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}; width: 100%; box-sizing: border-box;">
@@ -479,22 +480,22 @@
         </div>
       </div>
 
-      <h1>Jeu de Multiplication</h1>
-      <p class="game-intro">Résous autant de multiplications que possible avant la fin du temps!</p>
+      <h1>{_('play.title')}</h1>
+      <p class="game-intro">{_('play.description')}</p>
 
       <div class="game-options">
         <div class="option-section card-inset">
-          <h2>Choisis ton niveau:</h2>
+          <h2>{_('play.chooseLevel')}</h2>
           <div class="option-buttons">
             <button class:active={level === 'adulte'} on:click={() => setLevel('adulte')}>
-              <span class="emoji">👨‍💼</span> Adulte
+              <span class="emoji">👨‍💼</span> {_('common.adult')}
             </button>
             <button class:active={level === 'enfant'} on:click={() => setLevel('enfant')}>
-              <span class="emoji">🧒</span> Enfant
+              <span class="emoji">🧒</span> {_('common.child')}
             </button>
           </div>
           <p class="option-description">
-            {level === 'adulte' ? 'Temps de réponse: 5-15 secondes' : 'Temps de réponse: 15-45 secondes'}
+            {level === 'adulte' ? _('play.adultResponseTime') : _('play.childResponseTime')}
           </p>
         </div>
 
@@ -509,7 +510,7 @@
         {/if}
 
         <div class="option-section card-inset">
-          <h2>Choisis la durée:</h2>
+          <h2>{_('play.chooseDuration')}</h2>
           <div class="option-buttons">
             <button class:active={gameDuration === 2} on:click={() => setGameDuration(2)}>
               <span class="emoji">⏱️</span> 2 min
@@ -529,13 +530,13 @@
         on:click={startGame}
         disabled={level === 'enfant' && getSelectedTableNumbers().length === 0}
       >
-        <span class="emoji">🚀</span> Commencer
+        <span class="emoji">🚀</span> {_('play.start')}
       </button>
 
       <div class="leaderboard-link-section">
-        <h3>Envie de voir les meilleurs scores?</h3>
+        <h3>{_('play.viewLeaderboard')}</h3>
         <button class="leaderboard-link" on:click={goToLeaderboard}>
-          <span class="emoji">🏆</span> Voir le classement complet
+          <span class="emoji">🏆</span> {_('play.viewLeaderboardButton')}
         </button>
       </div>
     </div>
@@ -544,43 +545,43 @@
       <div class="game-header-sticky card">
         <div class="game-header">
           <div class="timer">
-            <span class="emoji">⏱️</span> Temps: {formatTime(gameTimer)}
+            <span class="emoji">⏱️</span> {_('play.timeLabel')} {formatTime(gameTimer)}
           </div>
           <div class="level">
-            <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> Niveau: {level === 'adulte' ? 'Adulte' : 'Enfant'}
+            <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> {_('play.levelLabel')} {level === 'adulte' ? _('common.adult') : _('common.child')}
           </div>
           <div class="score">
-            <span class="emoji">🏆</span> Score: {score}
+            <span class="emoji">🏆</span> {_('play.scoreLabel')} {score}
           </div>
         </div>
 
         <div class="progress-container">
           {#if level === 'adulte'}
-            <div class="progress-label">Multiplications résolues: {solvedCountAdult}/100</div>
+            <div class="progress-label">{_('play.solvedLabel')} {solvedCountAdult}/100</div>
             <div class="progress-bar">
               <div class="progress-fill" style="width: {progressPercentage}%"></div>
             </div>
           {:else}
             {#if getSelectedTableNumbers().length > 0}
-              <div class="progress-label">Multiplications résolues: {solvedCountChild.count}/{solvedCountChild.total}</div>
+              <div class="progress-label">{_('play.solvedLabel')} {solvedCountChild.count}/{solvedCountChild.total}</div>
               <div class="progress-bar">
                 <div class="progress-fill" style="width: {progressPercentage}%"></div>
               </div>
             {:else}
-              <div class="progress-label">Aucune table sélectionnée</div>
+              <div class="progress-label">{_('tableSelector.errorMessage')}</div>
             {/if}
           {/if}
         </div>
 
         {#if level === 'enfant'}
           <div class="tables-info">
-            <span class="emoji">📋</span> Tables sélectionnées: {getSelectedTableNumbers().join(', ')}
+            <span class="emoji">📋</span> {_('play.tablesLabel')} {getSelectedTableNumbers().join(', ')}
           </div>
         {/if}
 
         {#if !isMobile}
           <div class="current-multiplication">
-            <span class="emoji">🎯</span> Multiplication actuelle: <span class="row-col">{currentRow} × {currentCol}</span>
+            <span class="emoji">🎯</span> {_('play.currentMultiplicationLabel')} <span class="row-col">{currentRow} × {currentCol}</span>
             <div class="cell-timer-container">
               <div class="cell-timer" style="width: {(cellTimer / maxCellTimer) * 100}%"></div>
             </div>
@@ -624,47 +625,47 @@
     </div>
   {:else if gameState === 'finished'}
     <div class="end-screen card">
-      <h1>🎉 Partie terminée! 🎉</h1>
+      <h1>🎉 {_('play.gameOver')} 🎉</h1>
 
       <div class="results-container">
         <div class="result-card">
           <div class="result-icon">🏆</div>
-          <p>Ton score: <span class="final-score">{score}</span></p>
+          <p>{_('play.yourScore')} <span class="final-score">{score}</span></p>
         </div>
 
         <div class="result-card">
           <div class="result-icon">{level === 'adulte' ? '👨‍💼' : '🧒'}</div>
-          <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
+          <p>{_('common.level')}: <span class="final-level">{level === 'adulte' ? _('common.adult') : _('common.child')}</span></p>
         </div>
 
         <div class="result-card">
           <div class="result-icon">✅</div>
           {#if level === 'adulte'}
-            <p>Multiplications résolues: <span class="final-solved">{solvedCountAdult}/100</span></p>
+            <p>{_('play.solvedMultiplications')} <span class="final-solved">{solvedCountAdult}/100</span></p>
           {:else}
-            <p>Multiplications résolues: <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
+            <p>{_('play.solvedMultiplications')} <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
           {/if}
         </div>
 
         {#if level === 'enfant'}
           <div class="result-card">
             <div class="result-icon">📚</div>
-            <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
+            <p>{_('play.practicedTables')} <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
           </div>
         {/if}
 
         {#if isLoggedIn}
           <div class="result-card xp-card">
             <div class="result-icon">⭐</div>
-            <p>XP gagnée: <span class="final-xp">+{score}</span></p>
+            <p>{_('play.earnedXp')} <span class="final-xp">+{score}</span></p>
           </div>
         {/if}
       </div>
 
       {#if isLoggedIn && !scoreSaved}
         <div class="adventure-progress">
-          <h2>Progression dans l'aventure</h2>
-          <p class="adventure-info">Ton score est en cours de sauvegarde...</p>
+          <h2>{_('play.progressionTitle')}</h2>
+          <p class="adventure-info">{_('play.savingScore')}</p>
         </div>
       {/if}
 
@@ -672,13 +673,13 @@
         <div class="level-up-animation">
           <div class="level-up-content">
             <div class="level-up-icon">🏆</div>
-            <h2 class="level-up-title">Niveau Supérieur!</h2>
+            <h2 class="level-up-title">{_('play.levelUp')}</h2>
             <p class="level-up-info">
-              Tu as atteint le niveau {gameResults.progressUpdate.new_level}:
+              {_('play.reachedLevel')} {gameResults.progressUpdate.new_level}:
               <span class="new-level-title">{gameResults.newLevelTitle}</span>
             </p>
             <button class="view-level-button" on:click={viewNewLevel}>
-              Voir mon nouveau niveau
+              {_('play.viewNewLevel')}
             </button>
           </div>
         </div>
@@ -686,18 +687,18 @@
 
       {#if !isLoggedIn}
         <div class="save-score card-inset" class:saved={scoreSaved}>
-          <h2>Enregistre ton score</h2>
+          <h2>{_('play.saveScore')}</h2>
           <form on:submit|preventDefault={saveScore}>
             <div class="save-score-wrapper">
               <input
                 type="text"
                 bind:value={playerName}
-                placeholder="Ton prénom"
+                placeholder={_('play.firstNamePlaceholder')}
                 required
                 disabled={isLoading}
               />
               <button type="submit" disabled={isLoading}>
-                {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+                {isLoading ? _('common.loading') : _('play.saveButton')}
               </button>
             </div>
           </form>
@@ -705,24 +706,24 @@
       {:else if scoreSaved && gameResults}
         <div class="save-score card-inset saved">
           <div class="score-saved-message">
-            <span class="emoji">✅</span> Score sauvegardé avec succès!
-            <p class="xp-confirmation">Tu as gagné {gameResults.xpEarned} points d'expérience.</p>
+            <span class="emoji">✅</span> {_('play.scoreSaved')}
+            <p class="xp-confirmation">{_('play.xpEarned', { xp: gameResults.xpEarned })}</p>
           </div>
         </div>
       {/if}
 
       <div class="end-buttons">
         <button class="restart-button" on:click={restartGame}>
-          <span class="emoji">🔄</span> Nouvelle partie
+          <span class="emoji">🔄</span> {_('play.newGame')}
         </button>
 
         <button class="home-button" on:click={() => gameState = 'notStarted'}>
-          <span class="emoji">🏠</span> Retour à l'accueil
+          <span class="emoji">🏠</span> {_('play.backToHome')}
         </button>
 
         {#if isLoggedIn && scoreSaved}
           <button class="dashboard-button" on:click={goToDashboard}>
-            <span class="emoji">📊</span> Tableau de bord
+            <span class="emoji">📊</span> {_('play.dashboardButton')}
           </button>
         {/if}
       </div>

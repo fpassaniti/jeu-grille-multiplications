@@ -3,6 +3,7 @@
   import {goto} from '$app/navigation';
   import {page} from '$app/stores';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur (fournies via +layout.server.js)
   export let data;
@@ -40,28 +41,28 @@
 </script>
 
 <svelte:head>
-  <title>MultyFun - Apprends les multiplications en t'amusant!</title>
-  <meta name="description" content="Améliore tes compétences en multiplication avec ce jeu interactif amusant et gagne des niveaux!" />
+  <title>{_('home.title')}</title>
+  <meta name="description" content={_('home.metaDescription')} />
 </svelte:head>
 
 <main class="container">
   <div class="welcome-screen card">
     <div class="logo-container">
       <div class="logo">
-        <span class="logo-text">MultyFun</span>
+        <span class="logo-text">{_('common.appName')}</span>
         <div class="logo-icon">
           <span class="math-symbol">×</span>
         </div>
       </div>
     </div>
 
-    <h1>Jeu de Multiplication</h1>
-    <p class="game-intro">Résous autant de multiplications que possible avant la fin du temps!</p>
+    <h1>{_('home.gameTitle')}</h1>
+    <p class="game-intro">{_('home.gameIntro')}</p>
 
     {#if data.user}
       <!-- Utilisateur connecté -->
       <div class="welcome-message">
-        <p>Bienvenue, <span class="username">{data.user.displayName}</span>!</p>
+        <p>{_('home.welcome', { name: data.user.displayName })}</p>
         <div class="current-level-display">
           <div class="level-avatar-container">
             <LevelAvatar
@@ -73,15 +74,15 @@
             />
           </div>
           <h2 class="level-info">
-            Niveau {data.userProgress?.level || 1}:
-            <span class="level-title">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</span>
+            {_('home.levelNumber', { level: data.userProgress?.level || 1 })}
+            <span class="level-title">{data.userProgress?.currentLevel?.title || _('home.defaultLevelName')}</span>
           </h2>
         </div>
       </div>
 
       <div class="action-buttons">
         <button class="primary-button" on:click={goToDashboard}>
-          <span class="emoji">🏆</span> Continuer l'aventure
+          <span class="emoji">🏆</span> {_('home.continueAdventure')}
         </button>
       </div>
     {:else}
@@ -89,59 +90,59 @@
       <div class="start-options">
         <div class="option-card" on:click={goToRegister}>
           <div class="option-icon">🚀</div>
-          <h3>Commencer l'aventure</h3>
-          <p>Crée un compte et gagne des niveaux!</p>
+          <h3>{_('home.startOptions.startAdventure.title')}</h3>
+          <p>{_('home.startOptions.startAdventure.description')}</p>
         </div>
 
         <div class="option-card" on:click={goToLogin}>
           <div class="option-icon">🔑</div>
-          <h3>Se connecter</h3>
-          <p>Continue ton aventure mathématique!</p>
+          <h3>{_('home.startOptions.login.title')}</h3>
+          <p>{_('home.startOptions.login.description')}</p>
         </div>
 
         <div class="option-card" on:click={goToQuickPlay}>
           <div class="option-icon">⚡</div>
-          <h3>Partie rapide</h3>
-          <p>Joue sans créer de compte</p>
+          <h3>{_('home.startOptions.quickPlay.title')}</h3>
+          <p>{_('home.startOptions.quickPlay.description')}</p>
         </div>
       </div>
     {/if}
 
     <div class="features-section">
-      <h2>Pourquoi jouer à MultyFun?</h2>
+      <h2>{_('home.features.title')}</h2>
 
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">📊</div>
-          <h3>Gagne des niveaux</h3>
-          <p>Accumule de l'expérience et monte en grade!</p>
+          <h3>{_('home.features.gainLevels.title')}</h3>
+          <p>{_('home.features.gainLevels.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🏅</div>
-          <h3>Collectionne des titres</h3>
-          <p>Débloque 10 titres uniques de champion!</p>
+          <h3>{_('home.features.collectTitles.title')}</h3>
+          <p>{_('home.features.collectTitles.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🖨️</div>
-          <h3>Imprime ta carte</h3>
-          <p>Montre ta progression à tes amis!</p>
+          <h3>{_('home.features.printCard.title')}</h3>
+          <p>{_('home.features.printCard.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">📱</div>
-          <h3>Joue partout</h3>
-          <p>Sur ordinateur, tablette ou téléphone!</p>
+          <h3>{_('home.features.playEverywhere.title')}</h3>
+          <p>{_('home.features.playEverywhere.description')}</p>
         </div>
       </div>
     </div>
 
     <div class="leaderboard-section">
-      <h2>Découvre les meilleurs joueurs!</h2>
-      <p>Vois qui est en tête du classement et défie-les!</p>
+      <h2>{_('home.leaderboard.title')}</h2>
+      <p>{_('home.leaderboard.description')}</p>
       <button class="leaderboard-button" on:click={goToLeaderboard}>
-        <span class="emoji">🏆</span> Voir le classement
+        <span class="emoji">🏆</span> {_('home.leaderboard.viewButton')}
       </button>
     </div>
   </div>

@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -41,7 +42,7 @@
 </script>
 
 <svelte:head>
-  <title>Ma Collection - MultyFun</title>
+  <title>{_('collection.pageTitle')}</title>
   <style media="print">
     /* Style spécifique pour l'impression */
     body * {
@@ -65,15 +66,15 @@
   <div class="collection-container">
     <nav class="collection-nav card">
       <button class="nav-button" on:click={goToHome}>
-        <span class="emoji">🏠</span> Accueil
+        <span class="emoji">🏠</span> {_('common.home')}
       </button>
 
       <div class="nav-title">
-        Ma Collection
+        {_('collection.title')}
       </div>
 
       <button class="nav-button" on:click={goToDashboard}>
-        <span class="emoji">📊</span> Tableau de bord
+        <span class="emoji">📊</span> {_('common.dashboard')}
       </button>
     </nav>
 
@@ -84,16 +85,15 @@
     {/if}
 
     <div class="collection-header card">
-      <h1>Ma Collection de Niveaux</h1>
+      <h1>{_('collection.title')}</h1>
       <p class="collection-description">
-        Découvre tous les niveaux que tu peux débloquer en jouant à MultyFun!
-        Chaque niveau te donne un nouveau titre et une nouvelle image.
+        {_('collection.description')}
       </p>
 
       <div class="progress-summary">
         <div class="progress-label">
-          <span>Niveaux débloqués: {data.unlockedLevels}/{data.levels.length}</span>
-          <span>Niveau actuel: {data.userLevel}</span>
+          <span>{_('collection.unlockedLevels')} {data.unlockedLevels}/{data.levels.length}</span>
+          <span>{_('collection.currentLevel')} {data.userLevel}</span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" style="width: {(data.unlockedLevels/data.levels.length) * 100}%"></div>
@@ -105,11 +105,11 @@
       {#each data.levels as level}
         <div class="level-card card" class:unlocked={level.unlocked} class:current={level.current}>
           <div class="level-header">
-            <span class="level-number">Niveau {level.level}</span>
+            <span class="level-number">{_('collection.levelLabel')} {level.level}</span>
             {#if level.unlocked}
-              <span class="level-status unlocked">Débloqué</span>
+              <span class="level-status unlocked">{_('collection.unlocked')}</span>
             {:else}
-              <span class="level-status locked">Verrouillé</span>
+              <span class="level-status locked">{_('collection.locked')}</span>
             {/if}
           </div>
 
@@ -131,10 +131,10 @@
               {#if level.unlocked}
                 <p class="level-description">{level.description}</p>
               {:else}
-                <p class="level-hint">Débloque ce niveau en gagnant plus d'XP!</p>
-                <p class="level-xp-required">XP nécessaire: {level.min_xp}</p>
+                <p class="level-hint">{_('collection.unlockHint')}</p>
+                <p class="level-xp-required">{_('collection.requiredXp')} {level.min_xp}</p>
                 {#if data.userProgress}
-                  <p class="level-xp-missing">Encore {level.min_xp - data.userProgress.xp} XP à gagner</p>
+                  <p class="level-xp-missing">{_('collection.xpNeeded', { xp: level.min_xp - data.userProgress.xp })}</p>
                 {/if}
               {/if}
             </div>
@@ -143,7 +143,7 @@
           {#if level.unlocked}
             <div class="level-actions">
               <button class="print-button" on:click={() => printLevelCard(level)}>
-                <span class="emoji">🖨️</span> Imprimer
+                <span class="emoji">🖨️</span> {_('collection.print')}
               </button>
             </div>
           {/if}
@@ -156,11 +156,11 @@
     <div class="print-level-card">
       <div class="print-card-content">
         <div class="print-header">
-          <h1 class="print-title">MultyFun - Certificat de Niveau</h1>
+          <h1 class="print-title">{_('collection.certificateTitle')}</h1>
         </div>
 
         <div class="print-level-info">
-          <div class="print-level-number">Niveau {selectedLevel.level}</div>
+          <div class="print-level-number">{_('collection.levelLabel')} {selectedLevel.level}</div>
           <div class="print-level-title">{selectedLevel.title}</div>
 
           <div class="print-level-image">
@@ -204,7 +204,7 @@
         </div>
 
         <div class="print-footer">
-          <p>Continue ton aventure mathématique sur MultyFun!</p>
+          <p>{_('collection.continueAdventure')}</p>
         </div>
       </div>
     </div>
