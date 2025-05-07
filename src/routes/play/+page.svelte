@@ -13,6 +13,10 @@
   import { calculateScore } from '$lib/utils/game-logic';
   import { selectedTables, getSelectedTableNumbers } from '$lib/stores/gameStore';
 
+  // Polyfills
+  import 'core-js/stable';
+  import 'regenerator-runtime/runtime';
+
   // Données des leaderboards chargées côté serveur
   export let data;
 
