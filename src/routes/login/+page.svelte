@@ -248,6 +248,7 @@
   .password-container {
     display: flex;
     flex-wrap: wrap;
+    justify-content: center;
     gap: 0.5rem;
     padding: 0.5rem;
     background-color: var(--bg-secondary);
