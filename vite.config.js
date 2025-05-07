@@ -10,5 +10,11 @@ export default defineConfig({
     'process.env.VITE_SUPABASE_URL': JSON.stringify(process.env.VITE_SUPABASE_URL || ''),
     'process.env.VITE_SUPABASE_ANON_KEY': JSON.stringify(process.env.VITE_SUPABASE_ANON_KEY || '')
     // Note: VITE_SUPABASE_SERVICE_KEY n'est pas exposé côté client
+  },
+
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'es2015'
+    }
   }
 });
