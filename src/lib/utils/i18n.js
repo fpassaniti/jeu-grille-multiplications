@@ -1,4 +1,4 @@
-import { getTranslation as getTranslationFromFile } from '$lib/translations';
+import { getTranslation as getTranslationFromFile } from '$lib/translations/index.js';
 import languageStore from '$lib/stores/languageStore';
 import { get } from 'svelte/store';
 

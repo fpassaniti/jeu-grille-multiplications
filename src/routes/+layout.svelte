@@ -8,13 +8,16 @@
 
   // Récupérer les données du layout server
   export let data;
-  
-  // Initialize language from localStorage if in browser
+
   onMount(() => {
-    if (browser) {
-      const storedLanguage = localStorage.getItem('language');
-      if (storedLanguage) {
-        languageStore.set(storedLanguage);
+    // Cette partie est gérée automatiquement par le store
+    // le localStorage est vérifié dans languageStore.js
+
+    // On pourrait éventuellement préférer la langue du navigateur si c'est la première visite
+    if (browser && !localStorage.getItem('language')) {
+      const browserLang = navigator.language?.split('-')[0];
+      if (browserLang && ['fr', 'en', 'es'].includes(browserLang)) {
+        languageStore.set(browserLang);
       }
     }
   });

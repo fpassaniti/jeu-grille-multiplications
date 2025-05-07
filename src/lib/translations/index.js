@@ -1,51 +1,87 @@
+// src/lib/translations/index.js
 import fr from './fr';
 import en from './en';
 import es from './es';
 
+// Définition des langues disponibles avec leurs noms d'affichage
 export const languages = {
   fr: 'Français',
   en: 'English',
   es: 'Español'
 };
 
+// Langue par défaut
+export const defaultLanguage = 'fr';
+
+// Traductions complètes
 export const translations = {
   fr,
   en,
   es
 };
 
-export const defaultLanguage = 'fr';
+/**
+ * Récupère une traduction spécifique
+ * @param {string} locale - Code de langue (fr, en, es...)
+ * @param {string} key - Clé de traduction (peut être imbriquée avec des points)
+ * @param {Object} params - Paramètres à remplacer dans la traduction
+ * @returns {string} - Traduction ou clé si non trouvée
+ */
+export function getTranslation(locale, key, params = {}) {
+  // Vérifier si la langue existe
+  if (!locale || !translations[locale]) {
+    locale = defaultLanguage;
+  }
 
-export const getTranslation = (lang, key, params = {}) => {
-  // Split the key by dots to navigate the nested structure
+  // Diviser la clé pour naviguer dans l'objet de traductions
   const keys = key.split('.');
-  let value = translations[lang] || translations[defaultLanguage];
-  
-  // Navigate through the nested structure
+  let value = translations[locale];
+
+  // Naviguer dans la structure imbriquée
   for (const k of keys) {
-    if (!value[k]) {
-      console.warn(`Translation missing for key: ${key} in language: ${lang}`);
-      // Try to get the translation from the default language
-      value = translations[defaultLanguage];
-      for (const defaultK of keys) {
-        if (!value[defaultK]) {
-          return key; // Return the key if the translation is not found in the default language
-        }
-        value = value[defaultK];
+    if (!value || typeof value[k] === 'undefined') {
+      // Si la clé n'est pas trouvée dans la langue courante, essayer la langue par défaut
+      if (locale !== defaultLanguage) {
+        return getTranslationFromDefault(key, params);
       }
-      break;
+
+      // Si la clé n'existe pas même dans la langue par défaut, retourner la clé
+      console.warn(`Translation key "${key}" not found`);
+      return key;
     }
+
     value = value[k];
   }
-  
-  // If the value is not a string, return the key
+
+  // Si la valeur n'est pas une chaîne, retourner la clé
   if (typeof value !== 'string') {
-    console.warn(`Translation value is not a string for key: ${key} in language: ${lang}`);
     return key;
   }
-  
-  // Replace parameters in the translation
-  return value.replace(/{([^}]+)}/g, (match, name) => {
+
+  // Remplacer les paramètres dans la traduction
+  return replaceParams(value, params);
+}
+
+// Fonction auxiliaire pour récupérer une traduction de la langue par défaut
+function getTranslationFromDefault(key, params) {
+  const keys = key.split('.');
+  let value = translations[defaultLanguage];
+
+  for (const k of keys) {
+    if (!value || typeof value[k] === 'undefined') {
+      console.warn(`Translation key "${key}" not found in default language`);
+      return key;
+    }
+
+    value = value[k];
+  }
+
+  return typeof value === 'string' ? replaceParams(value, params) : key;
+}
+
+// Fonction pour remplacer les paramètres dans une chaîne
+function replaceParams(text, params) {
+  return text.replace(/{([^}]+)}/g, (match, name) => {
     return params[name] !== undefined ? params[name] : match;
   });
-};
+}
