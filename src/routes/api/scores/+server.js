@@ -1,4 +1,5 @@
-// src/routes/api/scores/+server.js
+// src/routes/api/scores/+server.js avec ajout d'invalidation
+
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
@@ -11,6 +12,7 @@ const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, cookies }) {
+
   try {
     const {
       name,
@@ -23,7 +25,7 @@ export async function POST({ request, cookies }) {
     } = await request.json();
 
     // Validation des données
-    if (!score || !duration || !level) {
+    if (score == undefined || !duration || !level) {
       return json({ error: 'Informations manquantes' }, { status: 400 });
     }
 

@@ -1,7 +1,6 @@
 <script>
   import { onMount, onDestroy } from 'svelte';
   import { browser } from '$app/environment';
-  import { goto } from '$app/navigation';
 
   // Importation des composants
   import GameBoard from '$lib/components/GameBoard.svelte';
@@ -339,19 +338,12 @@
       gameResults = resultData;
 
       // Vérifier s'il y a eu une montée en niveau
-      if (isLoggedIn && resultData.progressUpdate && resultData.progressUpdate.level_up) {
+      if (isLoggedIn && resultData.progressUpdate && resultData.progressUpdate.returned_level > resultData.progressUpdate.returned_previous_level) {
         levelUp = true;
 
         // Récupérer le titre du nouveau niveau
-        try {
-          const levelResponse = await fetch(`/api/levels/${resultData.progressUpdate.new_level}`);
-          if (levelResponse.ok) {
-            const levelData = await levelResponse.json();
-            gameResults.newLevelTitle = levelData.title;
-          }
-        } catch (levelError) {
-          console.error('Erreur lors de la récupération du niveau:', levelError);
-        }
+        gameResults.newLevel = resultData.progressUpdate.returned_level;
+        gameResults.newLevelTitle = resultData.progressUpdate.returned_level_title;
       }
 
       // Marquer le score comme sauvegardé
@@ -363,11 +355,6 @@
     } finally {
       isLoading = false;
     }
-  }
-
-  // Fonction pour voir le nouveau niveau
-  function viewNewLevel() {
-    goto('/dashboard');
   }
 
   // Fonction pour redémarrer le jeu
@@ -391,6 +378,10 @@
   // Gestion du changement de niveau
   function setLevel(newLevel) {
     level = newLevel;
+  }
+
+  function reloadPageOnDashboard() {
+    window.location.href = '/dashboard';
   }
 
   // Variables réactives pour le suivi des multiplications résolues
@@ -536,6 +527,7 @@
   {:else if gameState === 'playing'}
     <div class="game-screen">
       <div class="game-header-sticky card">
+        <button on:click={endGame}>End game</button>
         <div class="game-header">
           <div class="timer">
             <span class="emoji">⏱️</span> Temps: {formatTime(gameTimer)}
@@ -668,10 +660,10 @@
             <div class="level-up-icon">🏆</div>
             <h2 class="level-up-title">Niveau Supérieur!</h2>
             <p class="level-up-info">
-              Tu as atteint le niveau {gameResults.progressUpdate.new_level}:
+              Tu as atteint le niveau {gameResults.newLevel}:
               <span class="new-level-title">{gameResults.newLevelTitle}</span>
             </p>
-            <button class="view-level-button" on:click={viewNewLevel}>
+            <button class="view-level-button" on:click={reloadPageOnDashboard}>
               Voir mon nouveau niveau
             </button>
           </div>

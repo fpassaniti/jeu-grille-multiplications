@@ -338,6 +338,10 @@
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
   }
 
+  .emoji {
+    margin-right: 5px;
+  }
+
   .recent-games {
     padding: 20px;
   }
