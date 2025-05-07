@@ -17,37 +17,6 @@
     }
   });
 
-  // Navigation vers les différentes pages
-  function goToHome() {
-    goto('/');
-  }
-
-  function goToPlay() {
-    goto('/play');
-  }
-
-  function goToCollection() {
-    goto('/collection');
-  }
-
-  // Fonction de déconnexion
-  async function handleLogout() {
-    loading = true;
-
-    try {
-      await fetch('/api/auth/logout', {
-        method: 'POST'
-      });
-
-      goto('/');
-    } catch (err) {
-      console.error('Erreur de déconnexion:', err);
-      error = 'Erreur lors de la déconnexion';
-    } finally {
-      loading = false;
-    }
-  }
-
   // Fonction pour imprimer la carte de niveau
   function printLevelCard() {
     window.print();
@@ -61,9 +30,11 @@
     body * {
       visibility: hidden;
     }
+
     .level-card, .level-card * {
       visibility: visible;
     }
+
     .level-card {
       position: absolute;
       left: 0;
@@ -143,13 +114,13 @@
         </div>
 
         <div class="action-buttons">
-          <button class="primary-button" on:click={goToPlay}>
+          <a href="/play" class="button primary-button">
             <span class="emoji">🎮</span> Jouer
-          </button>
+          </a>
 
-          <button class="secondary-button" on:click={goToCollection}>
+          <a href="/collection" class="button secondary-button">
             <span class="emoji">📚</span> Collection
-          </button>
+          </a>
 
           <button class="tertiary-button" on:click={printLevelCard}>
             <span class="emoji">🖨️</span> Imprimer ma carte
@@ -181,9 +152,9 @@
         {:else}
           <div class="no-games">
             <p>Tu n'as pas encore joué de parties.</p>
-            <button class="play-now-button" on:click={goToPlay}>
+            <a href="/play" class="button play-now-button">
               Jouer maintenant!
-            </button>
+            </a>
           </div>
         {/if}
       </div>
@@ -339,6 +310,9 @@
     font-size: 1.1rem;
     border-radius: var(--border-radius-md);
     box-shadow: 0 4px 0 var(--accent-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .secondary-button {
@@ -349,6 +323,9 @@
     font-size: 1.1rem;
     border-radius: var(--border-radius-md);
     box-shadow: 0 4px 0 var(--primary-dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .tertiary-button {
@@ -432,6 +409,7 @@
     border-radius: var(--border-radius-md);
     font-size: 0.9rem;
     box-shadow: 0 3px 0 var(--accent-dark);
+    display: inline-block;
   }
 
   .error-message {

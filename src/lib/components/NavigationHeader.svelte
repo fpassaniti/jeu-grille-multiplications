@@ -1,42 +1,9 @@
 <script>
-  import {goto} from '$app/navigation';
-
   // Props
   export let user = null;
 
   // État du menu mobile
   let mobileMenuOpen = false;
-
-  // Fonctions de navigation
-  function goToHome() {
-    goto('/');
-    closeMobileMenu();
-  }
-
-  function goToPlay() {
-    goto('/play');
-    closeMobileMenu();
-  }
-
-  function goToDashboard() {
-    goto('/dashboard');
-    closeMobileMenu();
-  }
-
-  function goToLeaderboard() {
-    goto('/leaderboard');
-    closeMobileMenu();
-  }
-
-  function goToLogin() {
-    goto('/login');
-    closeMobileMenu();
-  }
-
-  function goToRegister() {
-    goto('/register');
-    closeMobileMenu();
-  }
 
   // Fonction de déconnexion
   async function handleLogout() {
@@ -67,26 +34,26 @@
 <header class="app-header">
   <div class="header-container">
     <div class="header-main">
-      <div class="logo" on:click={goToHome}>
+      <a href="/" class="logo">
         <span class="logo-text">MultyFun</span>
         <span class="logo-icon">×</span>
-      </div>
+      </a>
 
       <!-- Navigation sur desktop -->
       <nav class="navigation desktop-nav">
         <ul class="nav-links">
           <li>
-            <button class="nav-link" on:click={goToHome}>Accueil</button>
+            <a href="/" class="nav-link button">Accueil</a>
           </li>
           <li>
-            <button class="nav-link" on:click={goToPlay}>Jouer</button>
+            <a href="/play" class="nav-link button">Jouer</a>
           </li>
           <li>
-            <button class="nav-link" on:click={goToLeaderboard}>Classement</button>
+            <a href="/leaderboard" class="nav-link button">Classement</a>
           </li>
           {#if user}
             <li>
-              <button class="nav-link" on:click={goToDashboard}>Tableau de bord</button>
+              <a href="/dashboard" class="nav-link button">Tableau de bord</a>
             </li>
           {/if}
         </ul>
@@ -100,8 +67,8 @@
             <span class="logout-icon">🚪</span>
           </button>
         {:else}
-          <button class="login-button" on:click={goToLogin}>Connexion</button>
-          <button class="register-button" on:click={goToRegister}>Inscription</button>
+          <a href="/login" class="button login-button">Connexion</a>
+          <a href="/register" class="button register-button">Inscription</a>
         {/if}
       </div>
 
@@ -116,25 +83,25 @@
       <nav class="mobile-nav">
         <ul class="mobile-nav-links">
           <li>
-            <button class="mobile-nav-link" on:click={goToHome}>
+            <a href="/" class="button mobile-nav-link">
               <span class="nav-icon">🏠</span> Accueil
-            </button>
+            </a>
           </li>
           <li>
-            <button class="mobile-nav-link" on:click={goToPlay}>
+            <a href="/play" class="button mobile-nav-link">
               <span class="nav-icon">🎮</span> Jouer
-            </button>
+            </a>
           </li>
           <li>
-            <button class="mobile-nav-link" on:click={goToLeaderboard}>
+            <a href="/leaderboard" class="button mobile-nav-link">
               <span class="nav-icon">🏆</span> Classement
-            </button>
+            </a>
           </li>
           {#if user}
             <li>
-              <button class="mobile-nav-link" on:click={goToDashboard}>
+              <a href="/dashboard" class="button mobile-nav-link">
                 <span class="nav-icon">📊</span> Tableau de bord
-              </button>
+              </a>
             </li>
           {/if}
         </ul>
@@ -149,12 +116,12 @@
               <span class="nav-icon">🚪</span> Déconnexion
             </button>
           {:else}
-            <button class="mobile-login-button" on:click={goToLogin}>
+            <a href="/login" class="button mobile-login-button">
               <span class="nav-icon">🔑</span> Connexion
-            </button>
-            <button class="mobile-register-button" on:click={goToRegister}>
+            </a>
+            <a href="/register" class="button mobile-register-button">
               <span class="nav-icon">📝</span> Inscription
-            </button>
+            </a>
           {/if}
         </div>
       </nav>
@@ -193,6 +160,7 @@
     align-items: center;
     gap: 8px;
     cursor: pointer;
+    text-decoration: none;
   }
 
   .logo-text {
@@ -239,6 +207,7 @@
     padding: 8px 12px;
     border-radius: var(--border-radius-sm);
     transition: all 0.2s;
+    text-decoration: none;
   }
 
   .nav-link:hover {
@@ -355,6 +324,7 @@
     color: var(--text-secondary);
     border-bottom: 1px solid var(--bg-secondary);
     cursor: pointer;
+    text-decoration: none;
   }
 
   .mobile-nav-link:hover {
@@ -398,6 +368,7 @@
     font-size: 1rem;
     border-radius: var(--border-radius-md);
     cursor: pointer;
+    text-decoration: none;
   }
 
   .mobile-logout-button {

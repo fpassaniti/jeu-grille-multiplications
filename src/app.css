@@ -69,7 +69,8 @@ p {
 }
 
 /* Boutons */
-button {
+button,
+.button {
   font-family: 'Baloo 2', cursive;
   font-weight: 600;
   border-radius: var(--border-radius-md);
@@ -81,30 +82,36 @@ button {
   box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
   position: relative;
   top: 0;
+  text-decoration: none;
 }
 
-button:hover {
+button:hover,
+.button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 0 rgba(0, 0, 0, 0.15);
 }
 
-button:active {
+button:active,
+.button:hover {
   transform: translateY(2px);
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
 }
 
-button.active {
+button.active,
+.button.active {
   background-color: var(--primary);
   color: white;
   box-shadow: 0 4px 0 var(--primary-dark);
 }
 
-button.active:hover {
+button.active:hover,
+.button.active:hover {
   background-color: var(--primary-light);
   box-shadow: 0 6px 0 var(--primary-dark);
 }
 
-button:disabled {
+button:disabled,
+.button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
@@ -188,7 +195,12 @@ input.incorrect {
     font-size: 1.2rem;
   }
   
-  button {
+  button,
+  .button {
     padding: 10px 20px;
+  }
+
+  a {
+    text-decoration: none;
   }
 }

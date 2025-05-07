@@ -1,7 +1,4 @@
 <script>
-  import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
-
   // État du formulaire
   let username = '';
   let passwordChar = '';
@@ -10,9 +7,9 @@
   let error = null;
   let success = false;
   let submitted = false;
-  
+
   // Caractères disponibles pour le mot de passe visuel (identique à l'écran de login)
-  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉'];
+  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉', '🥦', '🫜', '🌱', '🥥', '🥑', '🥐', '🥨', '🌰'];
 
   async function handleRegister() {
     submitted = true;
@@ -59,16 +56,6 @@
       loading = false;
     }
   }
-
-  // Retour à l'accueil
-  function goToHome() {
-    goto('/');
-  }
-
-  // Aller à la page de connexion
-  function goToLogin() {
-    goto('/login');
-  }
 </script>
 
 <svelte:head>
@@ -77,10 +64,6 @@
 
 <main class="container">
   <div class="register-container card">
-    <button class="back-button" on:click={goToHome}>
-      <span class="emoji">🏠</span> Accueil
-    </button>
-
     <div class="register-header">
       <h1>Créer un compte</h1>
       <p class="register-subheader">Commence ton aventure mathématique!</p>
@@ -130,9 +113,9 @@
           <label for="passwordChar">Ton caractère secret</label>
           <div class="password-container">
             {#each passwordChars as char}
-              <button 
-                type="button" 
-                class="password-char-btn" 
+              <button
+                type="button"
+                class="password-char-btn"
                 class:selected={passwordChar === char}
                 on:click={() => passwordChar = char}
                 disabled={loading}
@@ -158,9 +141,9 @@
 
       <div class="register-footer">
         <p>Tu as déjà un compte?</p>
-        <button class="login-link" on:click={goToLogin}>
+        <a href="/login" class="button text-button">
           Se connecter
-        </button>
+        </a>
       </div>
     {/if}
   </div>
@@ -168,21 +151,10 @@
 
 <style>
   .register-container {
-    max-width: 500px;
+    max-width: 530px;
     margin: 50px auto;
     padding: 30px;
     position: relative;
-  }
-
-  .back-button {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    padding: 8px 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.9rem;
   }
 
   .register-header {
@@ -237,9 +209,10 @@
     color: var(--text-light);
     margin-top: 5px;
   }
-  
+
   .password-container {
     display: flex;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 0.5rem;
     padding: 0.5rem;
@@ -269,7 +242,7 @@
     background-color: var(--primary-light);
     box-shadow: 0 0 0 2px var(--primary);
   }
-  
+
   .error-text {
     color: #d32f2f;
     font-size: 0.85rem;
@@ -302,7 +275,7 @@
     color: var(--text-secondary);
   }
 
-  .login-link {
+  .text-button {
     color: var(--primary);
     font-weight: bold;
     text-decoration: underline;
@@ -313,7 +286,7 @@
     font-size: 1rem;
   }
 
-  .login-link:hover {
+  .text-button:hover {
     color: var(--primary-dark);
   }
 

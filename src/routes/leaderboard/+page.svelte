@@ -1,7 +1,6 @@
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { page } from '$app/stores';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
 
   // Initialisation au chargement de la page
@@ -30,9 +29,9 @@
 
   // Options de durée disponibles
   const durationOptions = [
-    { value: 2, label: '2 minutes' },
-    { value: 3, label: '3 minutes' },
-    { value: 5, label: '5 minutes' }
+    {value: 2, label: '2 minutes'},
+    {value: 3, label: '3 minutes'},
+    {value: 5, label: '5 minutes'}
   ];
 
   // Fonctions d'interaction
@@ -53,7 +52,7 @@
   // Met à jour l'URL et charge les données du classement
   async function updateLeaderboard() {
     const url = `/leaderboard?level=${currentLevel}&duration=${currentDuration}`;
-    goto(url, { replaceState: true });
+    goto(url, {replaceState: true});
 
     try {
       const response = await fetch(`/api/leaderboard?level=${currentLevel}&duration=${currentDuration}`);
@@ -74,15 +73,6 @@
         leaderboardData.enfant = [];
       }
     }
-  }
-
-  // Navigation
-  function goToHome() {
-    goto('/');
-  }
-
-  function goToPlay() {
-    goto('/play');
   }
 </script>
 
@@ -145,9 +135,9 @@
       <p class="challenge-text">
         <span class="emoji">🚀</span> Relève le défi et inscris ton nom dans le classement !
       </p>
-      <button class="play-button" on:click={goToPlay}>
+      <a href="/play" class="button play-button">
         Jouer maintenant
-      </button>
+      </a>
     </div>
   </div>
 </main>
@@ -243,6 +233,8 @@
     border-radius: var(--border-radius-md);
     margin-top: 15px;
     box-shadow: 0 4px 0 var(--accent-dark);
+    display: inline-flex;
+    align-items: center;
   }
 
   .play-button:hover {

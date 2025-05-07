@@ -1,5 +1,5 @@
 <script>
-  import { onMount } from 'svelte';
+  import {onMount} from 'svelte';
 
   // État du formulaire
   let name = 'Joueur Test';
@@ -108,7 +108,7 @@
   // Sélectionner/désélectionner toutes les tables
   function toggleAllTables(select) {
     if (select) {
-      selectedTables = Array.from({ length: 10 }, (_, i) => i + 1);
+      selectedTables = Array.from({length: 10}, (_, i) => i + 1);
     } else {
       selectedTables = [];
     }
@@ -458,7 +458,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .error-message, .success-message {

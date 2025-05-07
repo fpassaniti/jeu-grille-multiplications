@@ -1,6 +1,6 @@
 <script>
-  import { goto } from '$app/navigation';
-  import { onMount } from 'svelte';
+  import {goto} from '$app/navigation';
+  import {onMount} from 'svelte';
 
   // État du formulaire
   let username = '';
@@ -9,9 +9,9 @@
   let error = '';
   let showPassword = false;
   let submitted = false;
-  
+
   // Caractères disponibles pour le mot de passe visuel
-  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉'];
+  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉', '🥦', '🫜', '🌱', '🥥', '🥑', '🥐', '🥨', '🌰'];
 
   // Vérifier si déjà connecté
   onMount(async () => {
@@ -20,7 +20,7 @@
         method: 'GET'
       });
       const data = await response.json();
-      
+
       if (data.user) {
         // Rediriger vers le tableau de bord si déjà connecté
         goto('/dashboard');
@@ -46,7 +46,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ username, passwordChar })
+        body: JSON.stringify({username, passwordChar})
       });
 
       const data = await response.json();
@@ -63,16 +63,6 @@
     } finally {
       loading = false;
     }
-  }
-
-  // Fonction pour naviguer vers l'inscription
-  function goToRegister() {
-    goto('/register');
-  }
-
-  // Fonction pour retourner à l'accueil
-  function goToHome() {
-    goto('/');
   }
 </script>
 
@@ -96,10 +86,10 @@
       <form on:submit|preventDefault={handleLogin} class="login-form">
         <div class="form-group">
           <label for="username">Nom d'utilisateur</label>
-          <input 
-            type="text" 
-            id="username" 
-            bind:value={username} 
+          <input
+            type="text"
+            id="username"
+            bind:value={username}
             autocomplete="username"
             class:input-error={submitted && !username}
             disabled={loading}
@@ -113,9 +103,9 @@
           <label for="password">Caractère secret</label>
           <div class="password-container">
             {#each passwordChars as char}
-              <button 
-                type="button" 
-                class="password-char-btn" 
+              <button
+                type="button"
+                class="password-char-btn"
                 class:selected={passwordChar === char}
                 on:click={() => passwordChar = char}
                 disabled={loading}
@@ -150,12 +140,12 @@
       </form>
 
       <div class="alternative-actions">
-        <button type="button" class="text-button" on:click={goToRegister}>
+        <a href="/register" class="button text-button">
           Pas encore de compte ? Inscris-toi ici
-        </button>
-        <button type="button" class="text-button" on:click={goToHome}>
+        </a>
+        <a href="/" class="button text-button">
           <span class="emoji">🏠</span> Retour à l'accueil
-        </button>
+        </a>
       </div>
     </div>
   </div>
@@ -339,7 +329,9 @@
   }
 
   @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+      transform: rotate(360deg);
+    }
   }
 
   .error-message {
@@ -366,6 +358,8 @@
     font-size: 0.95rem;
     text-decoration: underline;
     cursor: pointer;
+    border: none;
+    padding: 5px;
   }
 
   .text-button:hover {

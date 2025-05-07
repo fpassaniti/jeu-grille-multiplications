@@ -17,15 +17,6 @@
     }
   });
 
-  // Navigation
-  function goToDashboard() {
-    goto('/dashboard');
-  }
-
-  function goToHome() {
-    goto('/');
-  }
-
   // Fonction pour imprimer la carte de niveau sélectionnée
   function printLevelCard(level) {
     // Stocker temporairement le niveau sélectionné
@@ -63,20 +54,6 @@
 
 <main class="container">
   <div class="collection-container">
-    <nav class="collection-nav card">
-      <button class="nav-button" on:click={goToHome}>
-        <span class="emoji">🏠</span> Accueil
-      </button>
-
-      <div class="nav-title">
-        Ma Collection
-      </div>
-
-      <button class="nav-button" on:click={goToDashboard}>
-        <span class="emoji">📊</span> Tableau de bord
-      </button>
-    </nav>
-
     {#if error}
       <div class="error-message">
         <span class="emoji">⚠️</span> {error}
@@ -216,28 +193,6 @@
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
-  }
-
-  .collection-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 20px;
-    margin-bottom: 30px;
-  }
-
-  .nav-button {
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    padding: 8px 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.9rem;
-  }
-
-  .nav-title {
-    font-weight: bold;
-    color: var(--primary);
-    font-size: 1.2rem;
   }
 
   .collection-header {

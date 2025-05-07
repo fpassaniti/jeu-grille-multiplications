@@ -1,7 +1,4 @@
 <script>
-  import {onMount} from 'svelte';
-  import {goto} from '$app/navigation';
-  import {page} from '$app/stores';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
 
   // Données utilisateur venant du serveur (fournies via +layout.server.js)
@@ -9,34 +6,6 @@
 
   // État UI
   let loading = false;
-
-  // Redirection selon le statut de connexion
-  onMount(() => {
-    if (data.user) {
-      // Si déjà connecté, proposer d'aller au dashboard
-    }
-  });
-
-  // Fonctions de navigation
-  function goToQuickPlay() {
-    goto('/play');
-  }
-
-  function goToLogin() {
-    goto('/login');
-  }
-
-  function goToRegister() {
-    goto('/register');
-  }
-
-  function goToDashboard() {
-    goto('/dashboard');
-  }
-
-  function goToLeaderboard() {
-    goto('/leaderboard');
-  }
 </script>
 
 <svelte:head>
@@ -80,9 +49,9 @@
       </div>
 
       <div class="action-buttons">
-        <button class="primary-button" on:click={goToDashboard}>
+        <a href="/dashboard" class="button primary-button">
           <span class="emoji">🏆</span> Continuer l'aventure
-        </button>
+        </a>
       </div>
     {:else}
       <!-- Utilisateur non connecté -->
@@ -140,9 +109,9 @@
     <div class="leaderboard-section">
       <h2>Découvre les meilleurs joueurs!</h2>
       <p>Vois qui est en tête du classement et défie-les!</p>
-      <button class="leaderboard-button" on:click={goToLeaderboard}>
+      <a href="/leaderboard" class="button leaderboard-button">
         <span class="emoji">🏆</span> Voir le classement
-      </button>
+      </a>
     </div>
   </div>
 </main>
@@ -252,6 +221,9 @@
     background-color: var(--accent);
     color: white;
     box-shadow: 0 6px 0 var(--accent-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .secondary-button {
@@ -260,6 +232,9 @@
     background-color: var(--primary);
     color: white;
     box-shadow: 0 6px 0 var(--primary-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .start-options {
@@ -365,6 +340,9 @@
     border-radius: var(--border-radius-md);
     box-shadow: 0 4px 0 var(--primary-dark);
     transition: transform 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .leaderboard-button:hover {
