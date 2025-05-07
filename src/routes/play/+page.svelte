@@ -527,10 +527,10 @@
   {:else if gameState === 'playing'}
     <div class="game-screen">
       <div class="game-header-sticky card">
-        <button on:click={endGame}>End game</button>
         <div class="game-header">
           <div class="timer">
             <span class="emoji">⏱️</span> Temps: {formatTime(gameTimer)}
+            <button class="smaller-button" on:click={endGame}>Finir la partie</button>
           </div>
           <div class="level">
             <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> Niveau: {level === 'adulte' ? 'Adulte' : 'Enfant'}
@@ -1185,6 +1185,11 @@
     background-color: var(--info);
     color: white;
     box-shadow: 0 4px 0 var(--info-dark);
+  }
+
+  .smaller-button {
+    margin-left: 8px;
+    padding: 0 8px;
   }
 
   @keyframes fadeIn {
