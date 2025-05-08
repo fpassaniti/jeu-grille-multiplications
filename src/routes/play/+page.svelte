@@ -455,18 +455,6 @@
 <main class="container" style="max-width: {windowWidth > 1200 ? '1200px' : '100%'}; width: 100%; box-sizing: border-box;">
   {#if gameState === 'notStarted'}
     <div class="start-screen card">
-      <div class="logo-container">
-        <div class="logo">
-          <span class="logo-text">MultyFun</span>
-          <div class="logo-icon">
-            <span class="math-symbol">×</span>
-          </div>
-        </div>
-      </div>
-
-      <h1>Jeu de Multiplication</h1>
-      <p class="game-intro">Résous autant de multiplications que possible avant la fin du temps!</p>
-
       <div class="game-options">
         <div class="option-section card-inset">
           <h2>Choisis ton niveau:</h2>
@@ -763,7 +751,7 @@
 
   .start-screen {
     text-align: center;
-    padding: 30px;
+    padding: 10px 30px;
     margin: 20px auto;
     background-color: white;
   }
@@ -1059,6 +1047,7 @@
     border-radius: var(--border-radius-md);
     margin-top: 15px;
     box-shadow: 0 4px 0 var(--primary-dark);
+    white-space: nowrap;
     transition: all 0.2s;
   }
 
