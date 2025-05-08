@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MultyFun - Certificat de Niveau {{level}}</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 15mm;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: white;
+    }
+
+    .print-card {
+      border: 3mm double #555;
+      padding: 10mm;
+      max-width: 180mm;
+      margin: 0 auto;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .print-header {
+      margin-bottom: 8mm;
+      text-align: center;
+      border-bottom: 2px solid #888;
+      padding-bottom: 4mm;
+    }
+
+    .print-title {
+      font-size: 20pt;
+      font-weight: bold;
+      margin: 0;
+      color: #333;
+    }
+
+    .print-content {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .print-level-info {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .print-level-number {
+      font-size: 14pt;
+      margin-bottom: 3mm;
+    }
+
+    .print-level-title {
+      font-size: 24pt;
+      font-weight: bold;
+      margin-bottom: 8mm;
+      text-align: center;
+    }
+
+    .print-level-image {
+      margin-bottom: 8mm;
+      text-align: center;
+    }
+
+    .print-image-wrapper {
+      width: 66mm;
+      height: 100mm;
+      margin: 0 auto;
+      overflow: hidden;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .print-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .print-fallback-image {
+      width: 66mm;
+      height: 100mm;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 48pt;
+      font-weight: bold;
+      background: {{gradient}};
+    }
+
+    .fallback-level {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .print-level-description {
+      font-size: 12pt;
+      text-align: center;
+      max-width: 90%;
+      font-style: italic;
+      margin: 0 auto 10mm auto;
+    }
+
+    .print-player-info {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10mm;
+      padding-top: 8mm;
+      border-top: 1px solid #ccc;
+      width: 100%;
+    }
+
+    .print-player-name {
+      font-size: 14pt;
+      font-weight: bold;
+    }
+
+    .print-date {
+      font-size: 12pt;
+    }
+
+    .print-footer {
+      margin-top: 4mm;
+      text-align: center;
+      font-size: 10pt;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+<div class="print-card">
+  <div class="print-header">
+    <h1 class="print-title">MultyFun - Certificat de Niveau</h1>
+  </div>
+
+  <div class="print-content">
+    <div class="print-level-info">
+      <div class="print-level-number">Niveau {{level}}</div>
+      <div class="print-level-title">{{title}}</div>
+
+      <div class="print-level-image">
+        {{#if hasImage}}
+        <div class="print-image-wrapper">
+          <img src="{{imageUrl}}" alt="Niveau {{level}}" class="print-image" />
+        </div>
+        {{else}}
+        <div class="print-fallback-image">
+          <div class="fallback-level">{{level}}</div>
+        </div>
+        {{/if}}
+      </div>
+
+      <div class="print-level-description">
+        {{description}}
+      </div>
+    </div>
+  </div>
+
+  <div class="print-player-info">
+    <div class="print-player-name">
+      {{playerName}}
+    </div>
+    <div class="print-date">
+      {{date}}
+    </div>
+  </div>
+
+  <div class="print-footer">
+    <p>Continue ton aventure mathématique sur MultyFun!</p>
+  </div>
+</div>
+
+<script>
+  // Imprimer automatiquement puis fermer la fenêtre
+  window.onload = function() {
+    setTimeout(function() {
+      window.print();
+      setTimeout(function() {
+        window.close();
+      }, 500);
+    }, 500);
+  };
+</script>
+</body>
+</html>
