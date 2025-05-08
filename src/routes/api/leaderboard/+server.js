@@ -17,19 +17,40 @@ export async function GET({ url }) {
     // Créer le client Supabase côté serveur
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Charger les scores avec filtrage par niveau et durée
-    const { data: scoresData, error: scoresError } = await supabase
+    // Récupérer tous les scores filtré par niveau et durée
+    const { data: allScores, error: scoresError } = await supabase
       .from('scores')
       .select('id, name, score, duration, level, date, tables_used')
       .eq('level', level)
       .eq('duration', parseInt(duration, 10))
-      .order('score', { ascending: false })
-      .limit(10);
+      .order('score', { ascending: false });
 
     if (scoresError) throw scoresError;
 
+    // Grouper les scores par nom et garder uniquement le meilleur score pour chaque joueur
+    const bestScoresByPlayer = {};
+
+    // Pour chaque score, vérifier s'il s'agit du meilleur score du joueur
+    allScores?.forEach(score => {
+      const playerName = score.name;
+
+      // Si nous n'avons pas encore vu ce joueur, ou si ce score est meilleur que ce que nous avons déjà
+      if (!bestScoresByPlayer[playerName] || score.score > bestScoresByPlayer[playerName].score) {
+        bestScoresByPlayer[playerName] = score;
+      }
+    });
+
+    // Convertir l'objet en tableau
+    const uniqueScores = Object.values(bestScoresByPlayer);
+
+    // Trier par score, du plus élevé au plus bas
+    uniqueScores.sort((a, b) => b.score - a.score);
+
+    // Limiter à 10 résultats
+    const topScores = uniqueScores.slice(0, 10);
+
     // S'assurer que les tables_used sont parsées correctement
-    const processedScores = scoresData?.map(score => {
+    const processedScores = topScores.map(score => {
       // Si tables_used est une chaîne JSON, la parser
       if (score.tables_used && typeof score.tables_used === 'string') {
         try {
@@ -45,7 +66,7 @@ export async function GET({ url }) {
       }
 
       return score;
-    }) || [];
+    });
 
     // Retourner les données
     return json({
