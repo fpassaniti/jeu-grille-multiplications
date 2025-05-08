@@ -1,5 +1,5 @@
 <script>
-  import { _ } from '$lib/utils/i18n';
+  import {_} from '$lib/utils/i18n';
 
   // État du formulaire
   let username = '';
@@ -64,7 +64,7 @@
   <title>{_('auth.registerTitle')} - {_('common.appName')}</title>
 </svelte:head>
 
-<main class="container">
+<div class="container">
   <div class="register-container card">
     <div class="register-header">
       <h1>{_('auth.registerTitle')}</h1>
@@ -149,7 +149,7 @@
       </div>
     {/if}
   </div>
-</main>
+</div>
 
 <style>
   .register-container {
@@ -305,13 +305,23 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-20px); }
-    60% { transform: translateY(-10px); }
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-20px);
+    }
+    60% {
+      transform: translateY(-10px);
+    }
   }
 </style>

@@ -9,9 +9,9 @@
 
 <NavigationHeader user={data.user} />
 
-<main>
+<div class="main-content">
   <slot />
-</main>
+</div>
 
 <footer class="app-footer">
   <div class="footer-container">
@@ -22,7 +22,7 @@
 </footer>
 
 <style>
-  main {
+  .main-content {
     min-height: calc(100vh - 192px);
   }
 

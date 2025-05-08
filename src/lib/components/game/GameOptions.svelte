@@ -1,5 +1,6 @@
 <script>
   import TableSelector from '$lib/components/TableSelector.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let level = 'adulte';
@@ -13,17 +14,17 @@
 
 <div class="game-options">
   <div class="option-section card-inset">
-    <h2>Choisis ton niveau:</h2>
+    <h2>{_('play.chooseLevel')}</h2>
     <div class="option-buttons">
       <button class:active={level === 'adulte'} on:click={() => setLevel('adulte')}>
-        <span class="emoji">👨‍💼</span> Adulte
+        <span class="emoji">👨‍💼</span> {_('common.adult')}
       </button>
       <button class:active={level === 'enfant'} on:click={() => setLevel('enfant')}>
-        <span class="emoji">🧒</span> Enfant
+        <span class="emoji">🧒</span> {_('common.child')}
       </button>
     </div>
     <p class="option-description">
-      {level === 'adulte' ? 'Temps de réponse: 5-15 secondes' : 'Temps de réponse: 15-45 secondes'}
+      {level === 'adulte' ? _('play.adultResponseTime') : _('play.childResponseTime')}
     </p>
   </div>
 
@@ -38,16 +39,16 @@
   {/if}
 
   <div class="option-section card-inset">
-    <h2>Choisis la durée:</h2>
+    <h2>{_('play.chooseDuration')}</h2>
     <div class="option-buttons">
       <button class:active={gameDuration === 2} on:click={() => setGameDuration(2)}>
-        <span class="emoji">⏱️</span> 2 min
+        <span class="emoji">⏱️</span> 2 {_('common.min')}
       </button>
       <button class:active={gameDuration === 3} on:click={() => setGameDuration(3)}>
-        <span class="emoji">⏱️</span> 3 min
+        <span class="emoji">⏱️</span> 3 {_('common.min')}
       </button>
       <button class:active={gameDuration === 5} on:click={() => setGameDuration(5)}>
-        <span class="emoji">⏱️</span> 5 min
+        <span class="emoji">⏱️</span> 5 {_('common.min')}
       </button>
     </div>
   </div>

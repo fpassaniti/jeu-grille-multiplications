@@ -4,6 +4,7 @@
   import GameHeader from './GameHeader.svelte';
   import GameProgress from './GameProgress.svelte';
   import CurrentMultiplication from './CurrentMultiplication.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let gameTimer = 0;
@@ -52,7 +53,7 @@
 
     {#if level === 'enfant'}
       <div class="tables-info">
-        <span class="emoji">📋</span> Tables sélectionnées: {getSelectedTableNumbers().join(', ')}
+        <span class="emoji">📋</span> {_('tableSelector.selectedTables')} {getSelectedTableNumbers().join(', ')}
       </div>
     {/if}
 
