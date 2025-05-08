@@ -1,19 +1,19 @@
 <script>
   // Props
-  export let grid;
-  export let solvedCells;
-  export let currentRow;
-  export let currentCol;
+  export let grid = [];
+  export let solvedCells = [];
+  export let currentRow = 0;
+  export let currentCol = 0;
   export let userAnswer = '';
-  export let handleAnswerChange;
-  export let handleSubmit;
+  export let handleAnswerChange = () => {};
+  export let handleSubmit = () => {};
   export let inputRef;
   export let lastAnswerCorrect = null;
-  export let isSelectedTableCell;
-  export let level;
-  export let getSelectedTableNumbers;
-  export let windowWidth;
-  export let windowHeight;
+  export let isSelectedTableCell = () => {};
+  export let level = 'adulte';
+  export let getSelectedTableNumbers = () => [];
+  export let windowWidth = 0;
+  export let windowHeight = 0;
 
   // Calculer la taille optimale de la grille en fonction de la fenêtre
   // Réduire davantage la taille pour s'assurer que tout tient dans la fenêtre
@@ -133,7 +133,7 @@
     border: 1px solid var(--bg-secondary); /* Conserve l'épaisseur de la bordure minimale */
     transition: all 0.2s;
   }
-  
+
   .grid-cell:hover:not(.inactive):not(.current):not(.solved) {
     transform: translateY(-1px); /* Réduit l'effet de survol pour un design plus compact */
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
@@ -152,12 +152,12 @@
     color: var(--success-dark);
     border-color: var(--success);
   }
-  
+
   .solved-result {
     font-size: min(20px, calc(var(--grid-size) / 2));
     font-weight: bold;
   }
-  
+
   .confetti-explosion {
     position: absolute;
     top: 0;
@@ -217,14 +217,14 @@
     border-color: var(--secondary);
     background-color: rgba(255, 107, 107, 0.1);
   }
-  
+
   @keyframes confetti {
-    0% { 
-      transform: translateY(0) rotate(0deg); 
+    0% {
+      transform: translateY(0) rotate(0deg);
       opacity: 1;
     }
-    100% { 
-      transform: translateY(-100px) rotate(720deg); 
+    100% {
+      transform: translateY(-100px) rotate(720deg);
       opacity: 0;
     }
   }

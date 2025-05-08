@@ -1,4 +1,4 @@
-// src/routes/api/scores/+server.js avec ajout d'invalidation
+// src/routes/api/scores/+server.js avec mise à jour pour gérer les grilles multiples
 
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
@@ -44,9 +44,9 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Score anormalement élevé détecté' }, { status: 400 });
     }
 
-    if (solvedCells > totalPossibleCells) {
-      return json({ error: 'Nombre de cellules résolues incohérent' }, { status: 400 });
-    }
+    // Modification: On permet maintenant que solvedCells > totalPossibleCells
+    // car la grille peut être réinitialisée et remplie plusieurs fois
+    // Nous n'imposons plus la contrainte solvedCells <= totalPossibleCells
 
     // Initialiser Supabase
     const supabase = createClient(supabaseUrl, supabaseKey);
