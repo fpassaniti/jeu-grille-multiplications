@@ -38,7 +38,8 @@ export default {
     status: 'Status',
     language: 'Language',
     selectLanguage: 'Select language',
-    copyright: '© {year} {appName} - Learn multiplication tables while having fun!'
+    copyright: '© {year} {appName} - Learn multiplication tables while having fun!',
+    min: 'min',
   },
 
   navigation: {
@@ -191,7 +192,10 @@ export default {
     print: 'Print',
     certificateTitle: 'MultyFun - Level Certificate',
     currentLevelLabel: 'Current level',
-    continueAdventure: 'Continue your math adventure on MultyFun!'
+    continueAdventure: 'Continue your math adventure on MultyFun!',
+    templateNotLoaded: 'The print template is not yet loaded. Please try again.',
+    popupBlocked: 'Please allow popups to print the certificate.',
+    printError: 'An error occurred while preparing the print.',
   },
 
   play: {
@@ -229,7 +233,9 @@ export default {
     xpEarned: 'You earned {xp} experience points.',
     newGame: 'New game',
     backToHome: 'Back to home',
-    dashboardButton: 'Dashboard'
+    dashboardButton: 'Dashboard',
+    gridReset: 'New grid! Keep playing!',
+    endGame: 'End game',
   },
 
   tableSelector: {

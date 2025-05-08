@@ -1,5 +1,7 @@
+<!-- src/lib/components/game/GameHeader.svelte -->
 <script>
   import { formatTime } from '$lib/utils/formatters';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let gameTimer = 0;
@@ -10,14 +12,14 @@
 
 <div class="game-header">
   <div class="timer">
-    <span class="emoji">⏱️</span> Temps: {formatTime(gameTimer)}
-    <button class="smaller-button" on:click={endGame}>Finir la partie</button>
+    <span class="emoji">⏱️</span> {_('play.timeLabel')} {formatTime(gameTimer)}
+    <button class="smaller-button" on:click={endGame}>{_('play.endGame')}</button>
   </div>
   <div class="level">
-    <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> Niveau: {level === 'adulte' ? 'Adulte' : 'Enfant'}
+    <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> {_('play.levelLabel')} {level === 'adulte' ? _('common.adult') : _('common.child')}
   </div>
   <div class="score">
-    <span class="emoji">🏆</span> Score: {score}
+    <span class="emoji">🏆</span> {_('play.scoreLabel')} {score}
   </div>
 </div>
 

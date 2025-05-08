@@ -38,7 +38,8 @@ export default {
     status: 'Estado',
     language: 'Idioma',
     selectLanguage: 'Seleccionar idioma',
-    copyright: '© {year} {appName} - ¡Aprende las tablas de multiplicar divirtiéndote!'
+    copyright: '© {year} {appName} - ¡Aprende las tablas de multiplicar divirtiéndote!',
+    min: 'min',
   },
 
   navigation: {
@@ -191,7 +192,10 @@ export default {
     print: 'Imprimir',
     certificateTitle: 'MultyFun - Certificado de Nivel',
     currentLevelLabel: 'Nivel actual',
-    continueAdventure: '¡Continúa tu aventura matemática en MultyFun!'
+    continueAdventure: '¡Continúa tu aventura matemática en MultyFun!',
+    templateNotLoaded: 'La plantilla de impresión aún no está cargada. Por favor, inténtalo de nuevo.',
+    popupBlocked: 'Por favor, permite las ventanas emergentes para imprimir el certificado.',
+    printError: 'Ocurrió un error al preparar la impresión.',
   },
 
   play: {
@@ -229,7 +233,9 @@ export default {
     xpEarned: 'Has ganado {xp} puntos de experiencia.',
     newGame: 'Nueva partida',
     backToHome: 'Volver al inicio',
-    dashboardButton: 'Panel'
+    dashboardButton: 'Panel',
+    gridReset: '¡Nueva cuadrícula! ¡Sigue jugando!',
+    endGame: 'Finalizar juego',
   },
 
   tableSelector: {

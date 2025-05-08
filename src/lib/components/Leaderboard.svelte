@@ -9,8 +9,8 @@
   export let leaderboard = [];
 
   // Déterminer le niveau à afficher pour le titre
-  $: levelLabel = level === 'adulte' ? 'Adulte' : 'Enfant';
-  $: durationLabel = `${duration} min`;
+  $: levelLabel = level === 'adulte' ? _('common.adult') : _('common.child');
+  $: durationLabel = `${duration} ${_('common.min')}`;
   $: rankEmojis = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣', '6️⃣', '7️⃣', '8️⃣', '9️⃣', '🔟'];
 </script>
 
@@ -23,7 +23,7 @@
   {#if isLoading}
     <div class="loading">
       <div class="loading-spinner"></div>
-      <span>Chargement des scores...</span>
+      <span>{_('common.loading')}</span>
     </div>
   {:else if leaderboard.length > 0}
     <div class="leaderboard-table">
@@ -179,14 +179,6 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-  }
-
-  .tables-list {
-    font-size: 0.9rem;
-    background-color: var(--success-light);
-    color: var(--success-dark);
-    padding: 2px 6px;
-    border-radius: 4px;
   }
 
   .tables-all {

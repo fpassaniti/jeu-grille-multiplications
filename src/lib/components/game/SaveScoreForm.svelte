@@ -1,4 +1,7 @@
+<!-- src/lib/components/game/SaveScoreForm.svelte -->
 <script>
+  import { _ } from '$lib/utils/i18n';
+
   // Props
   export let isLoggedIn = false;
   export let playerName = '';
@@ -10,18 +13,18 @@
 
 {#if !isLoggedIn}
   <div class="save-score card-inset" class:saved={scoreSaved}>
-    <h2>Enregistre ton score</h2>
+    <h2>{_('play.saveScore')}</h2>
     <form on:submit|preventDefault={saveScore}>
       <div class="save-score-wrapper">
         <input
           type="text"
           bind:value={playerName}
-          placeholder="Ton prénom"
+          placeholder={_('play.firstNamePlaceholder')}
           required
           disabled={isLoading}
         />
         <button type="submit" disabled={isLoading}>
-          {isLoading ? 'Sauvegarde...' : 'Sauvegarder'}
+          {isLoading ? _('common.loading') : _('play.saveButton')}
         </button>
       </div>
     </form>
@@ -29,8 +32,8 @@
 {:else if scoreSaved && gameResults}
   <div class="save-score card-inset saved">
     <div class="score-saved-message">
-      <span class="emoji">✅</span> Score sauvegardé avec succès!
-      <p class="xp-confirmation">Tu as gagné {gameResults.xpEarned} points d'expérience.</p>
+      <span class="emoji">✅</span> {_('play.scoreSaved')}
+      <p class="xp-confirmation">{_('play.xpEarned', { xp: gameResults.xpEarned })}</p>
     </div>
   </div>
 {/if}

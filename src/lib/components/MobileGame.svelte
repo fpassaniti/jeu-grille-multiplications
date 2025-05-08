@@ -1,3 +1,4 @@
+<!-- src/lib/components/MobileGame.svelte -->
 <script>
   import { _ } from '$lib/utils/i18n';
 
@@ -33,7 +34,7 @@
         max="100"
         autocomplete="off"
         inputmode="numeric"
-        placeholder="Ta réponse"
+        placeholder={_('game.answerPlaceholder')}
       />
     </form>
 
@@ -81,7 +82,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .multiplication-icon {
     font-size: 2rem;
     position: absolute;
@@ -144,12 +145,12 @@
     max-width: 400px;
     padding: 20px;
   }
-  
+
   .mobile-solved-info h3 {
     margin-top: 0;
     text-align: center;
   }
-  
+
   .emoji {
     margin-right: 5px;
   }
@@ -159,7 +160,7 @@
     overflow-y: auto;
     padding: 5px;
   }
-  
+
   .no-solved {
     text-align: center;
     color: var(--text-light);
@@ -187,11 +188,11 @@
     overflow: hidden;
     transition: transform 0.2s;
   }
-  
+
   .solved-item:hover {
     transform: translateY(-3px);
   }
-  
+
   .solved-operation {
     font-weight: bold;
   }

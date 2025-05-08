@@ -38,7 +38,8 @@ export default {
     status: 'Statut',
     language: 'Langue',
     selectLanguage: 'Sélectionner la langue',
-    copyright: '© {year} {appName} - Apprends les multiplications en t\'amusant!'
+    copyright: '© {year} {appName} - Apprends les multiplications en t\'amusant!',
+    min: 'min',
   },
 
   navigation: {
@@ -191,7 +192,10 @@ export default {
     print: 'Imprimer',
     certificateTitle: 'MultyFun - Certificat de Niveau',
     currentLevelLabel: 'Niveau actuel',
-    continueAdventure: 'Continue ton aventure mathématique sur MultyFun!'
+    continueAdventure: 'Continue ton aventure mathématique sur MultyFun!',
+    templateNotLoaded: 'Le modèle d\'impression n\'est pas encore chargé. Veuillez réessayer.',
+    popupBlocked: 'Veuillez autoriser les popups pour imprimer le certificat.',
+    printError: 'Une erreur est survenue lors de la préparation de l\'impression.',
   },
 
   play: {
@@ -229,7 +233,9 @@ export default {
     xpEarned: 'Tu as gagné {xp} points d\'expérience.',
     newGame: 'Nouvelle partie',
     backToHome: 'Retour à l\'accueil',
-    dashboardButton: 'Tableau de bord'
+    dashboardButton: 'Tableau de bord',
+    gridReset: 'Nouvelle grille! Continue à jouer!',
+    endGame: 'Finir la partie',
   },
 
   tableSelector: {
