@@ -112,6 +112,12 @@
     gameTimer = gameDuration * 60;
     lastSolvedMultiplications = []; // Réinitialiser les dernières multiplications résolues
 
+    // Réinitialiser les compteurs et la grille
+    totalSolvedCountAdult = 0;
+    totalSolvedCountChild = { count: 0, total: 0 };
+    solvedCountAdult = 0;
+    solvedCountChild = { count: 0, total: 0 };
+
     // Réinitialiser la grille et les cellules résolues
     grid = Array(10).fill().map(() => Array(10).fill(null));
     solvedCells = Array(10).fill().map(() => Array(10).fill(false));
@@ -142,6 +148,9 @@
     if (isSelectingNewCell) return;
     isSelectingNewCell = true;
 
+    // Mettre à jour les totaux avant de vérifier si la grille est complète
+    updateTotalCounts();
+
     // Construire la liste des cellules disponibles selon le mode
     const availableCells = [];
 
@@ -168,10 +177,17 @@
       }
     }
 
-    // Si toutes les cellules disponibles sont résolues, terminer le jeu
+    // Si toutes les cellules disponibles sont résolues, réinitialiser la grille
     if (availableCells.length === 0) {
-      endGame();
+      // Réinitialiser la grille des cellules résolues, mais conserver le score
+      solvedCells = Array(10).fill().map(() => Array(10).fill(false));
+
+      // Afficher une notification brève que la grille est réinitialisée
+      showGridResetNotification();
+
+      // Rappeler cette fonction pour sélectionner une cellule dans la nouvelle grille
       isSelectingNewCell = false;
+      selectNewMultiplication();
       return;
     }
 
@@ -246,6 +262,9 @@
 
       lastSolvedMultiplications = [newSolved, ...lastSolvedMultiplications].slice(0, MAX_LAST_SOLVED);
 
+      // Mettre à jour les compteurs totaux
+      updateTotalCounts();
+
       clearInterval(cellTimerInterval);
 
       // Attendre un moment avant de passer à la cellule suivante
@@ -292,8 +311,8 @@
       duration: gameDuration,
       level: level,
       solvedCells: level === 'adulte'
-        ? solvedCountAdult
-        : solvedCountChild.count,
+        ? totalSolvedCountAdult + solvedCountAdult
+        : totalSolvedCountChild.count + solvedCountChild.count,
       totalPossibleCells: level === 'adulte'
         ? 100
         : solvedCountChild.total,
@@ -341,7 +360,23 @@
     }
   }
 
-  // Fonction pour redémarrer le jeu
+  // Variables pour le tracking des cellules résolues au total
+  let totalSolvedCountAdult = 0;
+  let totalSolvedCountChild = { count: 0, total: 0 };
+  let solvedCountAdult = 0;
+  let solvedCountChild = { count: 0, total: 0 };
+
+  // Variable pour la notification de réinitialisation de grille
+  let showingGridReset = false;
+
+  // Fonction pour afficher une notification de réinitialisation de grille
+  function showGridResetNotification() {
+    showingGridReset = true;
+    // Masquer la notification après 1.5 secondes
+    setTimeout(() => {
+      showingGridReset = false;
+    }, 1500);
+  }
   function restartGame() {
     scoreSaved = false;
     levelUp = false;
@@ -386,40 +421,74 @@
   }
 
   // Variables réactives pour le suivi des multiplications résolues
-  $: solvedCountAdult = (() => {
-    if (level !== 'adulte') return 0;
-    let count = 0;
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        if (solvedCells[r][c]) count++;
-      }
-    }
-    return count;
-  })();
-
-  $: solvedCountChild = (() => {
-    if (level !== 'enfant') return { count: 0, total: 0 };
-    const selectedNums = getSelectedTableNumbers();
-    let count = 0;
-    let total = 0;
-
-    // Pour chaque cellule du tableau 10x10
-    for (let r = 0; r < 10; r++) {
-      for (let c = 0; c < 10; c++) {
-        // Une cellule fait partie des tables sélectionnées si sa ligne OU sa colonne est dans les tables sélectionnées
-        if (selectedNums.includes(r + 1) || selectedNums.includes(c + 1)) {
-          total++;
-          if (solvedCells[r][c]) count++;
+  $: {
+    // Calcul pour le mode adulte
+    if (level === 'adulte') {
+      // Calculer d'abord les cellules résolues dans la grille actuelle
+      let currentCount = 0;
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          if (solvedCells[r][c]) currentCount++;
         }
       }
-    }
 
-    return { count, total };
-  })();
+      // Mettre à jour le compteur de la grille actuelle
+      solvedCountAdult = currentCount;
+    }
+  }
+
+  $: {
+    // Calcul pour le mode enfant
+    if (level === 'enfant') {
+      const selectedNums = getSelectedTableNumbers();
+      let count = 0;
+      let total = 0;
+
+      // Pour chaque cellule du tableau 10x10
+      for (let r = 0; r < 10; r++) {
+        for (let c = 0; c < 10; c++) {
+          // Une cellule fait partie des tables sélectionnées si sa ligne OU sa colonne est dans les tables sélectionnées
+          if (selectedNums.includes(r + 1) || selectedNums.includes(c + 1)) {
+            total++;
+            if (solvedCells[r][c]) count++;
+          }
+        }
+      }
+
+      solvedCountChild = { count, total };
+    }
+  }
+
+  // Fonction pour suivre l'état précédent et détecter les réinitialisations de grille
+  let prevSolvedCountAdult = 0;
+  let prevSolvedCountChild = { count: 0, total: 0 };
+
+  function updateTotalCounts() {
+    // Mode adulte
+    if (level === 'adulte') {
+      // Détection de la réinitialisation: on passe d'un nombre élevé à un nombre très faible
+      if (solvedCountAdult < 10 && prevSolvedCountAdult > 90) {
+        // La grille a été réinitialisée, ajouter 100 au total
+        totalSolvedCountAdult += 100;
+      }
+      prevSolvedCountAdult = solvedCountAdult;
+    }
+    // Mode enfant
+    else if (level === 'enfant' && solvedCountChild && solvedCountChild.total > 0) {
+      const total = solvedCountChild.total;
+      // Détection de la réinitialisation
+      if (solvedCountChild.count < 10 && prevSolvedCountChild.count > (total * 0.9)) {
+        // La grille a été réinitialisée, ajouter le total précédent
+        totalSolvedCountChild.count += total;
+      }
+      prevSolvedCountChild = { ...solvedCountChild };
+      totalSolvedCountChild.total = total; // Toujours mettre à jour le total
+    }
+  }
 
   // Pour le pourcentage de progression
   $: progressPercentage = level === 'adulte'
-    ? solvedCountAdult
+    ? (solvedCountAdult / 100) * 100
     : (solvedCountChild.total > 0 ? (solvedCountChild.count / solvedCountChild.total) * 100 : 0);
 
   // Vérifie si une cellule fait partie des tables sélectionnées (pour l'affichage de la grille)
@@ -460,7 +529,10 @@
       {score}
       {solvedCountAdult}
       {solvedCountChild}
+      {totalSolvedCountAdult}
+      {totalSolvedCountChild}
       {progressPercentage}
+      {showingGridReset}
       {getSelectedTableNumbers}
       {currentRow}
       {currentCol}
@@ -486,6 +558,8 @@
       {level}
       {solvedCountAdult}
       {solvedCountChild}
+      {totalSolvedCountAdult}
+      {totalSolvedCountChild}
       {getSelectedTableNumbers}
       {isLoggedIn}
       bind:playerName

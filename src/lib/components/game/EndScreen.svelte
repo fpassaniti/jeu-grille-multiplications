@@ -7,6 +7,8 @@
   export let level = 'adulte';
   export let solvedCountAdult = 0;
   export let solvedCountChild = { count: 0, total: 0 };
+  export let totalSolvedCountAdult = 0;
+  export let totalSolvedCountChild = { count: 0, total: 0 };
   export let getSelectedTableNumbers = () => [];
   export let isLoggedIn = false;
   export let playerName = '';
@@ -37,9 +39,9 @@
     <div class="result-card">
       <div class="result-icon">✅</div>
       {#if level === 'adulte'}
-        <p>Multiplications résolues: <span class="final-solved">{solvedCountAdult}/100</span></p>
+        <p>Multiplications résolues: <span class="final-solved">{totalSolvedCountAdult + solvedCountAdult}/100</span></p>
       {:else}
-        <p>Multiplications résolues: <span class="final-solved">{solvedCountChild.count}/{solvedCountChild.total}</span></p>
+        <p>Multiplications résolues: <span class="final-solved">{totalSolvedCountChild.count + solvedCountChild.count}/{solvedCountChild.total}</span></p>
       {/if}
     </div>
 

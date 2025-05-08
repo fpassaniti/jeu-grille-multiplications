@@ -11,7 +11,10 @@
   export let score = 0;
   export let solvedCountAdult = 0;
   export let solvedCountChild = { count: 0, total: 0 };
+  export let totalSolvedCountAdult = 0;
+  export let totalSolvedCountChild = { count: 0, total: 0 };
   export let progressPercentage = 0;
+  export let showingGridReset = false;
   export let getSelectedTableNumbers = () => [];
   export let currentRow = 0;
   export let currentCol = 0;
@@ -40,8 +43,11 @@
       {level}
       {solvedCountAdult}
       {solvedCountChild}
+      {totalSolvedCountAdult}
+      {totalSolvedCountChild}
       {getSelectedTableNumbers}
       {progressPercentage}
+      {showingGridReset}
     />
 
     {#if level === 'enfant'}
