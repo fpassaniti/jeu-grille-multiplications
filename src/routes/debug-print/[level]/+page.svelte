@@ -358,7 +358,7 @@
   .print-card {
     border: 10px double #555;
     padding: 20px;
-    height: 100%;
+    height: 85%;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
