@@ -1,4 +1,6 @@
 <script>
+  import LanguagePicker from './LanguagePicker.svelte';
+  import { _ } from '$lib/utils/i18n';
   // Props
   export let user = null;
 
@@ -16,7 +18,7 @@
       // Cela garantit que tous les composants seront actualisés avec le nouvel état d'authentification
       window.location.href = '/';
     } catch (err) {
-      console.error('Erreur lors de la déconnexion:', err);
+      console.error(_('dashboard.logoutError'), err);
     }
   }
 
@@ -43,7 +45,7 @@
   <div class="header-container">
     <div class="header-main">
       <a href="/" class="logo">
-        <span class="logo-text">MultyFun</span>
+        <span class="logo-text">{_('common.appName')}</span>
         <span class="logo-icon">×</span>
       </a>
 
@@ -51,17 +53,17 @@
       <nav class="navigation desktop-nav">
         <ul class="nav-links">
           <li>
-            <a href="/" class="nav-link button">Accueil</a>
+            <a href="/" class="nav-link button">{_('common.home')}</a>
           </li>
           <li>
-            <a href="/play" class="nav-link button">Jouer</a>
+            <a href="/play" class="nav-link button">{_('common.play')}</a>
           </li>
           <li>
-            <a href="/leaderboard" class="nav-link button">Classement</a>
+            <a href="/leaderboard" class="nav-link button">{_('common.leaderboard')}</a>
           </li>
           {#if user}
             <li>
-              <a href="/dashboard" class="nav-link button">Tableau de bord</a>
+              <a href="/dashboard" class="nav-link button">{_('common.dashboard')}</a>
             </li>
           {/if}
         </ul>
@@ -69,14 +71,19 @@
 
       <!-- Boutons d'authentification sur desktop -->
       <div class="auth-buttons desktop-auth">
+        <!-- Language Picker -->
+        <div class="language-picker-container">
+          <LanguagePicker />
+        </div>
+
         {#if user}
-          <span class="user-greeting">Bonjour, {user.displayName}!</span>
-          <button class="logout-button" on:click={handleLogout} title="Déconnexion">
+          <span class="user-greeting">{_('common.greeting', { name: user.displayName })}</span>
+          <button class="logout-button" on:click={handleLogout} title={_('navigation.logoutTitle')}>
             <span class="logout-icon">🚪</span>
           </button>
         {:else}
-          <a href="/login" class="button login-button">Connexion</a>
-          <a href="/register" class="button register-button">Inscription</a>
+          <a href="/login" class="button login-button">{_('common.login')}</a>
+          <a href="/register" class="button register-button">{_('common.register')}</a>
         {/if}
       </div>
 
@@ -105,50 +112,59 @@
       <ul class="mobile-nav-links">
         <li>
           <a href="/" class="mobile-nav-link" on:click={closeMobileMenu}>
-            <span class="nav-icon">🏠</span> Accueil
+            <span class="nav-icon">🏠</span> {_('common.home')}
           </a>
         </li>
         <li>
           <a href="/play" class="mobile-nav-link" on:click={closeMobileMenu}>
-            <span class="nav-icon">🎮</span> Jouer
+            <span class="nav-icon">🎮</span> {_('common.play')}
           </a>
         </li>
         <li>
           <a href="/leaderboard" class="mobile-nav-link" on:click={closeMobileMenu}>
-            <span class="nav-icon">🏆</span> Classement
+            <span class="nav-icon">🏆</span> {_('common.leaderboard')}
           </a>
         </li>
         {#if user}
           <li>
             <a href="/dashboard" class="mobile-nav-link" on:click={closeMobileMenu}>
-              <span class="nav-icon">📊</span> Tableau de bord
+              <span class="nav-icon">📊</span> {_('common.dashboard')}
             </a>
           </li>
           <li>
             <a href="/collection" class="mobile-nav-link" on:click={closeMobileMenu}>
-              <span class="nav-icon">📚</span> Ma Collection
+              <span class="nav-icon">📚</span> {_('common.collection')}
             </a>
           </li>
         {/if}
+        <!-- Language Picker in mobile menu -->
+        <li class="mobile-language-item">
+          <div class="mobile-language-label">
+            <span class="nav-icon">🌐</span> {_('common.language')}:
+          </div>
+          <div class="mobile-language-picker">
+            <LanguagePicker />
+          </div>
+        </li>
       </ul>
     </nav>
 
     <div class="mobile-auth">
       {#if user}
         <div class="mobile-user-info">
-          <span class="mobile-greeting">Connecté en tant que</span>
+          <span class="mobile-greeting">{_('common.loggedInAs')}</span>
           <span class="mobile-username">{user.displayName}</span>
         </div>
         <button class="mobile-logout-button" on:click={() => { handleLogout(); closeMobileMenu(); }}>
-          <span class="nav-icon">🚪</span> Déconnexion
+          <span class="nav-icon">🚪</span> {_('common.logout')}
         </button>
       {:else}
         <div class="mobile-auth-buttons">
           <a href="/login" class="mobile-auth-button login" on:click={closeMobileMenu}>
-            <span class="nav-icon">🔑</span> Connexion
+            <span class="nav-icon">🔑</span> {_('common.login')}
           </a>
           <a href="/register" class="mobile-auth-button register" on:click={closeMobileMenu}>
-            <span class="nav-icon">📝</span> Inscription
+            <span class="nav-icon">📝</span> {_('common.rgister')}
           </a>
         </div>
       {/if}
@@ -435,6 +451,25 @@
     background-color: var(--bg-secondary);
     color: var(--primary);
     border-left-color: var(--primary);
+  }
+
+  .mobile-language-item {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid var(--bg-secondary);
+  }
+
+  .mobile-language-label {
+    flex: 1;
+    display: flex;
+    align-items: center;
+  }
+
+  .mobile-language-picker {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
   }
 
   .nav-icon {

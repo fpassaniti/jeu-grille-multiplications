@@ -1,5 +1,6 @@
 <script>
   import { formatDate } from '$lib/utils/formatters';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let isLoading = false;
@@ -16,7 +17,7 @@
 <div class="leaderboard card-inset">
   <h2>
     <span class="emoji">🏆</span>
-    Meilleurs scores ({levelLabel}, {durationLabel})
+    {_('leaderboard.title')} ({levelLabel}, {durationLabel})
   </h2>
 
   {#if isLoading}
@@ -30,12 +31,12 @@
         <thead>
         <tr>
           <th></th>
-          <th>Nom</th>
-          <th>Score</th>
+          <th>{_('leaderboard.nameHeader')}</th>
+          <th>{_('leaderboard.scoreHeader')}</th>
           {#if level === 'enfant'}
-            <th class="hide-mobile">Tables</th>
+            <th class="hide-mobile">{_('leaderboard.tablesHeader')}</th>
           {/if}
-          <th class="hide-mobile">Date</th>
+          <th class="hide-mobile">{_('leaderboard.dateHeader')}</th>
         </tr>
         </thead>
         <tbody>
@@ -49,9 +50,9 @@
             {#if level === 'enfant'}
               <td class="hide-mobile tables-cell">
                 {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
-                  <span class="tables-all">Tables {entry.tables_used.sort((a, b) => a - b).join(', ')}</span>
+                  <span class="tables-all">{_('leaderboard.tablesHeader')} {entry.tables_used.sort((a, b) => a - b).join(', ')}</span>
                 {:else}
-                  <span class="tables-all">Toutes les tables</span>
+                  <span class="tables-all">{_('leaderboard.allTables')}</span>
                 {/if}
               </td>
             {/if}
@@ -64,8 +65,8 @@
   {:else}
     <div class="empty-state">
       <div class="empty-icon">🏅</div>
-      <p>Aucun score enregistré pour ce niveau et cette durée.</p>
-      <p class="empty-message">Sois le premier à relever le défi!</p>
+      <p>{_('leaderboard.noScores')}</p>
+      <p class="empty-message">{_('leaderboard.beFirst')}</p>
     </div>
   {/if}
 </div>

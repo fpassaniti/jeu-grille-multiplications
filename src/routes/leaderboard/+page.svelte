@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Initialisation au chargement de la page
   onMount(async () => {
@@ -56,7 +57,7 @@
 
     try {
       const response = await fetch(`/api/leaderboard?level=${currentLevel}&duration=${currentDuration}`);
-      if (!response.ok) throw new Error('Erreur de chargement');
+      if (!response.ok) throw new Error(_('common.error'));
 
       const data = await response.json();
 
@@ -66,7 +67,7 @@
         leaderboardData.enfant = data.scores;
       }
     } catch (error) {
-      console.error('Erreur lors du chargement du classement:', error);
+      console.error(_('leaderboard.loading'), error);
       if (currentLevel === 'adulte') {
         leaderboardData.adulte = [];
       } else {
@@ -77,37 +78,37 @@
 </script>
 
 <svelte:head>
-  <title>Classement des meilleurs scores - MultyFun</title>
-  <meta name="description" content="Découvre les meilleurs joueurs de MultyFun et leurs scores impressionnants!" />
+  <title>{_('leaderboard.pageTitle')}</title>
+  <meta name="description" content={_('leaderboard.metaDescription')} />
 </svelte:head>
 
 <main class="container">
   <div class="leaderboard-page card">
     <div class="page-header">
-      <h1>Classement des Meilleurs Scores</h1>
+      <h1>{_('leaderboard.title')}</h1>
     </div>
 
     <div class="filters-container">
       <div class="level-toggle">
-        <h3>Niveau</h3>
+        <h3>{_('leaderboard.levelLabel')}</h3>
         <div class="toggle-buttons">
           <button
             class="toggle-button {currentLevel === 'adulte' ? 'active' : ''}"
             on:click={() => toggleLevel('adulte')}
           >
-            <span class="emoji">👨‍💼</span> Niveau Adulte
+            <span class="emoji">👨‍💼</span> {_('leaderboard.adultLevel')}
           </button>
           <button
             class="toggle-button {currentLevel === 'enfant' ? 'active' : ''}"
             on:click={() => toggleLevel('enfant')}
           >
-            <span class="emoji">🧒</span> Niveau Enfant
+            <span class="emoji">🧒</span> {_('leaderboard.childLevel')}
           </button>
         </div>
       </div>
 
       <div class="duration-selector">
-        <h3>Durée</h3>
+        <h3>{_('leaderboard.durationLabel')}</h3>
         <div class="toggle-buttons">
           {#each durationOptions as option}
             <button
@@ -131,12 +132,12 @@
     </div>
 
     <div class="page-footer">
-      <p>Les scores sont filtrés par niveau et durée de jeu.</p>
+      <p>{_('leaderboard.filterExplanation')}</p>
       <p class="challenge-text">
-        <span class="emoji">🚀</span> Relève le défi et inscris ton nom dans le classement !
+        <span class="emoji">🚀</span> {_('leaderboard.challenge')}
       </p>
       <a href="/play" class="button play-button">
-        Jouer maintenant
+        {_('leaderboard.playNow')}
       </a>
     </div>
   </div>
