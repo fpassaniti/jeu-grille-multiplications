@@ -5,61 +5,58 @@
   export let currentRow = 0;
   export let currentCol = 0;
   export let userAnswer = '';
-  export let handleAnswerChange = () => {
-  };
-  export let handleSubmit = () => {
-  };
+  export let handleAnswerChange = () => {};
+  export let handleSubmit = () => {};
   export let inputRef;
   export let lastAnswerCorrect = null;
-  export let isSelectedTableCell = () => {
-  };
+  export let isSelectedTableCell = () => {};
   export let level = 'adulte';
   export let getSelectedTableNumbers = () => [];
   export let windowWidth = 0;
   export let windowHeight = 0;
 
-  // Calculer la taille de la grille en fonction de la fenêtre
-  $: gridSize = Math.min(windowWidth - 40, windowHeight - 200, 650);
-  $: cellSize = Math.max(gridSize / 11, 30); // 10 cellules + 1 pour les en-têtes, mais au moins 30px
+  // Calculer la taille optimale de la grille en fonction de la fenêtre
+  // Réduire davantage la taille pour s'assurer que tout tient dans la fenêtre
+  $: gridSize = Math.min(windowWidth - 40, windowHeight - 230, 680) / 11;
 </script>
 
-<div class="grid-container" style="max-width: {gridSize}px;">
-  <form on:submit|preventDefault={handleSubmit} class="cell-form">
-    <div class="grid" style="grid-template-columns: repeat(11, {cellSize}px); grid-template-rows: repeat(11, {cellSize}px);">
-      <!-- Cellule vide en haut à gauche -->
-      <div class="grid-header-cell empty-cell"></div>
+<div class="grid-container">
+  <div class="grid" style="--grid-size: {gridSize}px;">
+    <!-- En-tête des colonnes -->
+    <div class="grid-header-cell"></div>
+    {#each Array(10) as _, colIndex}
+      <div
+        class="grid-header-cell"
+        class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(colIndex + 1)}
+      >
+        {colIndex + 1}
+      </div>
+    {/each}
 
-      <!-- En-têtes des colonnes -->
-      {#each Array(10) as _, i}
+    <!-- Lignes avec en-têtes -->
+    {#each Array(10) as _, rowIndex}
+      <!-- En-tête de ligne -->
+      <div
+        class="grid-header-cell"
+        class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(rowIndex + 1)}
+      >
+        {rowIndex + 1}
+      </div>
+
+      <!-- Cellules de la grille -->
+      {#each Array(10) as _, colIndex}
+        {@const isSelected = isSelectedTableCell(rowIndex, colIndex)}
         <div
-          class="grid-header-cell column-header"
-          class:selected-table={level === 'enfant' && getSelectedTableNumbers().includes(i + 1)}
+          class="grid-cell"
+          class:current={rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
+          class:solved={solvedCells[rowIndex][colIndex]}
+          class:inactive={!isSelected}
         >
-          {i + 1}
-        </div>
-      {/each}
-
-      <!-- Contenu de la grille avec en-têtes de lignes -->
-      {#each Array(10) as _, rowIndex}
-        <!-- En-tête de ligne -->
-        <div
-          class="grid-header-cell row-header"
-          class:selected-table={level === 'enfant' && getSelectedTableNumbers().includes(rowIndex + 1)}
-        >
-          {rowIndex + 1}
-        </div>
-
-        <!-- Cellules de la grille -->
-        {#each Array(10) as _, colIndex}
-          <div
-            class="grid-cell"
-            class:current={rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
-            class:solved={solvedCells[rowIndex][colIndex]}
-            class:not-selected={level === 'enfant' && !isSelectedTableCell(rowIndex, colIndex)}
-          >
-            {#if solvedCells[rowIndex][colIndex]}
-              <span class="result">{grid[rowIndex][colIndex]}</span>
-            {:else if rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
+          {#if solvedCells[rowIndex][colIndex]}
+            <span class="solved-result">{grid[rowIndex][colIndex]}</span>
+            <div class="confetti-explosion"></div>
+          {:else if rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
+            <form on:submit={handleSubmit} class="cell-form">
               <input
                 type="number"
                 bind:value={userAnswer}
@@ -70,30 +67,35 @@
                 min="1"
                 max="100"
                 autocomplete="off"
-                inputmode="numeric"
               />
-            {:else}
+            </form>
+          {:else if isSelected}
+            <div class="cell-content">
               <span class="multiplication-text">{rowIndex + 1}×{colIndex + 1}</span>
-            {/if}
-          </div>
-        {/each}
+            </div>
+          {/if}
+        </div>
       {/each}
-    </div>
-  </form>
+    {/each}
+  </div>
 </div>
 
 <style>
+  /* Grille - Optimisée pour responsive */
   .grid-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     margin: 0 auto;
-    overflow: auto;
+    overflow: hidden; /* Supprime les barres de défilement */
+    padding: 5px; /* Réduit le padding pour gagner de l'espace vertical */
   }
 
   .grid {
     display: grid;
-    gap: 1px;
-    background-color: var(--bg-secondary);
-    padding: 1px;
-    border-radius: var(--border-radius-md);
+    grid-template-columns: repeat(11, var(--grid-size)); /* Utilise une variable CSS pour la taille */
+    gap: 1px; /* Réduit davantage l'espacement entre les cellules */
     margin: 0 auto;
   }
 
@@ -101,75 +103,109 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f5f5f5;
-    font-weight: bold;
-    border-radius: var(--border-radius-sm);
-  }
-
-  .row-header, .column-header {
-    color: #4d57ff;
-    font-size: 1.2rem;
-    background-color: #f8f9ff;
-  }
-
-  .grid-header-cell.selected-table {
-    background-color: #e6e9ff;
-    color: #2c3ddf;
-  }
-
-  .grid-header-cell.empty-cell {
     background-color: var(--bg-secondary);
+    border-radius: calc(var(--border-radius-sm) - 2px); /* Réduit davantage le border-radius */
+    font-weight: bold;
+    color: var(--primary-dark);
+    width: var(--grid-size);
+    height: var(--grid-size);
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03); /* Réduit davantage l'ombre */
+    font-size: calc(var(--grid-size) * 0.42); /* Ajuste légèrement la taille de police */
+  }
+
+  .grid-header-cell.inactive {
+    background-color: var(--bg-primary);
+    color: var(--text-light);
   }
 
   .grid-cell {
+    width: var(--grid-size);
+    height: var(--grid-size);
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: white;
-    border-radius: var(--border-radius-sm);
-    font-size: 0.85rem;
-    color: #555;
+    border-radius: calc(var(--border-radius-sm) - 2px); /* Réduit davantage le border-radius */
+    font-weight: bold;
+    position: relative;
+    box-sizing: border-box;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03); /* Réduit davantage l'ombre */
+    border: 1px solid var(--bg-secondary); /* Conserve l'épaisseur de la bordure minimale */
+    transition: all 0.2s;
+  }
+
+  .grid-cell:hover:not(.inactive):not(.current):not(.solved) {
+    transform: translateY(-1px); /* Réduit l'effet de survol pour un design plus compact */
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
   }
 
   .grid-cell.current {
-    background-color: #e6f4ff;
-    box-shadow: 0 0 0 2px #4fb3ff;
+    background-color: var(--info-light);
+    border: 1px solid var(--info);
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 6px rgba(79, 179, 255, 0.4); /* Réduit l'ombre */
+    z-index: 1;
   }
 
   .grid-cell.solved {
-    background-color: #f5f8ff;
-  }
-
-  .grid-cell.not-selected {
-    background-color: #f0f0f0;
-    color: #aaa;
-  }
-
-  .result {
-    font-weight: bold;
+    background-color: var(--success-light);
     color: var(--success-dark);
-    font-size: 1.1rem;
+    border-color: var(--success);
+  }
+
+  .solved-result {
+    font-size: min(20px, calc(var(--grid-size) / 2));
+    font-weight: bold;
+  }
+
+  .confetti-explosion {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+  }
+
+  .grid-cell.inactive {
+    background-color: var(--bg-primary);
+    color: var(--text-light);
+    border-color: var(--bg-primary);
+    opacity: 0.6;
+  }
+
+  .cell-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
   }
 
   .multiplication-text {
-    color: #777;
-    font-size: 0.85rem;
+    font-size: min(12px, calc(var(--grid-size) / 3.5));
+    color: var(--text-secondary);
   }
 
-  input {
+  .cell-form {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  input[type="number"] {
     width: 90%;
     height: 80%;
+    font-size: min(16px, calc(var(--grid-size) / 3));
     text-align: center;
-    font-weight: bold;
-    font-size: 1.1rem;
-    border: 2px solid var(--primary);
+    border: 2px solid var(--primary-light);
     border-radius: var(--border-radius-sm);
-  }
-
-  input:focus {
-    outline: none;
-    border-color: var(--primary-dark);
-    box-shadow: 0 0 0 3px rgba(77, 87, 255, 0.2);
+    padding: 0;
+    box-sizing: border-box;
   }
 
   input.correct {
@@ -182,19 +218,14 @@
     background-color: rgba(255, 107, 107, 0.1);
   }
 
-  /* Ensure the grid is responsive but readable */
-  @media (max-width: 767px) {
-    .grid-container {
-      overflow-x: auto;
-      max-width: 100%;
+  @keyframes confetti {
+    0% {
+      transform: translateY(0) rotate(0deg);
+      opacity: 1;
     }
-
-    .row-header, .column-header {
-      font-size: 1rem;
-    }
-
-    .multiplication-text {
-      font-size: 0.75rem;
+    100% {
+      transform: translateY(-100px) rotate(720deg);
+      opacity: 0;
     }
   }
 </style>
