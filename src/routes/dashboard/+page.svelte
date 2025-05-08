@@ -1,7 +1,9 @@
+<!-- src/routes/dashboard/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import PrintableCard from '$lib/components/PrintableCard.svelte';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -16,34 +18,10 @@
       goto('/login');
     }
   });
-
-  // Fonction pour imprimer la carte de niveau
-  function printLevelCard() {
-    window.print();
-  }
 </script>
 
 <svelte:head>
   <title>Tableau de bord - MultyFun</title>
-  <style media="print">
-    /* Style spécifique pour l'impression */
-    body * {
-      visibility: hidden;
-    }
-
-    .level-card, .level-card * {
-      visibility: visible;
-    }
-
-    .level-card {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: white;
-    }
-  </style>
 </svelte:head>
 
 <main class="container">
@@ -122,9 +100,17 @@
             <span class="emoji">📚</span> Collection
           </a>
 
-          <button class="tertiary-button" on:click={printLevelCard}>
-            <span class="emoji">🖨️</span> Imprimer ma carte
-          </button>
+          <!-- Remplacé le bouton d'impression par notre nouveau composant -->
+          <div class="print-button-wrapper">
+            <PrintableCard
+              level={data.userProgress?.level || 1}
+              title={data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}
+              description={data.userProgress?.currentLevel?.description || 'Tu as commencé ton voyage dans le monde des mathématiques!'}
+              imageUrl={data.userProgress?.currentLevel?.image_url}
+              colorTheme={data.userProgress?.currentLevel?.color_theme || 'blue'}
+              playerName={data.user?.displayName || 'Aventurier'}
+            />
+          </div>
         </div>
       </div>
 
@@ -328,14 +314,10 @@
     justify-content: center;
   }
 
-  .tertiary-button {
+  .print-button-wrapper {
     flex: 1;
-    padding: 15px;
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
   }
 
   .emoji {

@@ -1,7 +1,9 @@
+<!-- src/routes/collection/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import PrintableCard from '$lib/components/PrintableCard.svelte';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -16,40 +18,10 @@
       goto('/login');
     }
   });
-
-  // Fonction pour imprimer la carte de niveau sélectionnée
-  function printLevelCard(level) {
-    // Stocker temporairement le niveau sélectionné
-    selectedLevel = level;
-    setTimeout(() => {
-      window.print();
-      selectedLevel = null;
-    }, 100);
-  }
-
-  // Niveau sélectionné pour impression
-  let selectedLevel = null;
 </script>
 
 <svelte:head>
   <title>Ma Collection - MultyFun</title>
-  <style media="print">
-    /* Style spécifique pour l'impression */
-    body * {
-      visibility: hidden;
-    }
-    .print-level-card, .print-level-card * {
-      visibility: visible;
-    }
-    .print-level-card {
-      position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      background-color: white;
-    }
-  </style>
 </svelte:head>
 
 <main class="container">
@@ -119,73 +91,21 @@
 
           {#if level.unlocked}
             <div class="level-actions">
-              <button class="print-button" on:click={() => printLevelCard(level)}>
-                <span class="emoji">🖨️</span> Imprimer
-              </button>
+              <!-- Remplacé le bouton d'impression par notre nouveau composant -->
+              <PrintableCard
+                level={level.level}
+                title={level.title}
+                description={level.description}
+                imageUrl={level.image_url}
+                colorTheme={level.color_theme || 'blue'}
+                playerName={data.user?.displayName || 'Aventurier'}
+              />
             </div>
           {/if}
         </div>
       {/each}
     </div>
   </div>
-
-  {#if selectedLevel}
-    <div class="print-level-card">
-      <div class="print-card-content">
-        <div class="print-header">
-          <h1 class="print-title">MultyFun - Certificat de Niveau</h1>
-        </div>
-
-        <div class="print-level-info">
-          <div class="print-level-number">Niveau {selectedLevel.level}</div>
-          <div class="print-level-title">{selectedLevel.title}</div>
-
-          <div class="print-level-image">
-            <!-- Note: Pour l'impression, nous gardons l'approche simple pour garantir la compatibilité -->
-            {#if selectedLevel.image_url}
-              <img
-                src={selectedLevel.image_url}
-                alt="Niveau {selectedLevel.level}"
-                class="print-avatar-img"
-              />
-              <div class="print-avatar" style="display: none; background-image: {
-                selectedLevel.color_theme ?
-                `linear-gradient(45deg, var(--${selectedLevel.color_theme}), var(--${selectedLevel.color_theme}-light))` :
-                'linear-gradient(45deg, #4a6da7, #7a9fd7)'
-              }">
-                {selectedLevel.level}
-              </div>
-            {:else}
-              <!-- Image représentant le niveau (fallback) -->
-              <div class="print-avatar" style={selectedLevel.color_theme ?
-                `background-image: linear-gradient(45deg, var(--${selectedLevel.color_theme}), var(--${selectedLevel.color_theme}-light))` :
-                'background-image: linear-gradient(45deg, #4a6da7, #7a9fd7)'
-              }>
-                {selectedLevel.level}
-              </div>
-            {/if}
-          </div>
-
-          <div class="print-level-description">
-            {selectedLevel.description}
-          </div>
-        </div>
-
-        <div class="print-player-info">
-          <div class="print-player-name">
-            {data.user?.displayName || 'Joueur'}
-          </div>
-          <div class="print-date">
-            {new Date().toLocaleDateString()}
-          </div>
-        </div>
-
-        <div class="print-footer">
-          <p>Continue ton aventure mathématique sur MultyFun!</p>
-        </div>
-      </div>
-    </div>
-  {/if}
 </main>
 
 <style>
@@ -354,135 +274,12 @@
     justify-content: flex-end;
   }
 
-  .print-button {
-    background-color: var(--bg-secondary);
-    color: var(--text-secondary);
-    padding: 8px 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 0.9rem;
-  }
-
   .error-message {
     background-color: #ffebee;
     color: #d32f2f;
     padding: 12px;
     border-radius: var(--border-radius-md);
     margin-bottom: 20px;
-  }
-
-  /* Styles pour la carte imprimable */
-  .print-level-card {
-    display: none; /* Masqué en affichage normal, visible uniquement lors de l'impression */
-  }
-
-  @media print {
-    .print-level-card {
-      display: block;
-      page-break-inside: avoid;
-      font-family: 'Arial', sans-serif;
-      padding: 20mm;
-      box-sizing: border-box;
-      color: #333;
-    }
-
-    .print-card-content {
-      border: 5mm double #555;
-      padding: 10mm;
-      position: relative;
-      height: 180mm;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .print-header {
-      margin-bottom: 10mm;
-      text-align: center;
-      border-bottom: 2px solid #888;
-      padding-bottom: 5mm;
-    }
-
-    .print-title {
-      font-size: 24pt;
-      margin: 0;
-    }
-
-    .print-level-info {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .print-level-number {
-      font-size: 16pt;
-      margin-bottom: 5mm;
-    }
-
-    .print-level-title {
-      font-size: 32pt;
-      font-weight: bold;
-      margin-bottom: 10mm;
-    }
-
-    .print-level-image {
-      margin-bottom: 10mm;
-    }
-
-    .print-avatar {
-      width: 30mm;
-      height: 30mm;
-      background-color: #4a6da7;
-      color: white;
-      font-size: 20pt;
-      font-weight: bold;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto;
-    }
-
-    .print-avatar-img {
-      width: 30mm;
-      height: 30mm;
-      object-fit: cover;
-      border-radius: 50%;
-      border: 2mm solid #4a6da7;
-      margin: 0 auto;
-    }
-
-    .print-level-description {
-      font-size: 12pt;
-      text-align: center;
-      max-width: 90%;
-      font-style: italic;
-    }
-
-    .print-player-info {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 15mm;
-      padding-top: 10mm;
-      border-top: 1px solid #ccc;
-      width: 100%;
-    }
-
-    .print-player-name {
-      font-size: 14pt;
-      font-weight: bold;
-    }
-
-    .print-date {
-      font-size: 12pt;
-    }
-
-    .print-footer {
-      margin-top: 5mm;
-      text-align: center;
-      font-size: 10pt;
-      color: #777;
-    }
   }
 
   @media (max-width: 767px) {
