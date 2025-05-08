@@ -22,7 +22,7 @@
 
 <style>
   main {
-    min-height: calc(100vh - 150px);
+    min-height: calc(100vh - 192px);
   }
 
   .app-footer {
