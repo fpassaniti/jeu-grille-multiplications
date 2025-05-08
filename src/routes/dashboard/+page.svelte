@@ -52,11 +52,11 @@
           <div class="level-info">
             <div class="level-title">
               <span class="level-number">{_('dashboard.levelNumber', { level: data.userProgress?.level || 1 })}</span>
-              <h2 class="level-name">{data.userProgress?.currentLevel?.title || _('dashboard.defaultLevelName')}</h2>
+              <h2 class="level-name">{data.userProgress?.level ? _(`level.${data.userProgress?.level}`) : _('dashboard.defaultLevelName')}</h2>
             </div>
 
             <p class="level-description">
-              {data.userProgress?.currentLevel?.description || _('dashboard.defaultLevelDescription')}
+              {data.userProgress?.level ? _(`level.description.${data.userProgress?.level}`) : _('dashboard.defaultLevelDescription')}
             </p>
 
             <div class="level-stats">

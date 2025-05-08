@@ -44,7 +44,9 @@
           </div>
           <h2 class="level-info">
             {_('home.levelNumber', { level: data.userProgress?.level || 1 })}
-            <span class="level-title">{data.userProgress?.currentLevel?.title || _('home.defaultLevelName')}</span>
+            <span class="level-title">
+              {data.userProgress?.currentLevel?.title ? _(`level.${data.userProgress.level}`) : _('home.defaultLevelName')}
+            </span>
           </h2>
         </div>
       </div>

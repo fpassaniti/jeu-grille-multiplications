@@ -119,7 +119,7 @@
     top: 100%;
     right: 0;
     z-index: 10;
-    min-width: 120px;
+    /*min-width: 120px;*/
     background-color: white;
     border-radius: 0.25rem;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);

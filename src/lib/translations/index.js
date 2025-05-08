@@ -5,9 +5,9 @@ import es from './es';
 
 // Définition des langues disponibles avec leurs noms d'affichage
 export const languages = {
-  fr: 'Français',
-  en: 'English',
-  es: 'Español'
+  fr: '🇫🇷',
+  en: '🇬🇧',
+  es: '🇪🇸'
 };
 
 // Langue par défaut

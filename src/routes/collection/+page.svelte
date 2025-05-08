@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
   import PrintableCard from '$lib/components/PrintableCard.svelte';
+  import {_} from "$lib/utils/i18n.js";
 
   // Données utilisateur venant du serveur
   export let data;
@@ -33,16 +34,15 @@
     {/if}
 
     <div class="collection-header card">
-      <h1>Ma Collection de Niveaux</h1>
+      <h1>{_('collection.title')}</h1>
       <p class="collection-description">
-        Découvre tous les niveaux que tu peux débloquer en jouant à MultyFun!
-        Chaque niveau te donne un nouveau titre et une nouvelle image.
+        {_('collection.description')}
       </p>
 
       <div class="progress-summary">
         <div class="progress-label">
-          <span>Niveaux débloqués: {data.unlockedLevels}/{data.levels.length}</span>
-          <span>Niveau actuel: {data.userLevel}</span>
+          <span>{_('collection.unlockedLevels')} {data.unlockedLevels}/{data.levels.length}</span>
+          <span>{_('collection.currentLevel')} {data.userLevel}</span>
         </div>
         <div class="progress-bar">
           <div class="progress-fill" style="width: {(data.unlockedLevels/data.levels.length) * 100}%"></div>
@@ -54,11 +54,11 @@
       {#each data.levels as level}
         <div class="level-card card" class:unlocked={level.unlocked} class:current={level.current}>
           <div class="level-header">
-            <span class="level-number">Niveau {level.level}</span>
+            <span class="level-number">{_('collection.levelLabel')} {level.level}</span>
             {#if level.unlocked}
-              <span class="level-status unlocked">Débloqué</span>
+              <span class="level-status unlocked">{_('collection.unlocked')}</span>
             {:else}
-              <span class="level-status locked">Verrouillé</span>
+              <span class="level-status locked">{_('collection.locked')}</span>
             {/if}
           </div>
 
@@ -75,15 +75,15 @@
             </div>
 
             <div class="level-details">
-              <h3 class="level-title">{level.title}</h3>
+              <h3 class="level-title">{_(`level.${level.level}`)}</h3>
 
               {#if level.unlocked}
-                <p class="level-description">{level.description}</p>
+                <p class="level-description">{_(`level.description.${level.level}`)}</p>
               {:else}
-                <p class="level-hint">Débloque ce niveau en gagnant plus d'XP!</p>
-                <p class="level-xp-required">XP nécessaire: {level.min_xp}</p>
+                <p class="level-hint">{_('collection.unlockHint')}</p>
+                <p class="level-xp-required">{_('collection.requiredXp')} {level.min_xp}</p>
                 {#if data.userProgress}
-                  <p class="level-xp-missing">Encore {level.min_xp - data.userProgress.xp} XP à gagner</p>
+                  <p class="level-xp-missing">{_('collection.xpNeeded', { xp : level.min_xp - data.userProgress.xp})}</p>
                 {/if}
               {/if}
             </div>
@@ -94,8 +94,8 @@
               <!-- Remplacé le bouton d'impression par notre nouveau composant -->
               <PrintableCard
                 level={level.level}
-                title={level.title}
-                description={level.description}
+                title={_(`level.${level.level}`)}
+                description={_(`level.description.${level.level}`)}
                 imageUrl={level.image_url}
                 colorTheme={level.color_theme || 'blue'}
                 playerName={data.user?.displayName || 'Aventurier'}
