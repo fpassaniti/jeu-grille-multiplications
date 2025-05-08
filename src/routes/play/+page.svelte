@@ -56,6 +56,15 @@
   // Grille pour suivre les cellules déjà résolues
   let solvedCells = Array(10).fill().map(() => Array(10).fill(false));
 
+  // Variables pour le tracking des cellules résolues au total
+  let totalSolvedCountAdult = 0;
+  let totalSolvedCountChild = { count: 0, total: 0 };
+  let solvedCountAdult = 0;
+  let solvedCountChild = { count: 0, total: 0 };
+
+  // Variable pour la notification de réinitialisation de grille
+  let showingGridReset = false;
+
   // Vérifier l'état de connexion
   onMount(() => {
     updateDimensions();
@@ -360,15 +369,6 @@
     }
   }
 
-  // Variables pour le tracking des cellules résolues au total
-  let totalSolvedCountAdult = 0;
-  let totalSolvedCountChild = { count: 0, total: 0 };
-  let solvedCountAdult = 0;
-  let solvedCountChild = { count: 0, total: 0 };
-
-  // Variable pour la notification de réinitialisation de grille
-  let showingGridReset = false;
-
   // Fonction pour afficher une notification de réinitialisation de grille
   function showGridResetNotification() {
     showingGridReset = true;
@@ -377,6 +377,7 @@
       showingGridReset = false;
     }, 1500);
   }
+
   function restartGame() {
     scoreSaved = false;
     levelUp = false;

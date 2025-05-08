@@ -20,15 +20,17 @@
     font-size: 1rem;
     font-weight: bold;
     color: var(--primary-dark);
+    padding: 5px;
   }
 
   .row-col {
     font-size: 1.5rem;
+    color: #4d57ff;
   }
 
   .cell-timer-container {
     height: 6px;
-    background-color: var(--bg-secondary);
+    background-color: #f5f5f5;
     border-radius: 3px;
     margin-top: 5px;
     overflow: hidden;
