@@ -164,7 +164,7 @@
             <span class="nav-icon">🔑</span> {_('common.login')}
           </a>
           <a href="/register" class="mobile-auth-button register" on:click={closeMobileMenu}>
-            <span class="nav-icon">📝</span> {_('common.rgister')}
+            <span class="nav-icon">📝</span> {_('common.register')}
           </a>
         </div>
       {/if}
@@ -480,7 +480,7 @@
   .mobile-auth {
     padding: 20px;
     border-top: 1px solid var(--bg-secondary);
-    margin-top: auto; /* Pousse l'auth en bas */
+    margin-top: auto; /* Pousse l\'auth en bas */
   }
 
   .mobile-user-info {
@@ -574,7 +574,7 @@
 
   /* Media queries pour le responsive */
   @media (max-width: 768px) {
-    /* Cacher la navigation et l'auth desktop */
+    /* Cacher la navigation et l\'auth desktop */
     .desktop-nav, .desktop-auth {
       display: none;
     }
