@@ -2,12 +2,14 @@
 import fr from './fr';
 import en from './en';
 import es from './es';
+import zh from './zh';
 
 // Définition des langues disponibles avec leurs noms d'affichage
 export const languages = {
   fr: '🇫🇷',
   en: '🇬🇧',
-  es: '🇪🇸'
+  es: '🇪🇸',
+  zh: '🇨🇳'
 };
 
 // Langue par défaut
@@ -17,7 +19,8 @@ export const defaultLanguage = 'fr';
 export const translations = {
   fr,
   en,
-  es
+  es,
+  zh
 };
 
 /**
