@@ -1,4 +1,7 @@
+<!-- src/lib/components/game/GameProgress.svelte -->
 <script>
+  import { _ } from '$lib/utils/i18n';
+
   // Props
   export let level = 'adulte';
   export let solvedCountAdult = 0;
@@ -13,13 +16,13 @@
 <div class="progress-container">
   {#if showingGridReset}
     <div class="grid-reset-notification">
-      <span class="emoji">🔄</span> Nouvelle grille! Continue à jouer!
+      <span class="emoji">🔄</span> {_('play.gridReset')}
     </div>
   {/if}
 
   {#if level === 'adulte'}
     <div class="progress-label">
-      Multiplications résolues: {totalSolvedCountAdult + solvedCountAdult}/100
+      {_('play.solvedLabel')} {totalSolvedCountAdult + solvedCountAdult}/100
     </div>
     <div class="progress-bar">
       <div class="progress-fill" style="width: {progressPercentage}%"></div>
@@ -27,13 +30,13 @@
   {:else}
     {#if getSelectedTableNumbers().length > 0}
       <div class="progress-label">
-        Multiplications résolues: {totalSolvedCountChild.count + solvedCountChild.count}/{solvedCountChild.total}
+        {_('play.solvedLabel')} {totalSolvedCountChild.count + solvedCountChild.count}/{solvedCountChild.total}
       </div>
       <div class="progress-bar">
         <div class="progress-fill" style="width: {progressPercentage}%"></div>
       </div>
     {:else}
-      <div class="progress-label">Aucune table sélectionnée</div>
+      <div class="progress-label">{_('tableSelector.errorMessage')}</div>
     {/if}
   {/if}
 </div>

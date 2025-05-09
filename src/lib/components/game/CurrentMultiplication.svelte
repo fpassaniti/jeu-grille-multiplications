@@ -1,4 +1,7 @@
+<!-- src/lib/components/game/CurrentMultiplication.svelte -->
 <script>
+  import { _ } from '$lib/utils/i18n';
+
   // Props
   export let currentRow = 0;
   export let currentCol = 0;
@@ -7,7 +10,7 @@
 </script>
 
 <div class="current-multiplication">
-  <span class="emoji">🎯</span> Multiplication actuelle: <span class="row-col">{currentRow} × {currentCol}</span>
+  <span class="emoji">🎯</span> {_('play.currentMultiplicationLabel')} <span class="row-col">{currentRow} × {currentCol}</span>
   <div class="cell-timer-container">
     <div class="cell-timer" style="width: {(cellTimer / maxCellTimer) * 100}%"></div>
   </div>

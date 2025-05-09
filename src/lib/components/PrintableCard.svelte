@@ -2,6 +2,7 @@
 <script>
   import { onMount } from 'svelte';
   import { loadTemplate, renderTemplate } from '$lib/utils/template-loader';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let level = 1;
@@ -52,7 +53,10 @@
       imageUrl: highResImageUrl,
       gradient,
       playerName,
-      date
+      date,
+      certificateTitle: _('collection.certificateTitle'),
+      levelLabel: _('collection.levelLabel'),
+      continueAdventure: _('collection.continueAdventure')
     };
   }
 
@@ -60,7 +64,7 @@
   function preparePrint() {
     if (!templateLoaded) {
       console.error('Le template n\'est pas encore chargé');
-      alert('Erreur lors de la préparation de l\'impression. Veuillez réessayer dans quelques instants.');
+      alert(_('common.error') + ': ' + _('collection.templateNotLoaded'));
       return;
     }
 
@@ -79,11 +83,11 @@
         printWindow.document.close();
       } else {
         // Si les popups sont bloqués, alerter l'utilisateur
-        alert('Veuillez autoriser les popups pour imprimer le certificat.');
+        alert(_('collection.popupBlocked'));
       }
     } catch (error) {
       console.error('Erreur lors de la préparation de l\'impression:', error);
-      alert('Une erreur est survenue lors de la préparation de l\'impression.');
+      alert(_('common.error') + ': ' + _('collection.printError'));
     }
   }
 </script>
@@ -91,7 +95,7 @@
 <div class="print-component">
   <!-- Bouton pour déclencher l'impression -->
   <button class="print-button" on:click={preparePrint} disabled={!templateLoaded}>
-    <span class="emoji">🖨️</span> Imprimer
+    <span class="emoji">🖨️</span> {_('collection.print')}
   </button>
 </div>
 
@@ -127,5 +131,6 @@
 
   .emoji {
     font-size: 1.1rem;
+    margin-right: 5px;
   }
 </style>

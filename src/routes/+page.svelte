@@ -1,5 +1,6 @@
 <script>
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur (fournies via +layout.server.js)
   export let data;
@@ -24,13 +25,13 @@
       </div>
     </div>
 
-    <h1>Jeu de Multiplication</h1>
-    <p class="game-intro">Résous autant de multiplications que possible avant la fin du temps!</p>
+    <h1>{_('home.gameTitle')}</h1>
+    <p class="game-intro">{_('home.gameIntro')}</p>
 
     {#if data.user}
       <!-- Utilisateur connecté -->
       <div class="welcome-message">
-        <p>Bienvenue, <span class="username">{data.user.displayName}</span>!</p>
+        <p>{_('home.welcome', { name: data.user.displayName })}</p>
         <div class="current-level-display">
           <div class="level-avatar-container">
             <LevelAvatar
@@ -42,75 +43,77 @@
             />
           </div>
           <h2 class="level-info">
-            Niveau {data.userProgress?.level || 1}:
-            <span class="level-title">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</span>
+            {_('home.levelNumber', { level: data.userProgress?.level || 1 })}
+            <span class="level-title">
+              {data.userProgress?.currentLevel?.title ? _(`level.${data.userProgress.level}`) : _('home.defaultLevelName')}
+            </span>
           </h2>
         </div>
       </div>
 
       <div class="action-buttons">
         <a href="/dashboard" class="button primary-button">
-          <span class="emoji">🏆</span> Continuer l'aventure
+          <span class="emoji">🏆</span> {_('home.continueAdventure')}
         </a>
       </div>
     {:else}
       <!-- Utilisateur non connecté -->
       <div class="start-options">
-        <a href="/register" class="option-card" >
+        <a href="/register" class="option-card">
           <div class="option-icon">🚀</div>
-          <h3>Commencer l'aventure</h3>
-          <p>Crée un compte et gagne des niveaux!</p>
+          <h3>{_('home.startOptions.startAdventure.title')}</h3>
+          <p>{_('home.startOptions.startAdventure.description')}</p>
         </a>
 
-        <a href="/login" class="option-card" >
+        <a href="/login" class="option-card">
           <div class="option-icon">🔑</div>
-          <h3>Se connecter</h3>
-          <p>Continue ton aventure mathématique!</p>
+          <h3>{_('home.startOptions.login.title')}</h3>
+          <p>{_('home.startOptions.login.description')}</p>
         </a>
 
-        <a href="/play" class="option-card" >
+        <a href="/play" class="option-card">
           <div class="option-icon">⚡</div>
-          <h3>Partie rapide</h3>
-          <p>Joue sans créer de compte</p>
+          <h3>{_('home.startOptions.quickPlay.title')}</h3>
+          <p>{_('home.startOptions.quickPlay.description')}</p>
         </a>
       </div>
     {/if}
 
     <div class="features-section">
-      <h2>Pourquoi jouer à MultyFun?</h2>
+      <h2>{_('home.features.title')}</h2>
 
       <div class="features-grid">
         <div class="feature-card">
           <div class="feature-icon">📊</div>
-          <h3>Gagne des niveaux</h3>
-          <p>Accumule de l'expérience et monte en grade!</p>
+          <h3>{_('home.features.gainLevels.title')}</h3>
+          <p>{_('home.features.gainLevels.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🏅</div>
-          <h3>Collectionne des titres</h3>
-          <p>Débloque 30 titres uniques de champion!</p>
+          <h3>{_('home.features.collectTitles.title')}</h3>
+          <p>{_('home.features.collectTitles.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">🖨️</div>
-          <h3>Imprime ta carte</h3>
-          <p>Montre ta progression à tes amis!</p>
+          <h3>{_('home.features.printCard.title')}</h3>
+          <p>{_('home.features.printCard.description')}</p>
         </div>
 
         <div class="feature-card">
           <div class="feature-icon">📱</div>
-          <h3>Joue partout</h3>
-          <p>Sur ordinateur, tablette ou téléphone!</p>
+          <h3>{_('home.features.playEverywhere.title')}</h3>
+          <p>{_('home.features.playEverywhere.description')}</p>
         </div>
       </div>
     </div>
 
     <div class="leaderboard-section">
-      <h2>Découvre les meilleurs joueurs!</h2>
-      <p>Vois qui est en tête du classement et défie-les!</p>
+      <h2>{_('home.leaderboard.title')}</h2>
+      <p>{_('home.leaderboard.description')}</p>
       <a href="/leaderboard" class="button leaderboard-button">
-        <span class="emoji">🏆</span> Voir le classement
+        <span class="emoji">🏆</span> {_('home.leaderboard.viewButton')}
       </a>
     </div>
   </div>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>MultyFun - Certificat de Niveau {{level}}</title>
+  <title>{{certificateTitle}} {{level}}</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
@@ -149,18 +149,18 @@
 <body>
 <div class="print-card">
   <div class="print-header">
-    <h1 class="print-title">MultyFun - Certificat de Niveau</h1>
+    <h1 class="print-title">{{certificateTitle}}</h1>
   </div>
 
   <div class="print-content">
     <div class="print-level-info">
-      <div class="print-level-number">Niveau {{level}}</div>
+      <div class="print-level-number">{{levelLabel}} {{level}}</div>
       <div class="print-level-title">{{title}}</div>
 
       <div class="print-level-image">
         {{#if hasImage}}
         <div class="print-image-wrapper">
-          <img src="{{imageUrl}}" alt="Niveau {{level}}" class="print-image" />
+          <img src="{{imageUrl}}" alt="{{levelLabel}} {{level}}" class="print-image" />
         </div>
         {{else}}
         <div class="print-fallback-image">
@@ -185,7 +185,7 @@
   </div>
 
   <div class="print-footer">
-    <p>Continue ton aventure mathématique sur MultyFun!</p>
+    <p>{{continueAdventure}}</p>
   </div>
 </div>
 

@@ -1,6 +1,7 @@
 <script>
   import '../app.css';
   import NavigationHeader from '$lib/components/NavigationHeader.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Récupérer les données du layout server
   export let data;
@@ -8,20 +9,20 @@
 
 <NavigationHeader user={data.user} />
 
-<main>
+<div class="main-content">
   <slot />
-</main>
+</div>
 
 <footer class="app-footer">
   <div class="footer-container">
     <div class="footer-content">
-      <p>&copy; {new Date().getFullYear()} MultyFun - Apprends les multiplications en t'amusant!</p>
+      <p>{_('common.copyright', { year: new Date().getFullYear(), appName: _('common.appName') })}</p>
     </div>
   </div>
 </footer>
 
 <style>
-  main {
+  .main-content {
     min-height: calc(100vh - 192px);
   }
 

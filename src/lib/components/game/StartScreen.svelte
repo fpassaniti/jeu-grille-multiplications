@@ -1,5 +1,6 @@
 <script>
   import GameOptions from './GameOptions.svelte';
+  import {_} from '$lib/utils/i18n';
 
   // Props
   export let level = 'adulte';
@@ -28,13 +29,13 @@
     on:click={startGame}
     disabled={level === 'enfant' && getSelectedTableNumbers().length === 0}
   >
-    <span class="emoji">🚀</span> Commencer
+    <span class="emoji">🚀</span> {_('play.start')}
   </button>
 
   <div class="leaderboard-link-section">
-    <h3>Envie de voir les meilleurs scores?</h3>
+    <h3>{_('play.viewLeaderboard')}</h3>
     <a href="/leaderboard" class="button leaderboard-link">
-      <span class="emoji">🏆</span> Voir le classement complet
+      <span class="emoji">🏆</span> {_('play.viewLeaderboardButton')}
     </a>
   </div>
 </div>

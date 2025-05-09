@@ -1,5 +1,6 @@
 <script>
   import {onMount} from 'svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // État du formulaire
   let name = 'Joueur Test';
@@ -23,7 +24,7 @@
   // Vérifier automatiquement si l'utilisateur est connecté
   onMount(async () => {
     try {
-      if (data.user) {
+      if (data && data.user) {
         isConnected = true;
         name = data.user.username;
         console.log(data.user)
@@ -119,7 +120,7 @@
   <title>Testeur d'API Scores - MultyFun</title>
 </svelte:head>
 
-<main class="container">
+<div class="container">
   <div class="test-page card">
     <h1>Testeur d'API Scores</h1>
     <p class="subtitle">Cet outil permet de simuler une fin de partie et tester l'API d'enregistrement des scores.</p>
@@ -284,7 +285,7 @@
       </div>
     {/if}
   </div>
-</main>
+</div>
 
 <style>
   .test-page {

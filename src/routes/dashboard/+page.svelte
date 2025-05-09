@@ -4,6 +4,7 @@
   import { goto } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
   import PrintableCard from '$lib/components/PrintableCard.svelte';
+  import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur
   export let data;
@@ -34,7 +35,7 @@
 
     <div class="dashboard-content">
       <div class="dashboard-main card">
-        <h1>Bonjour, {data.user?.displayName || 'Aventurier'}!</h1>
+        <h1>{_('dashboard.welcome', { name: data.user?.displayName || _('dashboard.defaultLevelName') })}</h1>
 
         <div class="level-card">
           <div class="level-image">
@@ -50,22 +51,22 @@
 
           <div class="level-info">
             <div class="level-title">
-              <span class="level-number">Niveau {data.userProgress?.level || 1}</span>
-              <h2 class="level-name">{data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}</h2>
+              <span class="level-number">{_('dashboard.levelNumber', { level: data.userProgress?.level || 1 })}</span>
+              <h2 class="level-name">{data.userProgress?.level ? _(`level.${data.userProgress?.level}`) : _('dashboard.defaultLevelName')}</h2>
             </div>
 
             <p class="level-description">
-              {data.userProgress?.currentLevel?.description || 'Tu as commencé ton voyage dans le monde des mathématiques!'}
+              {data.userProgress?.level ? _(`level.description.${data.userProgress?.level}`) : _('dashboard.defaultLevelDescription')}
             </p>
 
             <div class="level-stats">
               <div class="stat-item">
-                <span class="stat-label">Parties jouées</span>
+                <span class="stat-label">{_('dashboard.gamesPlayed')}</span>
                 <span class="stat-value">{data.userProgress?.games_played || 0}</span>
               </div>
 
               <div class="stat-item">
-                <span class="stat-label">XP totale</span>
+                <span class="stat-label">{_('dashboard.totalXp')}</span>
                 <span class="stat-value">{data.userProgress?.xp || 0}</span>
               </div>
             </div>
@@ -73,19 +74,19 @@
             {#if data.userProgress?.nextLevel}
               <div class="xp-progress">
                 <div class="progress-label">
-                  <span>Niveau suivant: {data.userProgress.nextLevel.title}</span>
+                  <span>{_('dashboard.nextLevel', { title: data.userProgress.nextLevel.title })}</span>
                   <span>{data.userProgress.xp}/{data.userProgress.nextLevel.min_xp} XP</span>
                 </div>
                 <div class="progress-bar">
                   <div class="progress-fill" style="width: {data.userProgress.levelProgress}%"></div>
                 </div>
                 <div class="progress-info">
-                  {data.userProgress.xpUntilNextLevel} XP nécessaires pour le niveau suivant
+                  {_('dashboard.xpUntilNextLevel', { xp: data.userProgress.xpUntilNextLevel })}
                 </div>
               </div>
             {:else}
               <div class="max-level">
-                <span class="emoji">🏆</span> Tu as atteint le niveau maximum!
+                <span class="emoji">🏆</span> {_('dashboard.maxLevel')}
               </div>
             {/if}
           </div>
@@ -93,11 +94,11 @@
 
         <div class="action-buttons">
           <a href="/play" class="button primary-button">
-            <span class="emoji">🎮</span> Jouer
+            <span class="emoji">🎮</span> {_('dashboard.playButton')}
           </a>
 
           <a href="/collection" class="button secondary-button">
-            <span class="emoji">📚</span> Collection
+            <span class="emoji">📚</span> {_('dashboard.collectionButton')}
           </a>
 
           <!-- Remplacé le bouton d'impression par notre nouveau composant -->
@@ -115,7 +116,7 @@
       </div>
 
       <div class="recent-games card">
-        <h2>Parties récentes</h2>
+        <h2>{_('dashboard.recentGames')}</h2>
 
         {#if data.recentGames && data.recentGames.length > 0}
           <div class="games-list">
@@ -130,16 +131,16 @@
                   </div>
                 </div>
                 <div class="game-level">
-                  <span class="emoji">{game.level === 'adulte' ? '👨‍💼' : '🧒'}</span> {game.level}
+                  <span class="emoji">{game.level === 'adulte' ? '👨‍💼' : '🧒'}</span> {game.level === 'adulte' ? _('common.adult') : _('common.child')}
                 </div>
               </div>
             {/each}
           </div>
         {:else}
           <div class="no-games">
-            <p>Tu n'as pas encore joué de parties.</p>
+            <p>{_('dashboard.noGames')}</p>
             <a href="/play" class="button play-now-button">
-              Jouer maintenant!
+              {_('dashboard.playNow')}
             </a>
           </div>
         {/if}
@@ -147,6 +148,7 @@
     </div>
   </div>
 </main>
+
 
 <style>
   .dashboard-container {

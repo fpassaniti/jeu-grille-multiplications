@@ -1,4 +1,7 @@
+<!-- src/lib/components/MobileGame.svelte -->
 <script>
+  import { _ } from '$lib/utils/i18n';
+
   // Props
   export let currentRow;
   export let currentCol;
@@ -31,7 +34,7 @@
         max="100"
         autocomplete="off"
         inputmode="numeric"
-        placeholder="Ta réponse"
+        placeholder={_('game.answerPlaceholder')}
       />
     </form>
 
@@ -41,17 +44,17 @@
   </div>
 
   <div class="mobile-solved-info card">
-    <h3><span class="emoji">🎯</span> Dernières multiplications résolues</h3>
+    <h3><span class="emoji">🎯</span> {_('game.recentlySolved')}</h3>
     <div class="solved-list">
       {#if lastSolvedMultiplications.length === 0}
-        <p class="no-solved">Aucune multiplication résolue pour le moment.</p>
+        <p class="no-solved">{_('game.noSolved')}</p>
       {:else}
         <div class="solved-grid">
           {#each lastSolvedMultiplications as solved}
             <div class="solved-item">
               <span class="solved-operation">{solved.row} × {solved.col} = {solved.result}</span>
               {#if solved.points !== undefined}
-                <div class="points-earned">+{solved.points} pts</div>
+                <div class="points-earned">{_('game.pointsEarned', { points: solved.points })}</div>
               {/if}
             </div>
           {/each}
@@ -79,7 +82,7 @@
     position: relative;
     overflow: hidden;
   }
-  
+
   .multiplication-icon {
     font-size: 2rem;
     position: absolute;
@@ -142,12 +145,12 @@
     max-width: 400px;
     padding: 20px;
   }
-  
+
   .mobile-solved-info h3 {
     margin-top: 0;
     text-align: center;
   }
-  
+
   .emoji {
     margin-right: 5px;
   }
@@ -157,7 +160,7 @@
     overflow-y: auto;
     padding: 5px;
   }
-  
+
   .no-solved {
     text-align: center;
     color: var(--text-light);
@@ -185,11 +188,11 @@
     overflow: hidden;
     transition: transform 0.2s;
   }
-  
+
   .solved-item:hover {
     transform: translateY(-3px);
   }
-  
+
   .solved-operation {
     font-weight: bold;
   }

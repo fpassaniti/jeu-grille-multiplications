@@ -1,4 +1,6 @@
 <script>
+  import {_} from '$lib/utils/i18n';
+
   // État du formulaire
   let username = '';
   let passwordChar = '';
@@ -59,21 +61,21 @@
 </script>
 
 <svelte:head>
-  <title>Créer un compte - MultyFun</title>
+  <title>{_('auth.registerTitle')} - {_('common.appName')}</title>
 </svelte:head>
 
-<main class="container">
+<div class="container">
   <div class="register-container card">
     <div class="register-header">
-      <h1>Créer un compte</h1>
-      <p class="register-subheader">Commence ton aventure mathématique!</p>
+      <h1>{_('auth.registerTitle')}</h1>
+      <p class="register-subheader">{_('auth.registerSubtitle')}</p>
     </div>
 
     {#if success}
       <div class="success-message">
         <div class="success-icon">🎉</div>
-        <h2>Compte créé avec succès!</h2>
-        <p>Bienvenue dans l'aventure MultyFun! Tu vas être redirigé vers ton tableau de bord...</p>
+        <h2>{_('auth.accountCreated')}</h2>
+        <p>{_('auth.welcomeMessage')}</p>
       </div>
     {:else}
       <form on:submit|preventDefault={handleRegister} class="register-form">
@@ -84,33 +86,33 @@
         {/if}
 
         <div class="form-group">
-          <label for="username">Ton prénom</label>
+          <label for="username">{_('auth.firstName')}</label>
           <input
             type="text"
             id="username"
             bind:value={username}
-            placeholder="Entre ton prénom"
+            placeholder={_('auth.firstNamePlaceholder')}
             disabled={loading}
             autocomplete="off"
           />
-          <p class="input-help">C'est le nom que tu utiliseras pour te connecter</p>
+          <p class="input-help">{_('auth.firstNameHelp')}</p>
         </div>
 
         <div class="form-group">
-          <label for="displayName">Nom d'affichage (optionnel)</label>
+          <label for="displayName">{_('auth.displayName')}</label>
           <input
             type="text"
             id="displayName"
             bind:value={displayName}
-            placeholder="Comment veux-tu qu'on t'appelle?"
+            placeholder={_('auth.displayNamePlaceholder')}
             disabled={loading}
             autocomplete="off"
           />
-          <p class="input-help">C'est le nom qui sera affiché dans le jeu</p>
+          <p class="input-help">{_('auth.displayNameHelp')}</p>
         </div>
 
         <div class="form-group">
-          <label for="passwordChar">Ton caractère secret</label>
+          <label for="passwordChar">{_('auth.secretCharacter')}</label>
           <div class="password-container">
             {#each passwordChars as char}
               <button
@@ -125,29 +127,29 @@
             {/each}
           </div>
           {#if submitted && !passwordChar}
-            <div class="error-text">Choisis un caractère secret</div>
+            <div class="error-text">{_('auth.chooseSecretCharacter')}</div>
           {/if}
-          <p class="input-help">Choisis un emoji comme mot de passe. Tu utiliseras celui-ci pour te connecter.</p>
+          <p class="input-help">{_('auth.emojiPassword')}</p>
         </div>
 
         <button type="submit" class="register-button" disabled={loading}>
           {#if loading}
-            Création en cours...
+            {_('auth.creatingAccount')}
           {:else}
-            <span class="emoji">🚀</span> Créer mon compte
+            <span class="emoji">🚀</span> {_('auth.createAccount')}
           {/if}
         </button>
       </form>
 
       <div class="register-footer">
-        <p>Tu as déjà un compte?</p>
+        <p>{_('auth.alreadyHaveAccount')}</p>
         <a href="/login" class="button text-button">
-          Se connecter
+          {_('auth.loginButton')}
         </a>
       </div>
     {/if}
   </div>
-</main>
+</div>
 
 <style>
   .register-container {
@@ -303,13 +305,23 @@
   }
 
   @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-20px); }
-    60% { transform: translateY(-10px); }
+    0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+    }
+    40% {
+      transform: translateY(-20px);
+    }
+    60% {
+      transform: translateY(-10px);
+    }
   }
 </style>
