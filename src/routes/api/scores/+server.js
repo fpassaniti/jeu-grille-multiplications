@@ -35,15 +35,6 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Durée de jeu invalide' }, { status: 400 });
     }
 
-    // Vérifications de sécurité supplémentaires
-    // Vérifier que le score est cohérent avec le nombre de cellules résolues
-    const maxScorePerCell = 30; // Score maximum estimé par cellule
-    const maxPossibleScore = solvedCells * maxScorePerCell;
-
-    if (score > maxPossibleScore) {
-      return json({ error: 'Score anormalement élevé détecté' }, { status: 400 });
-    }
-
     // Modification: On permet maintenant que solvedCells > totalPossibleCells
     // car la grille peut être réinitialisée et remplie plusieurs fois
     // Nous n'imposons plus la contrainte solvedCells <= totalPossibleCells

@@ -186,13 +186,13 @@
 
           <div class="form-group">
             <label for="solvedCells">Cellules résolues</label>
-            <input type="number" id="solvedCells" bind:value={solvedCells} min="1" max={totalPossibleCells} required />
+            <input type="number" id="solvedCells" bind:value={solvedCells} min="1" required />
             <p class="input-help">Nombre de multiplications résolues pendant la partie.</p>
           </div>
 
           <div class="form-group">
             <label for="totalCells">Total de cellules possibles</label>
-            <input type="number" id="totalCells" bind:value={totalPossibleCells} min={solvedCells} required />
+            <input type="number" id="totalCells" bind:value={totalPossibleCells} required />
             <p class="input-help">Nombre total de cellules disponibles dans la grille.</p>
           </div>
 
