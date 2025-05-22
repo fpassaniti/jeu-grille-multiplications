@@ -3,12 +3,14 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
+import { activeGameTokens } from '../../../lib/server/tokenStore.js'; // Import shared token store
 
 // Configuration Supabase
 const supabaseUrl = env.VITE_SUPABASE_URL;
 const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 // Le score est directement utilisé comme XP
+
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, cookies }) {
@@ -21,10 +23,21 @@ export async function POST({ request, cookies }) {
       level,
       solvedCells,
       totalPossibleCells,
-      selectedTables
+      selectedTables,
+      sessionToken // New field for game session token
     } = await request.json();
 
-    // Validation des données
+    // Validate session token first
+    if (!sessionToken) {
+      return json({ error: 'Session token manquant' }, { status: 400 });
+    }
+    if (!activeGameTokens.has(sessionToken)) {
+      return json({ error: 'Jeton de session invalide ou expiré' }, { status: 403 });
+    }
+    // Token is valid, consume it (make it single-use)
+    activeGameTokens.delete(sessionToken);
+
+    // Validation des données (existing validation)
     if (score == undefined || !duration || !level) {
       return json({ error: 'Informations manquantes' }, { status: 400 });
     }

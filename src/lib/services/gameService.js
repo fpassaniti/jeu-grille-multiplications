@@ -1,3 +1,6 @@
+import { get } from 'svelte/store';
+import { gameSessionToken } from '$lib/stores/gameStateStore.js';
+
 /**
  * Service pour gérer les interactions avec l'API du jeu
  */
@@ -15,12 +18,18 @@
  * @returns {Promise<Object>} - Réponse de l'API
  */
 export async function saveScore(gameData) {
+  const token = get(gameSessionToken);
+  const payload = {
+    ...gameData,
+    sessionToken: token
+  };
+
   const response = await fetch('/api/scores', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify(gameData)
+    body: JSON.stringify(payload)
   });
 
   if (!response.ok) {
