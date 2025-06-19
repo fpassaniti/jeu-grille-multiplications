@@ -3,7 +3,7 @@
 import { json } from '@sveltejs/kit';
 import { createClient } from '@supabase/supabase-js';
 import { env } from '$env/dynamic/private';
-import { activeGameTokens } from '../../../lib/server/tokenStore.js'; // Import shared token store
+import { activeGameTokens } from '$lib/server/tokenStore.js'; // Import shared token store
 
 // Configuration Supabase
 const supabaseUrl = env.VITE_SUPABASE_URL;

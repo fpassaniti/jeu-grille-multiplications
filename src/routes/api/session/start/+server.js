@@ -1,6 +1,6 @@
 // src/routes/api/session/start/+server.js
 import { json } from '@sveltejs/kit';
-import { activeGameTokens } from '../../../lib/server/tokenStore.js'; // Adjust path if necessary, this should be correct
+import { activeGameTokens } from '$lib/server/tokenStore.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request }) {
