@@ -1,6 +1,7 @@
 <script>
   import '../app.css';
   import NavigationHeader from '$lib/components/NavigationHeader.svelte';
+  import PwaInstallPrompt from '$lib/components/PwaInstallPrompt.svelte';
   import { _ } from '$lib/utils/i18n';
 
   // Récupérer les données du layout server
@@ -8,6 +9,7 @@
 </script>
 
 <NavigationHeader user={data.user} />
+<PwaInstallPrompt />
 
 <div class="main-content">
   <slot />
