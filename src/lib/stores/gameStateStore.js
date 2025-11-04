@@ -1,4 +1,4 @@
-import { writable, derived } from 'svelte/store';
+import { writable, derived, get } from 'svelte/store'; // Added get
 import { browser } from '$app/environment';
 import { calculateScore } from '$lib/utils/game-logic';
 
@@ -28,6 +28,7 @@ export const gameResults = writable(null);
 export const scoreSaved = writable(false);
 export const levelUp = writable(false);
 export const isLoading = writable(false);
+export const gameSessionToken = writable(null);
 
 // États dérivés
 export const solvedCountAdult = derived(solvedCells, $solvedCells => {
@@ -62,10 +63,38 @@ export const solvedCountChild = derived([solvedCells, level], ([$solvedCells, $l
 });
 
 // Fonctions
-export function startGame(getSelectedTableNumbers) {
+const generateToken = () => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+
+export async function startGame(getSelectedTableNumbers) { // Made async
   // Réinitialiser les données du jeu
   gameState.set('playing');
   score.set(0);
+  gameSessionToken.set(generateToken());
+
+  // Register the token with the server
+  const newToken = get(gameSessionToken);
+
+  if (newToken) {
+    try {
+      const response = await fetch('/api/session/start', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sessionToken: newToken }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({})); // Catch if response is not json
+        console.error('Failed to register session token:', response.status, errorData.error || 'Unknown error');
+        // Optionally, handle this error more gracefully in the UI or game state
+      } else {
+        // console.log('Session token registered successfully.'); // For client-side debugging
+      }
+    } catch (error) {
+      console.error('Error calling session registration API:', error);
+    }
+  }
 
   // Récupérer la durée depuis le store
   let currentDuration;
