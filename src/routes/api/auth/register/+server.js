@@ -1,10 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
+import { sql } from '$lib/server/db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, cookies }) {
@@ -20,38 +15,29 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Le mot de passe doit être un seul caractère' }, { status: 400 });
     }
 
-    // Initialiser Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Vérifier si l'utilisateur existe déjà
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', username)
-      .maybeSingle();
+    const existingUsers = await sql`
+      SELECT id FROM users WHERE username = ${username}
+    `;
 
-    if (existingUser) {
+    if (existingUsers.length > 0) {
       return json({ error: 'Ce nom d\'utilisateur est déjà pris' }, { status: 409 });
     }
 
     // Créer le nouvel utilisateur avec la fonction SQL
-    const { data, error } = await supabase.rpc(
-      'create_new_user',
-      {
-        p_username: username,
-        p_password_char: passwordChar,
-        p_display_name: displayName || username
-      }
-    );
+    const result = await sql`
+      SELECT * FROM create_new_user(${username}, ${passwordChar}, ${displayName || username})
+    `;
 
-    if (error) throw error;
+    if (!result || result.length === 0) throw new Error('Failed to create user');
+    const data = result[0];
 
     // Créer une session pour l'utilisateur
     const sessionId = crypto.randomUUID();
     const userData = {
-      id: data,
-      username,
-      displayName: displayName || username
+      id: data.user_id,
+      username: data.username,
+      displayName: data.display_name
     };
 
     // Stocker la session dans un cookie sécurisé (1 semaine d'expiration)

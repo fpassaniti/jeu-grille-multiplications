@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
+import { sql } from '$lib/server/db';
 import { redirect } from '@sveltejs/kit';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 export async function load({ locals }) {
   // Rediriger si non connecté
@@ -13,25 +8,18 @@ export async function load({ locals }) {
   }
 
   try {
-    // Créer le client Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Récupérer les données de progression
-    const { data: progressData, error: progressError } = await supabase
-      .from('user_progress')
-      .select('*')
-      .eq('user_id', locals.user.id)
-      .single();
+    const progressResult = await sql`
+      SELECT * FROM user_progress WHERE user_id = ${locals.user.id}
+    `;
 
-    if (progressError) throw progressError;
+    const progressData = progressResult && progressResult.length > 0 ? progressResult[0] : null;
 
     // Récupérer tous les niveaux
-    const { data: levels, error: levelsError } = await supabase
-      .from('level_definitions')
-      .select('*')
-      .order('level', { ascending: true });
-
-    if (levelsError) throw levelsError;
+    const levels = await sql`
+      SELECT * FROM level_definitions
+      ORDER BY level ASC
+    `;
 
     // Marquer les niveaux comme débloqués ou courants
     const userLevel = progressData?.level || 1;

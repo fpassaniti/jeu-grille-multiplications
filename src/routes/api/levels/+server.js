@@ -1,24 +1,14 @@
 import { json } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
+import { sql } from '$lib/server/db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ cookies }) {
   try {
-    // Initialiser Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Récupérer tous les niveaux
-    const { data: levels, error } = await supabase
-      .from('level_definitions')
-      .select('*')
-      .order('level', { ascending: true });
-
-    if (error) throw error;
+    const levels = await sql`
+      SELECT * FROM level_definitions
+      ORDER BY level ASC
+    `;
 
     // Déterminer le niveau actuel de l'utilisateur s'il est connecté
     let userLevel = 0;
@@ -28,14 +18,12 @@ export async function GET({ cookies }) {
       const session = JSON.parse(sessionCookie);
       const userId = session.user.id;
 
-      const { data: progress, error: progressError } = await supabase
-        .from('user_progress')
-        .select('level, xp')
-        .eq('user_id', userId)
-        .single();
+      const progress = await sql`
+        SELECT level, xp FROM user_progress WHERE user_id = ${userId}
+      `;
 
-      if (!progressError && progress) {
-        userLevel = progress.level;
+      if (progress && progress.length > 0) {
+        userLevel = progress[0].level;
       }
     }
 

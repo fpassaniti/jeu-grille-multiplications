@@ -1,10 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
+import { sql } from '$lib/server/db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, cookies }) {
@@ -16,17 +11,14 @@ export async function POST({ request, cookies }) {
       return json({ error: 'Nom d\'utilisateur et caractère de mot de passe requis' }, { status: 400 });
     }
 
-    // Initialiser Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Vérifier les identifiants
-    const { data: user, error } = await supabase
-      .from('users')
-      .select('id, username, display_name, password_char')
-      .eq('username', username)
-      .maybeSingle();
+    const users = await sql`
+      SELECT id, username, display_name, password_char
+      FROM users
+      WHERE username = ${username}
+    `;
 
-    if (error) throw error;
+    const user = users[0];
 
     if (!user) {
       return json({ error: 'Utilisateur non trouvé' }, { status: 404 });
@@ -38,10 +30,11 @@ export async function POST({ request, cookies }) {
     }
 
     // Mettre à jour la date de dernière connexion
-    await supabase
-      .from('users')
-      .update({ last_login: new Date().toISOString() })
-      .eq('id', user.id);
+    await sql`
+      UPDATE users
+      SET last_login = NOW()
+      WHERE id = ${user.id}
+    `;
 
     // Créer une session pour l'utilisateur
     const sessionId = crypto.randomUUID();

@@ -1,4 +1,6 @@
 <script>
+  import { getLevelImagePath } from '$lib/utils/image-paths.js';
+
   // Props
   export let level = 1;
   export let imageUrl = null;
@@ -6,6 +8,9 @@
   export let size = 'large'; // small, medium, large
   export let isLocked = false;
   export let shape = 'circle'; // 'circle' pour rond, 'rectangle' pour 3:4
+
+  // Générer automatiquement le chemin de l'image si non fourni
+  $: finalImageUrl = imageUrl || getLevelImagePath(level);
 
   // Calculer la taille
   $: dimensions = {
@@ -64,9 +69,9 @@
     <div class="locked-avatar">
       <span class="emoji">🔒</span>
     </div>
-  {:else if imageUrl && !imageError}
+  {:else if finalImageUrl && !imageError}
     <img
-      src={imageUrl}
+      src={finalImageUrl}
       alt="Niveau {level}"
       class="avatar-image"
       on:error={handleImageError}

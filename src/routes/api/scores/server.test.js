@@ -14,26 +14,26 @@ vi.mock('@sveltejs/kit', async () => {
   };
 });
 
-// Mock de Supabase
-vi.mock('@supabase/supabase-js', () => {
-  const mockSupabase = {
-    from: vi.fn(() => mockSupabase),
-    insert: vi.fn(() => mockSupabase),
-    select: vi.fn(() => mockSupabase),
-    eq: vi.fn(() => mockSupabase),
-    order: vi.fn(() => mockSupabase),
-    limit: vi.fn(() => mockSupabase),
-    single: vi.fn(() => mockSupabase),
-    rpc: vi.fn(() => mockSupabase),
-    data: [{ id: 'mock-id', score: 100 }],
-    error: null
-  };
-
+// Mock de Neon
+vi.mock('@neondatabase/serverless', () => {
   return {
-    createClient: vi.fn(() => ({
-      from: vi.fn(() => mockSupabase),
-      rpc: vi.fn(() => Promise.resolve({ data: [{ returned_user_id: 'user-id', returned_xp: 100, returned_level: 1, returned_streak_days: 1, returned_total_score: 100 }], error: null }))
-    }))
+    neon: vi.fn(() => {
+      return async (strings, ...values) => {
+        const query = typeof strings === 'string' ? strings : strings[0];
+
+        if (query.includes('INSERT INTO game_sessions')) {
+          return [{ id: 'mock-id', user_id: 'user-id', score: 100, date: new Date() }];
+        }
+        if (query.includes('INSERT INTO scores')) {
+          return [{ id: 1, name: 'Test Player', score: 100, date: new Date() }];
+        }
+        if (query.includes('SELECT * FROM add_user_xp')) {
+          return [{ user_id: 'user-id', total_xp: 100, current_level: 1, games_played: 1, total_score: 100, streak_days: 1 }];
+        }
+
+        return [];
+      };
+    })
   };
 });
 

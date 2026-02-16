@@ -1,10 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
+import { sql } from '$lib/server/db';
 import { error } from '@sveltejs/kit';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -15,20 +10,17 @@ export async function load({ params }) {
       throw error(400, 'ID de niveau invalide');
     }
 
-    // Initialiser Supabase
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Récupérer les informations sur le niveau spécifié
-    const { data: levelData, error: levelError } = await supabase
-      .from('level_definitions')
-      .select('*')
-      .eq('level', levelId)
-      .single();
+    const levelResult = await sql`
+      SELECT * FROM level_definitions WHERE level = ${levelId}
+    `;
 
-    if (levelError) {
-      console.error('Erreur lors de la récupération du niveau:', levelError);
+    if (!levelResult || levelResult.length === 0) {
+      console.error('Niveau non trouvé:', levelId);
       throw error(404, 'Niveau non trouvé');
     }
+
+    const levelData = levelResult[0];
 
     return {
       level: levelData

@@ -1,9 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY;
+import { sql } from '$lib/server/db';
 
 export async function load({ locals }) {
   // Données utilisateur par défaut
@@ -17,33 +12,34 @@ export async function load({ locals }) {
     userData.user = locals.user;
 
     try {
-      // Créer le client Supabase
-      const supabase = createClient(supabaseUrl, supabaseKey);
-
       // Récupérer la progression de l'utilisateur
-      const { data: progressData, error: progressError } = await supabase
-        .from('user_progress')
-        .select('*')
-        .eq('user_id', locals.user.id)
-        .single();
+      const progressResult = await sql`
+        SELECT * FROM user_progress WHERE user_id = ${locals.user.id}
+      `;
 
-      if (progressError) throw progressError;
+      if (!progressResult || progressResult.length === 0) {
+        throw new Error('User progress not found');
+      }
+
+      const progressData = progressResult[0];
 
       // Récupérer les informations sur le niveau actuel
-      const { data: levelData, error: levelError } = await supabase
-        .from('level_definitions')
-        .select('*')
-        .eq('level', progressData.level)
-        .single();
+      const levelResult = await sql`
+        SELECT * FROM level_definitions WHERE level = ${progressData.level}
+      `;
 
-      if (levelError) throw levelError;
+      if (!levelResult || levelResult.length === 0) {
+        throw new Error('Level not found');
+      }
+
+      const levelData = levelResult[0];
 
       // Récupérer les informations sur le prochain niveau
-      const { data: nextLevelData, error: nextLevelError } = await supabase
-        .from('level_definitions')
-        .select('*')
-        .eq('level', progressData.level + 1)
-        .maybeSingle();
+      const nextLevelResult = await sql`
+        SELECT * FROM level_definitions WHERE level = ${progressData.level + 1}
+      `;
+
+      const nextLevelData = nextLevelResult && nextLevelResult.length > 0 ? nextLevelResult[0] : null;
 
       // Calculer la progression vers le prochain niveau
       let levelProgress = 0;

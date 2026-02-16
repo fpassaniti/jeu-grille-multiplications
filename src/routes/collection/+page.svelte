@@ -66,7 +66,6 @@
             <div class="level-image">
               <LevelAvatar
                 level={level.level}
-                imageUrl={level.image_url}
                 colorTheme={level.color_theme}
                 size="medium"
                 shape="circle"
@@ -96,7 +95,6 @@
                 level={level.level}
                 title={_(`level.${level.level}`)}
                 description={_(`level.description.${level.level}`)}
-                imageUrl={level.image_url}
                 colorTheme={level.color_theme || 'blue'}
                 playerName={data.user?.displayName || 'Aventurier'}
               />

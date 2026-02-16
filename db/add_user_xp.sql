@@ -57,13 +57,13 @@ BEGIN
         xp = xp + p_xp_earned,
         games_played = games_played + 1,
         total_score = total_score + p_xp_earned -- Pourrait être renommé en total_xp dans une migration future
-    WHERE user_id = p_user_id
+    WHERE user_progress.user_id = p_user_id
     RETURNING
-        user_id as returned_user_id,
-        xp as returned_xp,
-        level as returned_level,
-        streak_days as returned_streak_days,
-        total_score as returned_total_xp -- Retourne total_score mais nommé returned_total_xp
+        user_progress.user_id,
+        user_progress.xp,
+        user_progress.level,
+        user_progress.streak_days,
+        user_progress.total_score
         INTO
             returned_user_id,
             returned_xp,

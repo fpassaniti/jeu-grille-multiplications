@@ -3,6 +3,7 @@
   import { onMount } from 'svelte';
   import { loadTemplate, renderTemplate } from '$lib/utils/template-loader';
   import { _ } from '$lib/utils/i18n';
+  import { getLevelImagePath, getLevelPosterPath } from '$lib/utils/image-paths.js';
 
   // Props
   export let level = 1;
@@ -16,8 +17,8 @@
   let templateLoaded = false;
   let printTemplate = '';
 
-  // Convertir l'URL de l'image en version haute résolution
-  $: highResImageUrl = imageUrl ? imageUrl.replace(/level-(\d+)\.png/i, 'level-$1_lg.png') : null;
+  // Utiliser le chemin de l'image fourni ou générer automatiquement la version haute résolution
+  $: highResImageUrl = imageUrl ? imageUrl.replace(/level-(\d+)\.png/i, 'level-$1_lg.png') : getLevelPosterPath(level);
 
   // Charger le template au montage du composant
   onMount(async () => {

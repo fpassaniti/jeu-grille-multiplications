@@ -1,11 +1,5 @@
-// src/routes/api/leaderboard/+server.js
 import { json } from '@sveltejs/kit';
-import { createClient } from '@supabase/supabase-js';
-import { env } from '$env/dynamic/private';
-
-// Configuration Supabase avec les variables d'environnement serveur
-const supabaseUrl = env.VITE_SUPABASE_URL;
-const supabaseKey = env.SUPABASE_SERVICE_KEY; // Clé de service plus sécurisée
+import { sql } from '$lib/server/db';
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ url }) {
@@ -14,18 +8,13 @@ export async function GET({ url }) {
     const level = url.searchParams.get('level') || 'adulte';
     const duration = url.searchParams.get('duration') || '5'; // Par défaut 5 minutes
 
-    // Créer le client Supabase côté serveur
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Récupérer tous les scores filtré par niveau et durée
-    const { data: allScores, error: scoresError } = await supabase
-      .from('scores')
-      .select('id, name, score, duration, level, date, tables_used')
-      .eq('level', level)
-      .eq('duration', parseInt(duration, 10))
-      .order('score', { ascending: false });
-
-    if (scoresError) throw scoresError;
+    const allScores = await sql`
+      SELECT id, name, score, duration, level, date, tables_used
+      FROM scores
+      WHERE level = ${level} AND duration = ${parseInt(duration, 10)}
+      ORDER BY score DESC
+    `;
 
     // Grouper les scores par nom et garder uniquement le meilleur score pour chaque joueur
     const bestScoresByPlayer = {};
@@ -51,7 +40,8 @@ export async function GET({ url }) {
 
     // S'assurer que les tables_used sont parsées correctement
     const processedScores = topScores.map(score => {
-      // Si tables_used est une chaîne JSON, la parser
+      // Avec Neon, les tableaux INTEGER[] sont retournés directement comme tableaux
+      // ou parfois comme chaînes JSON, donc on gère les deux cas
       if (score.tables_used && typeof score.tables_used === 'string') {
         try {
           score.tables_used = JSON.parse(score.tables_used);
@@ -60,8 +50,8 @@ export async function GET({ url }) {
           score.tables_used = [];
         }
       }
-      // Si tables_used est null, mettre un tableau vide
-      else if (score.tables_used === null) {
+      // Si tables_used est null ou undefined, mettre un tableau vide
+      else if (!score.tables_used) {
         score.tables_used = [];
       }
 

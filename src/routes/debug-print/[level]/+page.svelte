@@ -2,6 +2,7 @@
   import { onMount } from 'svelte';
   import PrintableCard from '$lib/components/PrintableCard.svelte';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import { getLevelPosterPath } from '$lib/utils/image-paths.js';
 
   // Données du niveau venant du serveur
   export let data;
@@ -16,7 +17,7 @@
     // Afficher des informations de debug
     debugInfo = {
       level: data.level,
-      highResImagePath: data.level.image_url ? data.level.image_url.replace(/level-(\d+)\.png/i, 'level-$1_lg.png') : null,
+      highResImagePath: getLevelPosterPath(data.level.level),
       timestamp: new Date().toISOString()
     };
   });
@@ -60,7 +61,6 @@
           <div class="level-avatar">
             <LevelAvatar
               level={data.level.level}
-              imageUrl={data.level.image_url}
               colorTheme={data.level.color_theme}
               size="medium"
               shape="circle"
@@ -96,7 +96,6 @@
               level={data.level.level}
               title={data.level.title}
               description={data.level.description}
-              imageUrl={data.level.image_url}
               colorTheme={data.level.color_theme || 'blue'}
               playerName={playerName}
               date={customDate}
@@ -136,30 +135,11 @@
                     <div class="print-level-title">{data.level.title}</div>
 
                     <div class="print-level-image">
-                      {#if data.level.image_url}
-                        <div class="print-image-wrapper">
-                          <img src={data.level.image_url.replace(/level-(\d+)\.png/i, 'level-$1_lg.png')}
-                               alt="Niveau {data.level.level}"
-                               class="print-image" />
-                        </div>
-                      {:else}
-                        <div class="print-fallback-image"
-                             style="background: {
-                               data.level.color_theme === 'blue' ? 'linear-gradient(45deg, #4d57ff, #8a90ff)' :
-                               data.level.color_theme === 'green' ? 'linear-gradient(45deg, #43d787, #7df0b2)' :
-                               data.level.color_theme === 'purple' ? 'linear-gradient(45deg, #9c5fff, #c29aff)' :
-                               data.level.color_theme === 'orange' ? 'linear-gradient(45deg, #ff8f3e, #ffb585)' :
-                               data.level.color_theme === 'red' ? 'linear-gradient(45deg, #ff6b6b, #ff9999)' :
-                               data.level.color_theme === 'teal' ? 'linear-gradient(45deg, #26c0c0, #7fe7e7)' :
-                               data.level.color_theme === 'indigo' ? 'linear-gradient(45deg, #4f46e5, #a5b4fc)' :
-                               data.level.color_theme === 'pink' ? 'linear-gradient(45deg, #ec4899, #f9a8d4)' :
-                               data.level.color_theme === 'amber' ? 'linear-gradient(45deg, #d97706, #fbbf24)' :
-                               data.level.color_theme === 'gold' ? 'linear-gradient(45deg, #d4af37, #f9e29c)' :
-                               'linear-gradient(45deg, #4d57ff, #8a90ff)'
-                             }">
-                          <span class="fallback-level">{data.level.level}</span>
-                        </div>
-                      {/if}
+                      <div class="print-image-wrapper">
+                        <img src={getLevelPosterPath(data.level.level)}
+                             alt="Niveau {data.level.level}"
+                             class="print-image" />
+                      </div>
                     </div>
 
                     <div class="print-level-description">

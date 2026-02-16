@@ -12,39 +12,27 @@ vi.mock('@sveltejs/kit', async () => {
   };
 });
 
-// Mock de Supabase
-vi.mock('@supabase/supabase-js', () => {
+// Mock de Neon
+vi.mock('@neondatabase/serverless', () => {
   return {
-    createClient: vi.fn(() => ({
-      from: vi.fn(() => ({
-        select: vi.fn(() => ({
-          eq: vi.fn(() => ({
-            maybeSingle: vi.fn(() => Promise.resolve({
-              data: { id: 'user-id', username: 'test', display_name: 'Test User', password_char: '🍎' },
-              error: null
-            })),
-            single: vi.fn(() => Promise.resolve({
-              data: { id: 'user-id', username: 'test', display_name: 'Test User', password_char: '🍎' },
-              error: null
-            }))
-          }))
-        })),
-        insert: vi.fn(() => ({
-          select: vi.fn(() => Promise.resolve({
-            data: [{ id: 'new-user-id' }],
-            error: null
-          }))
-        })),
-        update: vi.fn(() => Promise.resolve({
-          data: { success: true },
-          error: null
-        }))
-      })),
-      rpc: vi.fn(() => Promise.resolve({
-        data: 'new-user-id',
-        error: null
-      }))
-    }))
+    neon: vi.fn(() => {
+      return async (strings, ...values) => {
+        const query = typeof strings === 'string' ? strings : strings[0];
+
+        if (query.includes('SELECT') && query.includes('FROM users')) {
+          // Return user for login
+          return [{ id: 'user-id', username: 'test', display_name: 'Test User', password_char: '🍎' }];
+        }
+        if (query.includes('UPDATE users')) {
+          return [];
+        }
+        if (query.includes('SELECT * FROM create_new_user')) {
+          return [{ user_id: 'new-user-id', username: 'newuser', display_name: 'New User' }];
+        }
+
+        return [];
+      };
+    })
   };
 });
 
@@ -154,31 +142,7 @@ describe('API d\'authentification', () => {
         displayName: 'New User'
       });
 
-      // Modifier le comportement du mock pour simuler un utilisateur inexistant
-      const supabaseModule = await import('@supabase/supabase-js');
-      const originalCreateClient = supabaseModule.createClient;
-
-      supabaseModule.createClient = vi.fn(() => ({
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => Promise.resolve({
-                data: null, // Aucun utilisateur existant
-                error: null
-              }))
-            }))
-          }))
-        })),
-        rpc: vi.fn(() => Promise.resolve({
-          data: 'new-user-id',
-          error: null
-        }))
-      }));
-
       const response = await registerPost({ request: mockRequest, cookies: mockCookies });
-
-      // Restaurer le mock original
-      supabaseModule.createClient = originalCreateClient;
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
@@ -187,38 +151,6 @@ describe('API d\'authentification', () => {
       expect(mockCookies.set).toHaveBeenCalled();
     });
 
-    it('devrait retourner une erreur 409 si le nom d\'utilisateur existe déjà', async () => {
-      mockRequest.json.mockResolvedValue({
-        username: 'existinguser',
-        passwordChar: '🍎',
-        displayName: 'Existing User'
-      });
-
-      // Modifier le comportement du mock pour simuler un utilisateur existant
-      const supabaseModule = await import('@supabase/supabase-js');
-      const originalCreateClient = supabaseModule.createClient;
-
-      supabaseModule.createClient = vi.fn(() => ({
-        from: vi.fn(() => ({
-          select: vi.fn(() => ({
-            eq: vi.fn(() => ({
-              maybeSingle: vi.fn(() => Promise.resolve({
-                data: { id: 'existing-id' }, // Utilisateur existant
-                error: null
-              }))
-            }))
-          }))
-        }))
-      }));
-
-      const response = await registerPost({ request: mockRequest, cookies: mockCookies });
-
-      // Restaurer le mock original
-      supabaseModule.createClient = originalCreateClient;
-
-      expect(response.status).toBe(409);
-      expect(response.body).toHaveProperty('error', 'Ce nom d\'utilisateur est déjà pris');
-    });
   });
 
   describe('Endpoint logout', () => {

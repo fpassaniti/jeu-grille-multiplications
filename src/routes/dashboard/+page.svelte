@@ -41,7 +41,7 @@
           <div class="level-image">
             <LevelAvatar
               level={data.userProgress?.level || 1}
-              imageUrl={data.userProgress?.currentLevel?.image_url}
+              
               colorTheme={data.userProgress?.currentLevel?.color_theme}
               size="large"
               shape="rectangle"
@@ -107,7 +107,6 @@
               level={data.userProgress?.level || 1}
               title={data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}
               description={data.userProgress?.currentLevel?.description || 'Tu as commencé ton voyage dans le monde des mathématiques!'}
-              imageUrl={data.userProgress?.currentLevel?.image_url}
               colorTheme={data.userProgress?.currentLevel?.color_theme || 'blue'}
               playerName={data.user?.displayName || 'Aventurier'}
             />
