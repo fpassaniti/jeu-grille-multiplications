@@ -10,7 +10,7 @@
  */
 export function getLevelImagePath(level, large = false) {
   const suffix = large ? '_lg' : '';
-  return `/images/levels/level-${level}${suffix}.png`;
+  return `/images/levels/level_${level}${suffix}.png`;
 }
 
 /**
