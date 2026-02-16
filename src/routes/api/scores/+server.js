@@ -45,18 +45,19 @@ export async function POST({ request, cookies }) {
     // Le score est directement utilisé comme XP
     const xpEarned = score;
     const tablesUsed = level === 'enfant' ? selectedTables : [];
+    const tablesUsedPg = `{${tablesUsed.join(',')}}`;
 
     // Sauvegarder la session de jeu dans la table game_sessions
     const gameData = await sql`
       INSERT INTO game_sessions (user_id, name, score, xp_earned, duration, level, cells_solved, total_cells, tables_used, date)
-      VALUES (${userId}, ${playerName}, ${score}, ${score}, ${parseInt(duration, 10)}, ${level}, ${solvedCells}, ${totalPossibleCells}, ${JSON.stringify(tablesUsed)}, NOW())
+      VALUES (${userId}, ${playerName}, ${score}, ${score}, ${parseInt(duration, 10)}, ${level}, ${solvedCells}, ${totalPossibleCells}, ${tablesUsedPg}, NOW())
       RETURNING id, user_id, name, score, duration, level, date
     `;
 
     // Sauvegarder également dans la table scores pour le leaderboard
     const leaderboardData = await sql`
       INSERT INTO scores (name, score, duration, level, cells_solved, total_cells, tables_used, date)
-      VALUES (${playerName}, ${score}, ${parseInt(duration, 10)}, ${level}, ${solvedCells}, ${totalPossibleCells}, ${JSON.stringify(tablesUsed)}, NOW())
+      VALUES (${playerName}, ${score}, ${parseInt(duration, 10)}, ${level}, ${solvedCells}, ${totalPossibleCells}, ${tablesUsedPg}, NOW())
       RETURNING id, name, score, duration, level, date
     `;
 
