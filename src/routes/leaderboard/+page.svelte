@@ -2,7 +2,10 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
+  import { listEnabledModes } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
+
+  const modes = listEnabledModes();
 
   // Initialisation au chargement de la page
   onMount(async () => {
@@ -21,6 +24,7 @@
 
   // État UI
   let isLoading = false;
+  let currentMode = data.currentMode || 'tables';
   let currentLevel = data.currentLevel || 'adulte';
   let currentDuration = data.currentDuration || 5;
   let leaderboardData = {
@@ -36,6 +40,13 @@
   ];
 
   // Fonctions d'interaction
+  async function setMode(mode) {
+    if (mode !== currentMode) {
+      currentMode = mode;
+      await updateLeaderboard(true);
+    }
+  }
+
   async function toggleLevel(level) {
     if (level !== currentLevel) {
       currentLevel = level;
@@ -52,11 +63,11 @@
 
   // Met à jour l'URL et charge les données du classement
   async function updateLeaderboard() {
-    const url = `/leaderboard?level=${currentLevel}&duration=${currentDuration}`;
+    const url = `/leaderboard?mode=${currentMode}&level=${currentLevel}&duration=${currentDuration}`;
     goto(url, {replaceState: true});
 
     try {
-      const response = await fetch(`/api/leaderboard?level=${currentLevel}&duration=${currentDuration}`);
+      const response = await fetch(`/api/leaderboard?mode=${currentMode}&level=${currentLevel}&duration=${currentDuration}`);
       if (!response.ok) throw new Error(_('common.error'));
 
       const data = await response.json();
@@ -89,6 +100,20 @@
     </div>
 
     <div class="filters-container">
+      <div class="mode-toggle">
+        <h3>{_('modes.chooseMode')}</h3>
+        <div class="toggle-buttons">
+          {#each modes as mode}
+            <button
+              class="toggle-button {currentMode === mode.id ? 'active' : ''}"
+              on:click={() => setMode(mode.id)}
+            >
+              <span class="emoji">{mode.icon}</span> {_(mode.labelKey)}
+            </button>
+          {/each}
+        </div>
+      </div>
+
       <div class="level-toggle">
         <h3>{_('leaderboard.levelLabel')}</h3>
         <div class="toggle-buttons">
@@ -125,6 +150,7 @@
     <div class="leaderboard-container">
       <Leaderboard
         isLoading={isLoading}
+        mode={currentMode}
         level={currentLevel}
         duration={currentDuration}
         leaderboard={currentLevel === 'adulte' ? leaderboardData.adulte : leaderboardData.enfant}
@@ -170,14 +196,14 @@
     margin-bottom: 30px;
   }
 
-  .level-toggle, .duration-selector {
+  .mode-toggle, .level-toggle, .duration-selector {
     display: flex;
     flex-direction: column;
     gap: 10px;
     align-items: center;
   }
 
-  .level-toggle h3, .duration-selector h3 {
+  .mode-toggle h3, .level-toggle h3, .duration-selector h3 {
     color: var(--primary);
     margin: 0;
   }

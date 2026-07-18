@@ -1,6 +1,4 @@
 <script>
-  import {goto} from '$app/navigation';
-  import {onMount} from 'svelte';
   import { _ } from '$lib/utils/i18n';
 
   // État du formulaire
@@ -13,23 +11,6 @@
 
   // Caractères disponibles pour le mot de passe visuel
   const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉', '🥦', '🫜', '🌱', '🥥', '🥑', '🥐', '🥨', '🌰'];
-
-  // Vérifier si déjà connecté
-  onMount(async () => {
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'GET'
-      });
-      const data = await response.json();
-
-      if (data.user) {
-        // Rediriger vers le tableau de bord si déjà connecté
-        goto('/dashboard');
-      }
-    } catch (err) {
-      // Pas d'utilisateur connecté, c'est normal
-    }
-  });
 
   async function handleLogin() {
     if (!username || !passwordChar) {

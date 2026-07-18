@@ -57,13 +57,20 @@ export async function load({ locals }) {
         xpUntilNextLevel = nextLevelXP - userXP;
       }
 
+      // Un jour = heure de Paris, cohérent avec les fonctions SQL de gamification
+      const playedToday = progressData.last_played_at
+        ? new Date(progressData.last_played_at).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) ===
+          new Date().toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' })
+        : false;
+
       userData.userProgress = {
         ...progressData,
         currentLevel: levelData,
         nextLevel: nextLevelData || null,
         levelProgress,
         xpForNextLevel,
-        xpUntilNextLevel
+        xpUntilNextLevel,
+        playedToday
       };
     } catch (err) {
       console.error('Erreur lors du chargement des données utilisateur:', err);

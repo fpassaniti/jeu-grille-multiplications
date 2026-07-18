@@ -1,34 +1,42 @@
 <script>
   import GameOptions from './GameOptions.svelte';
-  import {_} from '$lib/utils/i18n';
+  import ModeSelector from '$lib/components/ModeSelector.svelte';
+  import { getMode } from '$lib/modes/index.js';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
+  export let modeId = 'tables';
   export let level = 'adulte';
-  export let gameDuration = 3;
-  export let setLevel = () => {};
-  export let setGameDuration = () => {};
-  export let toggleTable = () => {};
-  export let selectAllTables = () => {};
-  export let getSelectedTableNumbers = () => [];
-  export let startGame = () => {};
+  export let duration = 3;
+  export let options = {};
+  export let onModeSelect = () => {};
+  export let onLevelSelect = () => {};
+  export let onDurationSelect = () => {};
+  export let onOptionsChange = () => {};
+  export let onStart = () => {};
+
+  $: mode = getMode(modeId);
+  // Le mode tables/enfant exige au moins une table ; les autres au moins un palier
+  $: canStart =
+    mode.boardType === 'grid'
+      ? level === 'adulte' || (options.selectedTables?.length ?? 0) > 0
+      : mode.validateOptions(options).ok;
 </script>
 
 <div class="start-screen card">
+  <ModeSelector selected={modeId} onSelect={onModeSelect} />
+
   <GameOptions
+    {modeId}
     {level}
-    {gameDuration}
-    {setLevel}
-    {setGameDuration}
-    {toggleTable}
-    {selectAllTables}
-    {getSelectedTableNumbers}
+    {duration}
+    {options}
+    {onLevelSelect}
+    {onDurationSelect}
+    {onOptionsChange}
   />
 
-  <button
-    class="start-button"
-    on:click={startGame}
-    disabled={level === 'enfant' && getSelectedTableNumbers().length === 0}
-  >
+  <button class="start-button" on:click={onStart} disabled={!canStart}>
     <span class="emoji">🚀</span> {_('play.start')}
   </button>
 

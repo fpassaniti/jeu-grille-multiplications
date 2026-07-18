@@ -1,102 +1,81 @@
 <script>
   import GameBoard from '$lib/components/GameBoard.svelte';
-  import MobileGame from '$lib/components/MobileGame.svelte';
+  import QuestionPanel from '$lib/components/QuestionPanel.svelte';
   import GameHeader from './GameHeader.svelte';
   import GameProgress from './GameProgress.svelte';
-  import CurrentMultiplication from './CurrentMultiplication.svelte';
+  import CurrentQuestion from './CurrentQuestion.svelte';
+  import { getMode } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
-  // Props
-  export let gameTimer = 0;
+  // Props (scalaires/objets fournis par /play — jamais l'engine lui-même)
+  export let modeId = 'tables';
   export let level = 'adulte';
   export let score = 0;
-  export let solvedCountAdult = 0;
-  export let solvedCountChild = { count: 0, total: 0 };
-  export let totalSolvedCountAdult = 0;
-  export let totalSolvedCountChild = { count: 0, total: 0 };
-  export let progressPercentage = 0;
-  export let showingGridReset = false;
-  export let getSelectedTableNumbers = () => [];
-  export let currentRow = 0;
-  export let currentCol = 0;
-  export let cellTimer = 0;
-  export let maxCellTimer = 0;
-  export let isMobile = false;
-  export let grid = [];
-  export let solvedCells = [];
+  export let gameTimer = 0;
+  export let question = null;
+  export let questionTimer = 0;
+  export let timeAllowed = 0;
   export let userAnswer = '';
-  export let handleAnswerChange = () => {};
-  export let handleSubmit = () => {};
-  export let inputRef;
-  export let lastAnswerCorrect = null;
-  export let isSelectedTableCell = () => {};
+  export let feedback = null;
+  export let progress = { solved: 0, total: null, cumulative: 0 };
+  export let solvedHistory = [];
+  export let board = null;
+  export let poolResetNotice = false;
+  export let isMobile = false;
   export let windowWidth = 0;
   export let windowHeight = 0;
-  export let lastSolvedMultiplications = [];
-  export let endGame = () => {};
+  export let onInput = () => {};
+  export let onSubmit = () => {};
+  export let onEnd = () => {};
+
+  // Mapping boardType → composant : 'grid' + desktop → GameBoard, sinon QuestionPanel
+  $: mode = getMode(modeId);
+  $: useGrid = mode.boardType === 'grid' && !isMobile;
 </script>
 
 <div class="game-screen">
   <div class="game-header-sticky card">
-    <GameHeader {gameTimer} {level} {score} {endGame} />
+    <GameHeader {gameTimer} {level} {score} modeIcon={mode.icon} endGame={onEnd} />
 
-    <GameProgress
-      {level}
-      {solvedCountAdult}
-      {solvedCountChild}
-      {totalSolvedCountAdult}
-      {totalSolvedCountChild}
-      {getSelectedTableNumbers}
-      {progressPercentage}
-      {showingGridReset}
-    />
+    <GameProgress {progress} {poolResetNotice} />
 
-    {#if level === 'enfant'}
+    {#if mode.boardType === 'grid' && level === 'enfant' && board}
       <div class="tables-info">
-        <span class="emoji">📋</span> {_('tableSelector.selectedTables')} {getSelectedTableNumbers().join(', ')}
+        <span class="emoji">📋</span>
+        {_('tableSelector.selectedTables')}
+        {board.selectedNumbers.join(', ')}
       </div>
     {/if}
 
-    {#if !isMobile}
-      <CurrentMultiplication
-        {currentRow}
-        {currentCol}
-        {cellTimer}
-        {maxCellTimer}
-      />
+    {#if useGrid}
+      <CurrentQuestion {question} {questionTimer} {timeAllowed} />
     {/if}
   </div>
 
   <div class="game-board-container card">
-    {#if isMobile}
-      <MobileGame
-        {currentRow}
-        {currentCol}
-        bind:userAnswer
-        {handleAnswerChange}
-        {handleSubmit}
-        bind:inputRef
-        {lastAnswerCorrect}
-        {cellTimer}
-        {maxCellTimer}
-        {lastSolvedMultiplications}
-      />
-    {:else}
+    {#if useGrid}
       <GameBoard
-        {grid}
-        {solvedCells}
-        {currentRow}
-        {currentCol}
-        bind:userAnswer
-        {handleAnswerChange}
-        {handleSubmit}
-        bind:inputRef
-        {lastAnswerCorrect}
-        {isSelectedTableCell}
+        {board}
+        {question}
+        {userAnswer}
+        {feedback}
         {level}
-        {getSelectedTableNumbers}
         {windowWidth}
         {windowHeight}
+        {onInput}
+        {onSubmit}
+      />
+    {:else}
+      <QuestionPanel
+        {question}
+        {userAnswer}
+        {feedback}
+        {questionTimer}
+        {timeAllowed}
+        {solvedHistory}
+        {isMobile}
+        {onInput}
+        {onSubmit}
       />
     {/if}
   </div>

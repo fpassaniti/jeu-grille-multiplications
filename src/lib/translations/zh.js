@@ -40,6 +40,9 @@ export default {
     selectLanguage: '选择语言',
     copyright: '© {year} {appName} - 有趣地学习乘法表！',
     min: '分钟',
+    coins: '金币',
+    shop: '商店',
+    character: '角色',
   },
 
   navigation: {
@@ -149,11 +152,143 @@ export default {
     logoutError: '退出登录时出错'
   },
 
+  shop: {
+    title: '商店',
+    subtitle: '装扮你的冒险家！',
+    dailyOffers: '今日特惠',
+    owned: '已拥有',
+    buy: '购买',
+    confirmTitle: '确认购买',
+    confirmBuy: '花费 {price} 🪙 购买？',
+    confirmRemaining: '购买后剩余 {remaining} 🪙',
+    confirm: '确认',
+    cancel: '取消',
+    bought: '购买成功！',
+    insufficient_coins: '金币不足',
+    already_owned: '已经拥有',
+    level_locked: '需要等级 {level}',
+    levelLocked: '需要等级 {level}',
+    not_purchasable: '暂不可购买',
+    already_active: '已经生效',
+    freeze_cap_reached: '已达到最大保护数量',
+    tryOn: '试穿',
+    potions: '药水',
+    freezeName: '连续保护',
+    freezeDesc: '错过一天时保护你的连续记录',
+    boosterName: '双倍药水 ×2',
+    boosterDesc: '接下来3场游戏金币翻倍',
+    boosterActive: '药水生效中！',
+    slots: {
+      background: '背景',
+      aura: '光环',
+      back: '背部',
+      body: '身体',
+      outfit: '服装',
+      weapon: '武器',
+      hat: '帽子',
+      pet: '宠物'
+    },
+    rarity: {
+      common: '普通',
+      rare: '稀有',
+      epic: '史诗',
+      legendary: '传奇'
+    }
+  },
+
+  character: {
+    title: '我的角色',
+    subtitle: '装备你已解锁的物品',
+    equip: '装备',
+    equipped: '已装备',
+    unequip: '卸下',
+    none: '无',
+    empty: '在商店和宝箱中获取物品吧！',
+    goToShop: '前往商店'
+  },
+
+  chest: {
+    open: '打开我的宝箱',
+    tapToOpen: '点击宝箱打开它！',
+    daily: '每日宝箱',
+    streak: '连续宝箱',
+    levelup: '升级宝箱',
+    perfect: '完美宝箱',
+    welcome: '欢迎宝箱',
+    welcomeTitle: '欢迎来到全新冒险！',
+    welcomeText: '这是庆祝 MultyFun 新功能的礼物。',
+    youWon: '你获得了 {coins} 🪙！',
+    newItem: '解锁了新物品！',
+    duplicate: '你已经拥有了！+{refund} 🪙',
+    comeBackTomorrow: '明天再来开新的宝箱吧！',
+    alreadyOpened: '今天已经打开过了'
+  },
+
+  rewards: {
+    base: '获得的金币',
+    weekend: '周末双倍奖励 ×2！',
+    booster: '双倍药水 ×2 ⚡',
+    firstOfDay: '今日首场游戏',
+    streakBonus: '连续奖励 🔥',
+    perfectBonus: '完美游戏 💯',
+    openChest: '有一个宝箱等着你！'
+  },
+
+  streak: {
+    days: '连续 {count} 天 🔥',
+    calendarTitle: '本周',
+    nextMilestone: '再坚持 {days} 天 → {reward}宝箱！',
+    freezeUsed: '你的连续保护 🛡️ 救了你！',
+    freezeCount: '可用的连续保护',
+    milestoneReached: '达成连续里程碑！'
+  },
+
   game: {
     answerPlaceholder: '你的答案',
-    recentlySolved: '最近解决的乘法题',
-    noSolved: '尚未解决任何乘法题。',
-    pointsEarned: '+{points}分'
+    recentlySolved: '最近答对的题目',
+    noSolved: '尚未解决任何题目。',
+    pointsEarned: '+{points}分',
+    validate: '确定 ✓'
+  },
+
+  modes: {
+    chooseMode: '选择运算类型：',
+    tables: '乘法表',
+    addition: '加法',
+    subtraction: '减法',
+    multiplication: '乘法',
+    division: '除法'
+  },
+
+  difficulty: {
+    chooseTitle: '选择难度：',
+    customHint: '勾选你想练习的题型：',
+    presets: {
+      ce1: '二年级',
+      ce2: '三年级',
+      libre: '自选'
+    },
+    tiers: {
+      A1: '不进位，20以内',
+      A2: '不进位，100以内',
+      A3: '进位，100以内',
+      A4: '不进位，1000以内',
+      A5: '进位，1000以内',
+      A6: '进位，10000以内',
+      S1: '不借位，20以内',
+      S2: '不借位，100以内',
+      S3: '借位，100以内',
+      S4: '不借位，1000以内',
+      S5: '借位，1000以内',
+      M1: '乘以10',
+      M2: '乘以100或1000',
+      M3: '两位数 × 一位数，不进位',
+      M4: '两位数 × 一位数，进位',
+      M5: '三位数 × 一位数',
+      D1: '除以2、5或10',
+      D2: '除以3、4或6',
+      D3: '除以7、8或9'
+    }
   },
 
   leaderboard: {
@@ -216,6 +351,8 @@ export default {
     solvedLabel: '已解决的乘法题：',
     tablesLabel: '已选择的乘法表：',
     currentMultiplicationLabel: '当前乘法题：',
+    currentQuestionLabel: '题目：',
+    solvedGenericLabel: '已答对 {count} 题',
     gameOver: '游戏结束！',
     yourScore: '你的分数：',
     solvedMultiplications: '已解决的乘法题：',

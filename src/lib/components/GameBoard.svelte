@@ -1,84 +1,107 @@
 <script>
+  import { tick } from 'svelte';
+
   // Props
-  export let grid = [];
-  export let solvedCells = [];
-  export let currentRow = 0;
-  export let currentCol = 0;
+  export let board = null; // {grid, solvedCells, selectedNumbers} — fourni par l'engine
+  export let question = null; // Question courante ({meta: {row, col}})
   export let userAnswer = '';
-  export let handleAnswerChange = () => {};
-  export let handleSubmit = () => {};
-  export let inputRef;
-  export let lastAnswerCorrect = null;
-  export let isSelectedTableCell = () => {};
+  export let feedback = null; // null | 'correct' | 'incorrect' | 'timeout'
   export let level = 'adulte';
-  export let getSelectedTableNumbers = () => [];
   export let windowWidth = 0;
   export let windowHeight = 0;
+  export let onInput = () => {};
+  export let onSubmit = () => {};
+
+  let inputEl;
+
+  $: currentRow = question?.meta?.row ?? 0;
+  $: currentCol = question?.meta?.col ?? 0;
+  $: selectedNumbers = board?.selectedNumbers ?? [];
 
   // Calculer la taille optimale de la grille en fonction de la fenêtre
-  // Réduire davantage la taille pour s'assurer que tout tient dans la fenêtre
   $: gridSize = Math.min(windowWidth - 40, windowHeight - 230, 680) / 11;
+
+  // Refocus quand la question change (l'input se déplace de cellule en cellule)
+  $: if (question?.id) {
+    tick().then(() => inputEl?.focus());
+  }
+
+  function isSelectedCell(rowIndex, colIndex) {
+    if (level !== 'enfant') return true;
+    return selectedNumbers.includes(rowIndex + 1) || selectedNumbers.includes(colIndex + 1);
+  }
+
+  function handleInput(event) {
+    onInput(event.target.value);
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    onSubmit();
+  }
 </script>
 
-<div class="grid-container">
-  <div class="grid" style="--grid-size: {gridSize}px;">
-    <!-- En-tête des colonnes -->
-    <div class="grid-header-cell"></div>
-    {#each Array(10) as _, colIndex}
-      <div
-        class="grid-header-cell"
-        class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(colIndex + 1)}
-      >
-        {colIndex + 1}
-      </div>
-    {/each}
-
-    <!-- Lignes avec en-têtes -->
-    {#each Array(10) as _, rowIndex}
-      <!-- En-tête de ligne -->
-      <div
-        class="grid-header-cell"
-        class:inactive={level === 'enfant' && !getSelectedTableNumbers().includes(rowIndex + 1)}
-      >
-        {rowIndex + 1}
-      </div>
-
-      <!-- Cellules de la grille -->
+{#if board}
+  <div class="grid-container">
+    <div class="grid" style="--grid-size: {gridSize}px;">
+      <!-- En-tête des colonnes -->
+      <div class="grid-header-cell"></div>
       {#each Array(10) as _, colIndex}
-        {@const isSelected = isSelectedTableCell(rowIndex, colIndex)}
         <div
-          class="grid-cell"
-          class:current={rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
-          class:solved={solvedCells[rowIndex][colIndex]}
-          class:inactive={!isSelected}
+          class="grid-header-cell"
+          class:inactive={level === 'enfant' && !selectedNumbers.includes(colIndex + 1)}
         >
-          {#if solvedCells[rowIndex][colIndex]}
-            <span class="solved-result">{grid[rowIndex][colIndex]}</span>
-            <div class="confetti-explosion"></div>
-          {:else if rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
-            <form on:submit={handleSubmit} class="cell-form">
-              <input
-                type="number"
-                bind:value={userAnswer}
-                on:input={handleAnswerChange}
-                bind:this={inputRef}
-                class:correct={lastAnswerCorrect === true}
-                class:incorrect={lastAnswerCorrect === false}
-                min="1"
-                max="100"
-                autocomplete="off"
-              />
-            </form>
-          {:else if isSelected}
-            <div class="cell-content">
-              <span class="multiplication-text">{rowIndex + 1}×{colIndex + 1}</span>
-            </div>
-          {/if}
+          {colIndex + 1}
         </div>
       {/each}
-    {/each}
+
+      <!-- Lignes avec en-têtes -->
+      {#each Array(10) as _, rowIndex}
+        <!-- En-tête de ligne -->
+        <div
+          class="grid-header-cell"
+          class:inactive={level === 'enfant' && !selectedNumbers.includes(rowIndex + 1)}
+        >
+          {rowIndex + 1}
+        </div>
+
+        <!-- Cellules de la grille -->
+        {#each Array(10) as _, colIndex}
+          {@const isSelected = isSelectedCell(rowIndex, colIndex)}
+          <div
+            class="grid-cell"
+            class:current={rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
+            class:solved={board.solvedCells[rowIndex][colIndex]}
+            class:inactive={!isSelected}
+          >
+            {#if board.solvedCells[rowIndex][colIndex]}
+              <span class="solved-result">{board.grid[rowIndex][colIndex]}</span>
+              <div class="confetti-explosion"></div>
+            {:else if rowIndex + 1 === currentRow && colIndex + 1 === currentCol}
+              <form on:submit={handleSubmit} class="cell-form">
+                <input
+                  type="text"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  value={userAnswer}
+                  on:input={handleInput}
+                  bind:this={inputEl}
+                  class:correct={feedback === 'correct'}
+                  class:incorrect={feedback === 'incorrect' || feedback === 'timeout'}
+                  autocomplete="off"
+                />
+              </form>
+            {:else if isSelected}
+              <div class="cell-content">
+                <span class="multiplication-text">{rowIndex + 1}×{colIndex + 1}</span>
+              </div>
+            {/if}
+          </div>
+        {/each}
+      {/each}
+    </div>
   </div>
-</div>
+{/if}
 
 <style>
   /* Grille - Optimisée pour responsive */
@@ -197,7 +220,7 @@
     justify-content: center;
   }
 
-  input[type="number"] {
+  input[type='text'] {
     width: 90%;
     height: 80%;
     font-size: min(16px, calc(var(--grid-size) / 3));

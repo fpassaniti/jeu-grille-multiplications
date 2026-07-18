@@ -3,41 +3,30 @@
   import { _ } from '$lib/utils/i18n';
 
   // Props
-  export let level = 'adulte';
-  export let solvedCountAdult = 0;
-  export let solvedCountChild = { count: 0, total: 0 };
-  export let totalSolvedCountAdult = 0;
-  export let totalSolvedCountChild = { count: 0, total: 0 };
-  export let getSelectedTableNumbers = () => [];
-  export let progressPercentage = 0;
-  export let showingGridReset = false;
+  export let progress = { solved: 0, total: null, cumulative: 0 };
+  export let poolResetNotice = false;
+
+  $: percentage = progress.total ? (progress.solved / progress.total) * 100 : 0;
 </script>
 
 <div class="progress-container">
-  {#if showingGridReset}
+  {#if poolResetNotice}
     <div class="grid-reset-notification">
       <span class="emoji">🔄</span> {_('play.gridReset')}
     </div>
   {/if}
 
-  {#if level === 'adulte'}
+  {#if progress.total !== null}
     <div class="progress-label">
-      {_('play.solvedLabel')} {totalSolvedCountAdult + solvedCountAdult}/100
+      {_('play.solvedLabel')} {progress.cumulative}/{progress.total}
     </div>
     <div class="progress-bar">
-      <div class="progress-fill" style="width: {progressPercentage}%"></div>
+      <div class="progress-fill" style="width: {percentage}%"></div>
     </div>
   {:else}
-    {#if getSelectedTableNumbers().length > 0}
-      <div class="progress-label">
-        {_('play.solvedLabel')} {totalSolvedCountChild.count + solvedCountChild.count}/{solvedCountChild.total}
-      </div>
-      <div class="progress-bar">
-        <div class="progress-fill" style="width: {progressPercentage}%"></div>
-      </div>
-    {:else}
-      <div class="progress-label">{_('tableSelector.errorMessage')}</div>
-    {/if}
+    <div class="progress-label">
+      <span class="emoji">✅</span> {_('play.solvedGenericLabel', { count: progress.cumulative })}
+    </div>
   {/if}
 </div>
 

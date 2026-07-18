@@ -1,0 +1,53 @@
+import { json } from '@sveltejs/kit';
+import { sql } from '$lib/server/db';
+import { getSessionUser } from '$lib/server/auth';
+
+const VALID_TYPES = ['daily', 'streak', 'levelup', 'perfect', 'welcome'];
+
+/** @type {import('./$types').RequestHandler} */
+export async function POST({ request, cookies }) {
+  const sessionUser = getSessionUser(cookies);
+  if (!sessionUser) {
+    return json({ error: 'Non authentifié' }, { status: 401 });
+  }
+
+  try {
+    const { type } = await request.json();
+    if (!VALID_TYPES.includes(type)) {
+      return json({ error: 'Type de coffre inconnu' }, { status: 400 });
+    }
+
+    const rows = await sql`SELECT open_chest(${sessionUser.id}, ${type}) AS result`;
+    const result = rows[0].result;
+
+    if (result.error) {
+      return json({ error: result.error }, { status: result.error === 'not_available' ? 409 : 400 });
+    }
+
+    let item = null;
+    if (result.item_id) {
+      const itemRows = await sql`
+        SELECT code, slot, rarity, name, asset_url FROM items WHERE id = ${result.item_id}
+      `;
+      if (itemRows && itemRows.length > 0) {
+        const i = itemRows[0];
+        item = { id: result.item_id, code: i.code, slot: i.slot, rarity: i.rarity, name: i.name, assetUrl: i.asset_url };
+      }
+    }
+
+    return json({
+      success: true,
+      chestType: type,
+      coins: result.coins,
+      item,
+      duplicate: result.duplicate ?? false,
+      refund: result.refund ?? 0,
+      coinsBalance: result.balance,
+      milestone: result.milestone ?? null,
+      level: result.level ?? null
+    });
+  } catch (error) {
+    console.error("Erreur lors de l'ouverture du coffre:", error);
+    return json({ error: "Erreur serveur lors de l'ouverture du coffre" }, { status: 500 });
+  }
+}

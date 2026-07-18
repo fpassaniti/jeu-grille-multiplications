@@ -3,6 +3,7 @@
   import { _ } from '$lib/utils/i18n';
   // Props
   export let user = null;
+  export let userProgress = null;
 
   // État du menu mobile
   let mobileMenuOpen = false;
@@ -65,6 +66,9 @@
             <li>
               <a href="/dashboard" class="nav-link button">{_('common.dashboard')}</a>
             </li>
+            <li>
+              <a href="/character" class="nav-link button">{_('common.character')}</a>
+            </li>
           {/if}
         </ul>
       </nav>
@@ -77,6 +81,14 @@
         </div>
 
         {#if user}
+          {#if userProgress}
+            <a href="/shop" class="pill coins-pill" title={_('common.coins')}>
+              🪙 {userProgress.coins ?? 0}
+            </a>
+            <span class="pill streak-pill" class:inactive={!userProgress.playedToday}>
+              🔥 {userProgress.streak_days ?? 0}
+            </span>
+          {/if}
           <span class="user-greeting">{_('common.greeting', { name: user.displayName })}</span>
           <button class="logout-button" on:click={handleLogout} title={_('navigation.logoutTitle')}>
             <span class="logout-icon">🚪</span>
@@ -136,6 +148,16 @@
               <span class="nav-icon">📚</span> {_('common.collection')}
             </a>
           </li>
+          <li>
+            <a href="/shop" class="mobile-nav-link" on:click={closeMobileMenu}>
+              <span class="nav-icon">🛍️</span> {_('common.shop')}
+            </a>
+          </li>
+          <li>
+            <a href="/character" class="mobile-nav-link" on:click={closeMobileMenu}>
+              <span class="nav-icon">🦸</span> {_('common.character')}
+            </a>
+          </li>
         {/if}
         <!-- Language Picker in mobile menu -->
         <li class="mobile-language-item">
@@ -155,6 +177,16 @@
           <span class="mobile-greeting">{_('common.loggedInAs')}</span>
           <span class="mobile-username">{user.displayName}</span>
         </div>
+        {#if userProgress}
+          <div class="mobile-gamification">
+            <a href="/shop" class="pill coins-pill" on:click={closeMobileMenu}>
+              🪙 {userProgress.coins ?? 0}
+            </a>
+            <span class="pill streak-pill" class:inactive={!userProgress.playedToday}>
+              🔥 {userProgress.streak_days ?? 0}
+            </span>
+          </div>
+        {/if}
         <button class="mobile-logout-button" on:click={() => { handleLogout(); closeMobileMenu(); }}>
           <span class="nav-icon">🚪</span> {_('common.logout')}
         </button>
@@ -270,6 +302,49 @@
   .user-greeting {
     color: var(--primary);
     font-weight: bold;
+  }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .coins-pill {
+    background-color: #fff8e1;
+    color: #ff8f00;
+  }
+
+  .coins-pill:hover {
+    background-color: #ffecb3;
+  }
+
+  .streak-pill {
+    background-color: #ffebee;
+    color: #e64a19;
+  }
+
+  .streak-pill.inactive {
+    background-color: var(--bg-secondary);
+    color: var(--text-light);
+    opacity: 0.7;
+  }
+
+  .mobile-gamification {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  .mobile-gamification .pill {
+    flex: 1;
+    justify-content: center;
   }
 
   .login-button, .register-button {

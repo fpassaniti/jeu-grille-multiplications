@@ -1,11 +1,10 @@
 <script>
-  import { selectedTables } from '$lib/stores/gameStore';
   import { _ } from '$lib/utils/i18n';
 
-  // Props
-  export let toggleTable;
-  export let selectAllTables;
+  // Props (composant contrôlé : plus de store, le parent détient la sélection)
   export let selectedNumbers = [];
+  export let onToggle = () => {};
+  export let onSelectAll = () => {};
 </script>
 
 <div class="table-selector">
@@ -13,15 +12,12 @@
 
   <div class="tables-selection">
     {#each Array(10) as _, i}
-      <div 
-        class="table-checkbox" 
-        class:selected={$selectedTables[i]}
-      >
+      <div class="table-checkbox" class:selected={selectedNumbers.includes(i + 1)}>
         <label>
           <input
             type="checkbox"
-            checked={$selectedTables[i]}
-            on:change={() => toggleTable(i)}
+            checked={selectedNumbers.includes(i + 1)}
+            on:change={() => onToggle(i + 1)}
           />
           <span class="table-number">{i + 1}</span>
           <span class="table-symbol">×</span>
@@ -31,10 +27,10 @@
   </div>
 
   <div class="selection-actions">
-    <button on:click={() => selectAllTables(true)}>
+    <button on:click={() => onSelectAll(true)}>
       <span class="emoji">✅</span> {_('tableSelector.selectAll')}
     </button>
-    <button on:click={() => selectAllTables(false)}>
+    <button on:click={() => onSelectAll(false)}>
       <span class="emoji">❌</span> {_('tableSelector.deselectAll')}
     </button>
   </div>
@@ -68,7 +64,7 @@
     box-shadow: 0 3px 0 rgba(0, 0, 0, 0.08);
     border: 2px solid var(--bg-secondary);
   }
-  
+
   .table-checkbox.selected {
     border-color: var(--primary-light);
     background-color: var(--bg-primary);
@@ -86,13 +82,13 @@
   .table-checkbox input {
     margin: 0;
   }
-  
+
   .table-number {
     font-weight: bold;
     font-size: 1.2rem;
     color: var(--primary-dark);
   }
-  
+
   .table-symbol {
     font-size: 1rem;
     color: var(--text-light);
@@ -109,7 +105,7 @@
     padding: 8px 15px;
     font-size: 0.9rem;
   }
-  
+
   .emoji {
     font-size: 1.1em;
     margin-right: 5px;
@@ -120,7 +116,7 @@
     font-size: 0.9rem;
     color: var(--text-secondary);
   }
-  
+
   /* Responsive */
   @media (max-width: 767px) {
     .tables-selection {
@@ -128,17 +124,17 @@
       grid-template-columns: repeat(2, 1fr);
       gap: 8px;
     }
-    
+
     .table-checkbox {
       padding: 8px 10px;
     }
-    
+
     .selection-actions {
       flex-direction: column;
       gap: 8px;
       align-items: center;
     }
-    
+
     .selection-actions button {
       width: 100%;
       max-width: 250px;

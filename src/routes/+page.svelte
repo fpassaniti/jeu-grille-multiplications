@@ -1,5 +1,8 @@
 <script>
+  import { onMount } from 'svelte';
+  import { invalidateAll } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
+  import ChestModal from '$lib/components/chest/ChestModal.svelte';
   import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur (fournies via +layout.server.js)
@@ -7,6 +10,25 @@
 
   // État UI
   let loading = false;
+
+  // Bannière week-end : affichage seul, le calcul réel (bonus ×2) est serveur
+  const isWeekend = [0, 6].includes(new Date().getDay());
+
+  let dailyChestAvailable = false;
+  let showDailyChest = false;
+
+  onMount(async () => {
+    if (!data.user) return;
+    try {
+      const response = await fetch('/api/chests');
+      if (response.ok) {
+        const chests = await response.json();
+        dailyChestAvailable = chests.daily?.available ?? false;
+      }
+    } catch {
+      // silencieux : la bannière est un bonus, pas une fonctionnalité critique
+    }
+  });
 </script>
 
 <svelte:head>
@@ -27,6 +49,10 @@
 
     <h1>{_('home.gameTitle')}</h1>
     <p class="game-intro">{_('home.gameIntro')}</p>
+
+    {#if isWeekend}
+      <p class="weekend-banner">🎉 {_('rewards.weekend')}</p>
+    {/if}
 
     {#if data.user}
       <!-- Utilisateur connecté -->
@@ -55,6 +81,11 @@
         <a href="/dashboard" class="button primary-button">
           <span class="emoji">🏆</span> {_('home.continueAdventure')}
         </a>
+        {#if dailyChestAvailable}
+          <button class="button daily-chest-cta" on:click={() => (showDailyChest = true)}>
+            🎁 {_('chest.open')}
+          </button>
+        {/if}
       </div>
     {:else}
       <!-- Utilisateur non connecté -->
@@ -119,6 +150,17 @@
   </div>
 </main>
 
+{#if showDailyChest}
+  <ChestModal
+    chestType="daily"
+    onClose={() => {
+      showDailyChest = false;
+      dailyChestAvailable = false;
+    }}
+    onOpened={invalidateAll}
+  />
+{/if}
+
 <style>
   .logo-container {
     display: flex;
@@ -162,6 +204,34 @@
     font-size: 1.2rem;
     margin-bottom: 30px;
     color: var(--text-secondary);
+  }
+
+  .weekend-banner {
+    display: inline-block;
+    background: linear-gradient(135deg, #fff8e1, #ffe082);
+    color: #ff8f00;
+    font-weight: bold;
+    padding: 10px 20px;
+    border-radius: var(--border-radius-md);
+    margin-bottom: 20px;
+  }
+
+  .daily-chest-cta {
+    font-size: 1.2rem;
+    padding: 15px 30px;
+    background-color: var(--success);
+    color: white;
+    box-shadow: 0 6px 0 var(--success-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
   }
 
   .welcome-screen {

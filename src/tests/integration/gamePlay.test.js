@@ -1,243 +1,136 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  calculateScore,
-  calculateDifficultyMultiplier,
-  checkAnswer
-} from '../../lib/utils/game-logic';
+import { GameEngine } from '../../lib/game/engine.svelte.js';
+import { saveScore } from '../../lib/services/gameService.js';
 
-// Simulation de l'intégration entre le module de logique du jeu et l'API de scores
-describe('Intégration - Jeu et API Scores', () => {
-  // Données simulées
-  const mockUserInfo = {
-    name: 'Test User',
-    authenticated: false
-  };
+/**
+ * Test d'intégration : une partie complète pilotée par l'engine,
+ * puis sauvegarde du score — vérifie le payload exact envoyé à /api/scores.
+ */
 
-  // Simuler un fetch
-  const mockFetch = vi.fn();
-  global.fetch = mockFetch;
+describe('Intégration : partie + sauvegarde du score', () => {
+  let engine;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-
-    // Configuration par défaut du mock fetch
-    mockFetch.mockResolvedValue({
+    vi.useFakeTimers();
+    engine = new GameEngine();
+    global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
         success: true,
-        gameData: {
-          id: 'game-id',
-          score: 500
-        },
-        xpEarned: 500
+        xpEarned: 0,
+        progressUpdate: null
       })
     });
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    engine.destroy();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
-  it('devrait soumettre un score correct après une partie adulte', async () => {
-    // Simule une partie terminée
-    const gameState = {
-      level: 'adulte',
-      duration: 5,
-      solvedCells: 10,
-      totalPossibleCells: 20,
-      selectedTables: [],
-      timeRemaining: 180,
-      cellsWithScore: [
-        { row: 7, col: 8, result: 56, timeRemaining: 12 },
-        { row: 9, col: 3, result: 27, timeRemaining: 8 }
-      ]
-    };
-
-    // Calcul du score total
-    const totalScore = gameState.cellsWithScore.reduce((total, cell) => {
-      const cellScore = calculateScore(
-        cell.timeRemaining,
-        cell.row,
-        cell.col,
-        gameState.level
-      );
-      return total + cellScore;
-    }, 0);
-
-    // Soumission du score
-    await submitScore(mockUserInfo, gameState, totalScore);
-
-    // Vérifications
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/scores',
-      expect.objectContaining({
-        method: 'POST',
-        headers: expect.any(Object),
-        body: expect.stringContaining('"score":' + totalScore)
-      })
-    );
-  });
-
-  it('devrait soumettre un score avec tables sélectionnées pour une partie enfant', async () => {
-    // Simule une partie enfant terminée
-    const gameState = {
-      level: 'enfant',
-      duration: 5,
-      solvedCells: 8,
-      totalPossibleCells: 15,
-      selectedTables: [2, 5, 10], // Tables sélectionnées pour le niveau enfant
-      timeRemaining: 240,
-      cellsWithScore: [
-        { row: 2, col: 5, result: 10, timeRemaining: 15 },
-        { row: 5, col: 5, result: 25, timeRemaining: 10 }
-      ]
-    };
-
-    // Calcul du score total
-    const totalScore = gameState.cellsWithScore.reduce((total, cell) => {
-      const cellScore = calculateScore(
-        cell.timeRemaining,
-        cell.row,
-        cell.col,
-        gameState.level
-      );
-      return total + cellScore;
-    }, 0);
-
-    // Soumission du score
-    await submitScore(mockUserInfo, gameState, totalScore);
-
-    // Vérifications
-    expect(mockFetch).toHaveBeenCalledTimes(1);
-
-    // Vérifier que les tables sélectionnées sont incluses dans la requête
-    const fetchCall = mockFetch.mock.calls[0];
-    const requestBody = JSON.parse(fetchCall[1].body);
-    expect(requestBody).toHaveProperty('selectedTables');
-    expect(requestBody.selectedTables).toEqual([2, 5, 10]);
-  });
-
-  it('devrait mettre à jour la progression pour un utilisateur connecté', async () => {
-    // Simuler un utilisateur authentifié
-    const authenticatedUser = {
-      name: 'Auth User',
-      authenticated: true,
-      id: 'user-id'
-    };
-
-    // Réponse simulée avec mise à jour de progression
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        success: true,
-        gameData: {
-          id: 'game-id',
-          score: 700
-        },
-        xpEarned: 700,
-        progressUpdate: {
-          returned_user_id: 'user-id',
-          returned_xp: 5200, // XP après mise à jour
-          returned_level: 3,  // Niveau après mise à jour
-          returned_streak_days: 4,
-          returned_total_score: 13200
-        }
-      })
-    });
-
-    // Simuler état du jeu
-    const gameState = {
-      level: 'adulte',
-      duration: 5,
-      solvedCells: 15,
-      totalPossibleCells: 20,
-      selectedTables: [],
-      timeRemaining: 180,
-      cellsWithScore: [
-        { row: 7, col: 8, result: 56, timeRemaining: 12 },
-        { row: 6, col: 7, result: 42, timeRemaining: 14 },
-        { row: 9, col: 9, result: 81, timeRemaining: 10 }
-      ]
-    };
-
-    // Calcul du score total
-    const totalScore = gameState.cellsWithScore.reduce((total, cell) => {
-      const cellScore = calculateScore(
-        cell.timeRemaining,
-        cell.row,
-        cell.col,
-        gameState.level
-      );
-      return total + cellScore;
-    }, 0);
-
-    // Soumission du score
-    const response = await submitScore(authenticatedUser, gameState, totalScore);
-
-    // Vérifications
-    expect(response.progressUpdate).toBeDefined();
-    expect(response.progressUpdate.returned_xp).toBe(5200);
-    expect(response.progressUpdate.returned_level).toBe(3);
-    expect(response.xpEarned).toBe(700);
-  });
-
-  it('devrait gérer les erreurs lors de la soumission du score', async () => {
-    // Simuler une erreur côté serveur
-    mockFetch.mockResolvedValue({
-      ok: false,
-      json: async () => ({
-        error: 'Erreur serveur lors de l\'enregistrement du score'
-      })
-    });
-
-    // Simuler état du jeu
-    const gameState = {
-      level: 'adulte',
-      duration: 5,
-      solvedCells: 10,
-      totalPossibleCells: 20,
-      selectedTables: [],
-      timeRemaining: 180,
-      cellsWithScore: [
-        { row: 7, col: 8, result: 56, timeRemaining: 12 }
-      ]
-    };
-
-    // Soumission du score
-    try {
-      await submitScore(mockUserInfo, gameState, 100);
-      // Si submitScore ne génère pas d'erreur, le test échoue
-      expect(true).toBe(false);
-    } catch (error) {
-      expect(error.message).toBe('Erreur lors de la soumission du score');
+  async function playAndSave(config, questionsToSolve = 5) {
+    engine.start(config);
+    for (let i = 0; i < questionsToSolve; i++) {
+      engine.onAnswerInput(String(engine.question.answer));
+      vi.advanceTimersByTime(500);
     }
-  });
-});
+    engine.end();
 
-// Fonction simulée pour soumettre un score (ce serait normalement dans un autre fichier)
-async function submitScore(user, gameState, totalScore) {
-  const payload = {
-    name: user.name,
-    score: totalScore,
-    duration: gameState.duration,
-    level: gameState.level,
-    solvedCells: gameState.solvedCells,
-    totalPossibleCells: gameState.totalPossibleCells,
-    selectedTables: gameState.selectedTables
-  };
-
-  const response = await fetch('/api/scores', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error('Erreur lors de la soumission du score');
+    const results = engine.results;
+    const payload = {
+      name: 'Testeur',
+      score: results.score,
+      duration: results.durationMin,
+      level: results.level,
+      gameMode: results.modeId,
+      modeOptions: results.options,
+      questionsSolved: results.questionsSolved,
+      questionsTotal: results.questionsTotal,
+      errorsCount: results.errorsCount,
+      elapsedSec: results.elapsedSec,
+      solvedCells: results.questionsSolved,
+      totalPossibleCells: results.questionsTotal,
+      selectedTables:
+        results.modeId === 'tables' && results.level === 'enfant'
+          ? (results.options.selectedTables ?? [])
+          : []
+    };
+    await saveScore(payload);
+    return payload;
   }
 
-  return await response.json();
-}
+  it('partie tables enfant : payload complet V1 + V2', async () => {
+    const payload = await playAndSave({
+      modeId: 'tables',
+      options: { selectedTables: [2, 5] },
+      level: 'enfant',
+      durationMin: 3
+    });
+
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/scores',
+      expect.objectContaining({ method: 'POST' })
+    );
+    const sent = JSON.parse(global.fetch.mock.calls[0][1].body);
+
+    // Nouveau format V2
+    expect(sent.gameMode).toBe('tables');
+    expect(sent.modeOptions).toEqual({ selectedTables: [2, 5] });
+    expect(sent.questionsSolved).toBe(5);
+    expect(sent.questionsTotal).toBe(36); // lignes 2∪5 + colonnes 2∪5 = 20+20−4
+    expect(sent.errorsCount).toBe(0);
+    // Champs V1 (compat serveur non déployé / PWA)
+    expect(sent.solvedCells).toBe(5);
+    expect(sent.selectedTables).toEqual([2, 5]);
+    expect(sent.level).toBe('enfant');
+    expect(sent.duration).toBe(3);
+    expect(sent.score).toBeGreaterThan(0);
+    expect(payload.score).toBe(sent.score);
+  });
+
+  it('partie addition : pool infini (questionsTotal null), pas de tables', async () => {
+    const payload = await playAndSave(
+      { modeId: 'addition', options: { tiers: ['A1'] }, level: 'adulte', durationMin: 2 },
+      3
+    );
+    const sent = JSON.parse(global.fetch.mock.calls[0][1].body);
+    expect(sent.gameMode).toBe('addition');
+    expect(sent.modeOptions).toEqual({ tiers: ['A1'] });
+    expect(sent.questionsTotal).toBeNull();
+    expect(sent.selectedTables).toEqual([]);
+    expect(payload.questionsSolved).toBe(3);
+  });
+
+  it('les erreurs sont comptées dans le payload', async () => {
+    engine.start({
+      modeId: 'tables',
+      options: { selectedTables: [] },
+      level: 'adulte',
+      durationMin: 3
+    });
+    // une erreur : réponse fausse de même longueur que la bonne réponse
+    const answer = engine.question.answer;
+    const wrong = String(answer).length === String(answer + 1).length ? answer + 1 : answer - 1;
+    engine.onAnswerInput(String(wrong));
+    expect(engine.feedback).toBe('incorrect');
+    vi.advanceTimersByTime(600);
+    // puis une bonne réponse
+    engine.onAnswerInput(String(engine.question.answer));
+    vi.advanceTimersByTime(500);
+    engine.end();
+
+    expect(engine.results.errorsCount).toBe(1);
+    expect(engine.results.questionsSolved).toBe(1);
+  });
+
+  it('saveScore propage les erreurs serveur', async () => {
+    global.fetch.mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'Score invalide' })
+    });
+    await expect(
+      saveScore({ name: 'x', score: 999999, duration: 3, level: 'adulte' })
+    ).rejects.toThrow('Score invalide');
+  });
+});

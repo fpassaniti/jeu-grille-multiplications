@@ -1,0 +1,437 @@
+# SPEC — MultyFun (multy.ovh)
+
+> Document de spécification vivant. Il décrit l'existant (V1), les points d'attention, puis les spécifications de la V2 : modes de calcul multiples et gamification (pièces d'or, boutique, personnage RPG, coffres, streaks). Il est fait pour itérer : chaque section peut être amendée avant implémentation.
+
+**Dernière mise à jour** : 2026-07-18
+
+---
+
+## 1. Vue d'ensemble
+
+| | |
+|---|---|
+| **Produit** | Jeu éducatif d'entraînement au calcul mental, pensé pour des enfants de CE1/CE2 (7–9 ans) |
+| **V1** | Tables de multiplication uniquement (grille 10×10) |
+| **V2 (cible)** | Multi-modes : tables, additions, soustractions, multiplications étendues (divisions préparées pour V3) + gamification complète |
+| **Stack** | SvelteKit 2 + Svelte 5, Neon Postgres (`@neondatabase/serverless`), déployé sur Vercel, PWA (`@vite-pwa/sveltekit`) |
+| **i18n** | 4 langues : fr (défaut), en, es, zh — `src/lib/translations/` |
+| **Utilisateurs** | ~52 comptes réels, 423 scores, 381 sessions de jeu (données à préserver) |
+| **Style** | Enfantin : polices Baloo 2 / Comic Neue, emojis comme icônes, boutons « 3D », pas de sons |
+
+---
+
+## 2. État des lieux V1
+
+### 2.1 Routes et pages
+
+| Route | Accès | Rôle |
+|---|---|---|
+| `/` | Public | Accueil. Connecté : bienvenue + avatar de niveau + lien dashboard. Invité : cartes S'inscrire / Se connecter / Jouer |
+| `/play` | Public | Le jeu (machine à états `notStarted` → `playing` → `finished`) |
+| `/login` | Public | Connexion : username + emoji secret (18 choix) |
+| `/register` | Public | Inscription : username, displayName optionnel, emoji secret |
+| `/dashboard` | Connecté | Niveau, XP, barre de progression, 5 dernières parties, actions |
+| `/collection` | Connecté | Les 30 niveaux (débloqués/verrouillés), XP manquante, impression de cartes |
+| `/leaderboard` | Public | Top 10 filtré par mode (adulte/enfant) × durée (2/3/5 min) |
+| `/offline` | Public | Fallback PWA hors-ligne |
+| `/debug-print/[level]`, `/debug-score` | Debug | Aperçu carte imprimable / POST de score simulé |
+
+### 2.2 Mécanique de jeu
+
+| Élément | Comportement V1 |
+|---|---|
+| **Modes** | `adulte` (toutes les cellules 1–10 × 1–10) / `enfant` (tables choisies via TableSelector, persistées en localStorage) |
+| **Durées** | 2, 3 ou 5 minutes (défaut 3) |
+| **Génération** | Cellule aléatoire non résolue de la grille 10×10 ; mode enfant : ligne OU colonne dans les tables choisies |
+| **Temps/question** | `5 + ((row+col)/20)×10` → 5 à 15 s ; ×3 en mode enfant. Timeout → marqué incorrect, question suivante |
+| **Grille épuisée** | Reset des cellules résolues (score conservé), notification 1,5 s |
+| **Validation** | Automatique à chaque frappe (`parseInt(saisie) === réponse`) — ⚠️ bug de préfixe, voir §3 |
+| **Score** | `timeRemaining × difficulté` (matrice 10×10 en dur, 0.5 à 3.0, pic 7×7 = 3.0) ; enfant : `timeRemaining × (difficulté×0.7 + 0.3)` — `src/lib/utils/game-logic.js:44` |
+| **Combo/streak en partie** | Aucun |
+| **Fin de partie** | Connecté : sauvegarde auto + XP. Invité : formulaire de prénom pour le leaderboard |
+
+### 2.3 Progression (XP / niveaux)
+
+| Élément | Comportement V1 |
+|---|---|
+| **XP** | XP = score de la partie (ratio 1:1), attribuée par la fonction SQL `add_user_xp(user_id, xp, update_streak)` |
+| **Niveaux** | `level = MAX(level) FROM level_definitions WHERE min_xp <= xp` ; 30 niveaux (titres i18n + images `static/images/levels/level_N.png`) |
+| **Level-up** | `LevelUpModal` affiché quand le niveau retourné augmente |
+| **Streak jours** | Calculé en base (`streak_days` : +1 si joué la veille, sinon reset) mais **jamais affiché dans l'UI** |
+| **Badges** | Colonne `unlocked_badges` (JSON) présente, **aucune logique implémentée** |
+
+### 2.4 Endpoints API
+
+| Endpoint | Méthode | Payload / Query | Notes |
+|---|---|---|---|
+| `/api/auth/register` | POST | `{username, passwordChar, displayName?}` | Appelle `create_new_user()`, pose cookie session 7 j |
+| `/api/auth/login` | POST | `{username, passwordChar}` | Comparaison en clair, `UPDATE last_login` |
+| `/api/auth/logout` | POST | — | Supprime le cookie |
+| `/api/scores` | POST | `{name, score, duration, level, solvedCells, totalPossibleCells, selectedTables}` | Insère dans `game_sessions` + `scores` ; si connecté, appelle `add_user_xp`. Validation : `duration ∈ {2,3,5}` seulement — **le score n'est pas validé** |
+| `/api/leaderboard` | GET | `?level=&duration=` | Meilleur score par nom, top 10 |
+| `/api/user/progress` | GET | (cookie) | Progression + niveau courant/suivant + % |
+| `/api/levels`, `/api/levels/[id]` | GET | — | Définitions de niveaux, flags `unlocked`/`current` |
+
+### 2.5 Modèle de données
+
+| Table | Colonnes principales |
+|---|---|
+| `users` | `id (UUID)`, `username`, `password_char` (emoji en clair), `display_name`, `last_login`, `created_at` |
+| `user_progress` | `user_id`, `xp`, `level`, `games_played`, `total_score`, `streak_days`, `unlocked_badges (JSON)`, `last_played_at` |
+| `scores` (leaderboard) | `id`, `name`, `score`, `level (text: adulte/enfant)`, `duration`, `cells_solved`, `total_cells`, `tables_used (int[])`, `date` |
+| `game_sessions` (historique) | idem `scores` + `user_id`, `xp_earned`, `completed` |
+| `level_definitions` | `level (unique)`, `title`, `description`, `min_xp`, `rewards (JSON, inutilisé)`, `image_url`, `color_theme` |
+
+**Fonctions SQL** : `add_user_xp(user_id, xp, update_streak)` (streak + XP + niveau, versionnée dans `db/add_user_xp.sql`) ; `create_new_user(...)` (⚠️ non versionnée, existe uniquement en base).
+
+### 2.6 Front : composants et stores
+
+| Zone | Fichiers clés |
+|---|---|
+| Jeu | `src/routes/play/+page.svelte` (~593 lignes, toute la logique), `game/StartScreen`, `GameScreen`, `EndScreen`, `GameOptions`, `GameHeader`, `GameProgress`, `CurrentMultiplication`, `SaveScoreForm`, `LevelUpModal` |
+| Plateau | `GameBoard.svelte` (grille 11×11 desktop), `MobileGame.svelte` (question + input, < 768 px) |
+| Généraux | `NavigationHeader`, `Leaderboard`, `LevelAvatar`, `TableSelector`, `PrintableCard`, `PwaInstallPrompt`, `LanguagePicker` |
+| Stores | `gameStore.js` (tables sélectionnées, utilisé), `languageStore.js`, `gameStateStore.js` (**code mort**) |
+| Utils | `game-logic.js` (difficulté + score), `formatters.js`, `i18n.js`, `image-paths.js`, `template-loader.js` |
+| Services | `gameService.js` (wrappers fetch, partiellement dupliqués dans `/play`) |
+
+---
+
+## 3. Points d'attention / dette technique
+
+| # | Problème | Impact | À traiter |
+|---|---|---|---|
+| 1 | `level_definitions` versionné = 10 niveaux, mais UI/i18n/images = 30 | Seuils XP 11–30 dépendent du contenu réel de la base prod | Réconcilier et versionner le seed 30 niveaux |
+| 2 | Le client attend `returned_previous_level`/`returned_level_title` que `add_user_xp` (repo) ne retourne pas | Détection de level-up fragile | Corrigé par `add_game_rewards` (V2, §5.7) |
+| 3 | `create_new_user` non versionnée | Base non reconstructible | Extraire le SQL de la base et le versionner |
+| 4 | Mot de passe = 1 emoji stocké/comparé en clair | Sécurité faible (choix assumé enfants) | Documenté, pas de changement prévu |
+| 5 | `gameStateStore.js` = code mort ; `gameService.saveScore` dupliqué dans `/play` | Confusion | Supprimé/réutilisé au refactor V2 (étape 1) |
+| 6 | Auto-validation à chaque frappe : taper « 4 » pour 42 flashe « incorrect » | Bloquant avec des réponses à 3-4 chiffres | Corrigé par l'engine V2 (§4.3) |
+| 7 | `POST /api/scores` ne valide pas la plausibilité du score | Triche triviale (XP et bientôt pièces) | Anti-triche V2 (§5.7) |
+| 8 | `login/+page.svelte` fait un GET `/api/auth/login` inexistant | Erreur silencieuse | Nettoyage |
+| 9 | Restes Supabase (`vite.config.js`, README) après migration Neon | Confusion | Nettoyage |
+| 10 | Streak calculé mais invisible ; `unlocked_badges` et `rewards` inutilisés | Potentiel gaspillé | Exploités par la V2 (§5) |
+
+---
+
+## 4. Spec V2 — Volet A : modes de calcul multiples
+
+### 4.1 Objectif
+
+Ne plus proposer uniquement les tables, mais un choix de **modes de calcul** avec progression pédagogique CE1 → CE2 :
+
+| Mode | id | Statut V2 | Affichage |
+|---|---|---|---|
+| Tables de multiplication | `tables` | ✅ Existant, réécrit dans l'abstraction | Grille 10×10 (desktop) / question (mobile) |
+| Additions posées | `addition` | ✅ Nouveau | Question générique (posée en colonnes) |
+| Soustractions posées | `subtraction` | ✅ Nouveau | Question générique (posée en colonnes) |
+| Multiplications étendues | `multiplication` | ✅ Nouveau | Question générique |
+| Divisions | `division` | 🔜 V3 — architecture prête, `enabled: false` | Question générique |
+
+### 4.2 Abstraction « mode » — `src/lib/modes/` (JS pur, sans import Svelte)
+
+Le JS pur permet les tests Vitest ET l'import côté serveur (validation des options dans `/api/scores`).
+
+```
+src/lib/modes/
+├── index.js            # MODES, getMode(id) (fallback 'tables'), listEnabledModes()
+├── types.js            # Typedefs JSDoc
+├── tables.js           # Grille 10×10 + matrice de difficulté (migrée de game-logic.js)
+├── addition.js / subtraction.js / multiplication.js
+├── division.js         # enabled: false
+├── presets.js          # CE1 / CE2 / Libre
+└── generator-utils.js  # randInt, contrôle retenue/emprunt, anti-répétition
+```
+
+**Interfaces** (JSDoc) :
+- `Question` : `id, operands[], operator ('×'|'+'|'−'|'÷'), answer, difficulty (0.5–3.0, échelle commune), timeAllowedSec, meta` (spécifique au mode : `{row,col}` / `{carry:true}` / `{tier:'A3'}`).
+- `QuestionGenerator` (créé par partie, avec état) : `next()`, `markSolved(id)`, `progress() → {solved, total|null}`, `poolExhausted()`, `resetPool()`, `boardState()` (état de grille pour `tables`, `null` sinon).
+- `GameMode` : `id, enabled, labelKey, icon, boardType ('grid'|'generic'), tiers, defaultOptions, validateOptions(options), createGenerator(options, level)`.
+
+`boardType` est une **chaîne** (pas un composant) ; le mapping vers les composants vit dans `GameScreen.svelte` : `grid` + desktop → `GameBoard`, sinon → `QuestionPanel`. Ajouter un mode = 1 fichier + traductions.
+
+### 4.3 Moteur — `src/lib/game/engine.svelte.js` (classe à runes Svelte 5)
+
+États réactifs : `state, score, gameTimer, questionTimer, question, feedback, solvedHistory, progress`. Méthodes : `start({modeId, options, level, durationMin})`, `onAnswerInput(raw)`, `submitAnswer(raw)`, `end()`, `destroy()`.
+
+- **Validation corrigée** : auto-check seulement quand la longueur saisie atteint celle de la réponse ; Enter/bouton OK force la vérification. Supprime le bug de préfixe (#6).
+- Timers (global + question, timeout → feedback → question suivante) migrés depuis `/play`.
+- `/play/+page.svelte` retombe à ~100 lignes ; `gameStateStore.js` supprimé ; `gameService.saveScore` réutilisé.
+- `src/lib/game/persistence.js` : localStorage `multyfun.gameSettings.v2` = `{lastMode, level, duration, optionsByMode}` (migre `selectedMultiplicationTables`).
+
+### 4.4 Scoring unifié — `src/lib/game/scoring.js`
+
+```js
+points = Math.round(15 * question.difficulty * (0.25 + 0.75 * timeRemaining / timeAllowed))
+```
+
+- La vitesse est un **ratio** → insensible au ×3 enfant et équitable entre une table à 8 s et une addition posée à 40 s.
+- Difficulté = échelle commune 0.5–3.0 calibrée entre modes (§4.5).
+- Plancher 0.25 : une bonne réponse lente rapporte toujours (motivation CE1).
+- Max 45 pts/question ≈ ancien max adulte → continuité des leaderboards. XP = score 1:1 conservé.
+- L'ajustement enfant `×0.7+0.3` est supprimé (le leaderboard sépare déjà adulte/enfant).
+- À valider en test : `points/minute` du même ordre (±30 %) entre modes ; ajuster les `difficulty` des paliers sinon.
+
+### 4.5 Paliers pédagogiques (échelle de difficulté commune)
+
+| Mode | Palier | Contenu | Difficulté |
+|---|---|---|---|
+| Addition | A1 | Sans retenue, résultat ≤ 20 | 0.5 |
+| | A2 | Sans retenue, ≤ 100 | 0.8 |
+| | A3 | Avec retenue, ≤ 100 | 1.2 |
+| | A4 | Sans retenue, ≤ 1000 | 1.4 |
+| | A5 | Avec retenue, ≤ 1000 | 1.8 |
+| | A6 | Avec retenue, ≤ 10 000 (option 3 opérandes) | 2.4 |
+| Soustraction | S1 | Sans emprunt, ≤ 20 (résultat ≥ 0) | 0.6 |
+| | S2 | Sans emprunt, ≤ 100 | 0.9 |
+| | S3 | Avec emprunt, ≤ 100 | 1.4 |
+| | S4 | Sans emprunt, ≤ 1000 | 1.6 |
+| | S5 | Avec emprunt, ≤ 1000 | 2.0 |
+| Multiplication | M1 | n × 10 | 0.6 |
+| | M2 | n × 100, n × 1000 | 0.8 |
+| | M3 | 2 chiffres × 1 chiffre, sans retenue | 1.5 |
+| | M4 | 2 chiffres × 1 chiffre, avec retenue | 2.2 |
+| | M5 | 3 chiffres × 1 chiffre | 2.8 |
+| Division (V3) | D1–D3 | Inverse des tables → quotients exacts | déclarés, désactivés |
+| Tables | — | Matrice 10×10 existante | 0.5–3.0 |
+
+Génération chiffre par chiffre pour **contrôler exactement** la retenue/l'emprunt (sans retenue : chaque colonne somme ≤ 9 ; avec : au moins une colonne > 9).
+
+**Presets** (`presets.js`) : **CE1** = A1–A3, S1–S3, tables {2,3,4,5,10}, M1 · **CE2** = A3–A5, S3–S5, toutes tables, M1–M4 · **Libre** = sélection manuelle des paliers.
+
+### 4.6 DB + API (migration `db/migrations/001_game_modes.sql`, rétrocompatible)
+
+```sql
+ALTER TABLE scores        ADD COLUMN game_mode text NOT NULL DEFAULT 'tables',
+                          ADD COLUMN mode_options jsonb NOT NULL DEFAULT '{}';
+ALTER TABLE game_sessions ADD COLUMN game_mode text NOT NULL DEFAULT 'tables',
+                          ADD COLUMN mode_options jsonb NOT NULL DEFAULT '{}';
+-- + CHECK game_mode IN (...), backfill tables_used → mode_options.selectedTables,
+-- + INDEX (game_mode, level, duration, score DESC)
+```
+
+- Les 906 enregistrements existants deviennent `game_mode = 'tables'` via DEFAULT — zéro réécriture.
+- `mode_options JSONB` : chaque mode y sérialise ses réglages → la division V3 n'exigera aucune migration.
+- `POST /api/scores` : accepte l'**ancien payload** (PWA en cache : `solvedCells`, `selectedTables`…) ET le nouveau (`gameMode, modeOptions, questionsSolved, questionsTotal, errorsCount`) ; validation serveur via `getMode(gameMode).validateOptions()` (rejette `division` tant que désactivée).
+- `GET /api/leaderboard` : nouveau paramètre `mode` (défaut `tables` → l'historique reste le classement tables).
+
+### 4.7 UI
+
+| Composant | Rôle |
+|---|---|
+| `ModeSelector.svelte` (nouveau) | Cartes icône + nom (✖️ ➕ ➖) en tête de StartScreen, depuis `listEnabledModes()` |
+| `DifficultySelector.svelte` (nouveau) | 3 gros boutons CE1 / CE2 / Libre ; « Libre » déplie les paliers du mode |
+| `QuestionPanel.svelte` (généralise `MobileGame`) | Rendu `operands/operator` ; **présentation posée en colonnes** pour additions/soustractions multi-chiffres (technique opératoire CE1/CE2) ; historique `{question, points}` |
+| `CurrentQuestion.svelte` (généralise `CurrentMultiplication`) | Question dans le header desktop |
+| `NumericKeypad.svelte` (nouveau) | Pavé 0-9 + effacer + OK sur mobile/tablette (`inputmode="none"`) ; clavier physique + Enter sur desktop |
+| `GameOptions.svelte` (modifié) | Niveau + durée communs ; section spécifique par mode (`TableSelector` pour tables, `DifficultySelector` sinon) |
+| `Leaderboard.svelte` (modifié) | Sélecteur de mode au-dessus des filtres existants, URL `?mode=&level=&duration=` |
+
+i18n : nouvelles clés `modes.*`, `difficulty.*` (tiers libellés), `game.validate` dans les 4 langues.
+
+---
+
+## 5. Spec V2 — Volet B : gamification
+
+### 5.1 Principes (public : enfants de 7–9 ans)
+
+- **XP et pièces séparés** : l'XP reste la progression permanente (30 niveaux, jamais dépensée) ; les pièces d'or 🪙 sont la monnaie dépensable.
+- **Éthique** : pas d'achats réels, pas de pub, catalogue entièrement visible (pas de FOMO agressif type « aujourd'hui seulement »), pity anti-frustration, gel de streak (les enfants ne contrôlent pas leur emploi du temps), doublons toujours convertis positivement.
+- **Tout gain est calculé côté serveur** (formules, bonus, tirages de coffres) — le client ne fait qu'afficher.
+
+### 5.2 Économie des pièces
+
+**Conversion** : `pieces_base = GREATEST(10, FLOOR(score / 10))` → 20–200 🪙/partie (score typique 200–2000), moyenne ~80. Nombres petits et lisibles, visuellement distincts de l'XP.
+
+**Bonus (serveur uniquement)** :
+
+| Bonus | Montant | Condition |
+|---|---|---|
+| Première partie du jour | +50 🪙 | `DATE(last_played_at) < CURRENT_DATE` |
+| Streak actif | +5 × streak_days (plafond +50) | streak ≥ 2 jours |
+| Partie parfaite | +25 🪙 | 0 erreur ET ≥ 10 réponses |
+| Week-end | ×2 sur la base | samedi/dimanche |
+
+Revenu d'un joueur régulier (2-3 parties/jour) : **~300–400 🪙/jour** (avec coffre quotidien).
+
+**Prix boutique** :
+
+| Rareté | Prix | Rythme d'acquisition cible |
+|---|---|---|
+| Commun | 150 🪙 | ~2 parties |
+| Rare | 500 🪙 | 1-2 jours |
+| Épique | 1 500 🪙 | 4-5 jours |
+| Légendaire | 4 500 🪙 | ~2 semaines de jeu régulier |
+
+**Crédit rétroactif au lancement** : `LEAST(800, FLOOR(xp/50))` pour les 52 joueurs existants (les vétérans à 25 000–41 000 XP touchent 500–800 🪙 : moment « waouh » sans vider la boutique) + **1 coffre de bienvenue** pour tous au premier login post-V2.
+
+### 5.3 Personnage RPG (calques d'images)
+
+**7 slots + corps**, empilés par z-order croissant :
+
+| z | Slot | Exemples | Équipement de départ |
+|---|---|---|---|
+| 0 | `background` | prairie, château, galaxie | ciel simple |
+| 10 | `aura` | étincelles, flammes (épique+) | — |
+| 20 | `back` | cape, ailes, sac à dos | — |
+| 30 | `body` | créature de base, variantes, dragon, phénix | blob violet basique |
+| 40 | `outfit` | t-shirt troué → armure dorée | t-shirt troué |
+| 50 | `weapon` | bâton → épée laser des maths | bâton de bois |
+| 60 | `hat` | bonnet → couronne | — |
+| 70 | `pet` | familier en bas à droite | — |
+
+- **Assets** : PNG 512×512 transparents, **tous dessinés sur le même canvas** (corps centré, chaque item positionné à sa place) → composition = simples `<img>` empilées en `position:absolute; inset:0`, aucun offset en code.
+- **Composant** `src/lib/components/character/CharacterAvatar.svelte` (prop `equipment`, `size`). Affiché : `/character` (300 px), dashboard (150 px), header (mini 40 px).
+- **Lien avec les niveaux** : `unlock_level` sur certains items (« Reviens au niveau 10 pour l'acheter ! » → double motivation) ; ~6 items `is_purchasable = false` exclusifs aux coffres de level-up (niveaux 5/10/15/20/25/30).
+
+### 5.4 Boutique (`/shop`)
+
+- Onglets par slot (🎩 👕 ⚔️ 🐾 🌈 ✨ 🦸), cartes style « 3D » existant, fond de couleur de rareté (gris/bleu/violet/or), badge « ✅ Possédé ».
+- **Prévisualisation avant achat** : tap sur un item → le personnage l'essaie en haut de page.
+- Confirmation en 2 taps (« Acheter pour 350 🪙 ? Il te restera 120 🪙 »).
+- « ⭐ Offres du jour » : 3 items à −20 %, sélection **déterministe sans cron** (`ORDER BY md5(CURRENT_DATE::text || item.code) LIMIT 3`).
+
+### 5.5 Coffres au trésor
+
+| Type | Déclencheur | Contenu |
+|---|---|---|
+| 🎁 Quotidien | 1 clic/jour (dashboard + accueil) | 30–80 🪙 ; 15 % item commun, 3 % rare |
+| 🔥 Streak | Paliers 3 / 7 / 14 / 30 jours | commun garanti / rare + 100 🪙 / épique / légendaire |
+| ⬆️ Level-up | Chaque montée de niveau | `100 + 20×niveau` 🪙 + item exclusif aux nv 5/10/15/20/25/30 |
+| 💯 Perfect | Partie parfaite (max 1/jour) | 25–75 🪙, 10 % item commun |
+| 👋 Bienvenue | Premier login post-V2 | pièces + item commun garanti |
+
+- **Doublons** : convertis en pièces (50 % du prix) avec message positif (« Tu l'as déjà ! +250 🪙 »).
+- **`ChestModal.svelte`** : coffre qui tremble (CSS), tap pour ouvrir, confettis emoji, halo couleur de rareté.
+- Tirage exclusivement serveur dans `/api/chests/open`.
+
+### 5.6 Streaks quotidiens et boosters
+
+- Réutilise `user_progress.streak_days` existant (#10).
+- **Gel de streak 🛡️** : 1 offert, rachetable 300 🪙 ; consommé automatiquement si 1 jour manqué (logique dans la fonction SQL).
+- **UI** : flamme 🔥 + compteur dans le header (grise si pas encore joué aujourd'hui) ; dashboard : calendrier 7 jours (✅/⬜) + prochain palier (« Encore 2 jours → coffre rare ! »).
+- **Boosters (volontairement minimal)** : week-end ×2 (pur code serveur + bannière accueil) ; potion ×2 consommable (400 🪙, 3 prochaines parties, `active_booster JSONB`). Pas de système d'événements générique en V2.
+
+### 5.7 Schéma DB (`db/migrations/v2_gamification.sql`)
+
+```sql
+ALTER TABLE user_progress
+  ADD COLUMN coins INTEGER NOT NULL DEFAULT 0 CHECK (coins >= 0),
+  ADD COLUMN coins_total_earned INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN streak_freezes INTEGER NOT NULL DEFAULT 1,
+  ADD COLUMN active_booster JSONB DEFAULT NULL,
+  ADD COLUMN last_daily_chest_at DATE DEFAULT NULL,
+  ADD COLUMN last_streak_reward INTEGER NOT NULL DEFAULT 0;
+
+CREATE TABLE items (
+  id SERIAL PRIMARY KEY,
+  code VARCHAR(50) UNIQUE NOT NULL,          -- 'hat_crown_gold'
+  slot VARCHAR(20) NOT NULL CHECK (slot IN ('background','aura','back','body','outfit','weapon','hat','pet')),
+  rarity VARCHAR(20) NOT NULL CHECK (rarity IN ('common','rare','epic','legendary')),
+  price INTEGER NOT NULL DEFAULT 0,
+  asset_url VARCHAR(255) NOT NULL,
+  name JSONB NOT NULL,                        -- {"fr":"Couronne dorée","en":...}
+  unlock_level INTEGER NOT NULL DEFAULT 1,
+  is_purchasable BOOLEAN NOT NULL DEFAULT true,
+  is_default BOOLEAN NOT NULL DEFAULT false,
+  sort_order INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE user_inventory (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  item_id INTEGER NOT NULL REFERENCES items(id),
+  source VARCHAR(20) NOT NULL DEFAULT 'shop', -- shop|chest|level|default|retro
+  acquired_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, item_id)
+);
+
+CREATE TABLE user_equipment (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  slot VARCHAR(20) NOT NULL,
+  item_id INTEGER NOT NULL REFERENCES items(id),
+  PRIMARY KEY (user_id, slot)
+);
+
+CREATE TABLE coin_transactions (               -- audit + anti-triche + debug
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount INTEGER NOT NULL,                     -- négatif = dépense
+  reason VARCHAR(30) NOT NULL,                 -- game|daily_chest|streak_chest|levelup_chest|perfect|purchase|retro
+  ref JSONB DEFAULT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE chest_openings (
+  id SERIAL PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  chest_type VARCHAR(20) NOT NULL,
+  rewards JSONB NOT NULL,                      -- {"coins":45,"item_id":12}
+  opened_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**Fonction `add_game_rewards(user_id, xp, is_perfect)`** — remplace l'appel à `add_user_xp` dans `/api/scores` (l'ancienne fonction reste en place pendant la transition) :
+- `SELECT ... FOR UPDATE` + **un seul UPDATE** (corrige les 4 UPDATE fragiles de `add_user_xp`, #2).
+- Gère : streak (avec gel automatique si jour manqué et `streak_freezes > 0`), pièces (base + week-end + booster + bonus premier-du-jour/streak/perfect), XP, level-up, journal `coin_transactions`.
+- Retourne : `xp, level, level_up (bool), streak_days, coins_earned, coins_balance, coins_breakdown (JSONB), streak_chest_dû, freeze_used`.
+
+**`buy_item(user_id, item_id)`** : atomique — vérifie niveau + non-possession, débite via `UPDATE ... SET coins = coins - price WHERE coins >= price` (aucun solde négatif possible même en double-clic), insère l'inventaire.
+
+**Anti-triche `/api/scores`** (#7) :
+- Plausibilité : rejet si `score > duration × 60 × 10` ou `solvedCells > totalPossibleCells`.
+- Anti-replay : rejet si une partie du même utilisateur existe déjà datant de moins de `duration` minutes.
+- `errorsCount` ajouté au payload client (perfect = `errorsCount === 0 && solvedCells >= 10`).
+
+### 5.8 API et pages
+
+| Nouveau | Rôle |
+|---|---|
+| `GET /api/shop` | Catalogue joint à l'inventaire (flag `owned`) |
+| `POST /api/shop/buy` | `{itemId}` → `buy_item()` |
+| `POST /api/character/equip` | `{slot, itemId\|null}` (UPSERT `user_equipment`, vérifie possession) |
+| `GET /api/chests` | Coffres disponibles (quotidien ? palier streak dû ? bienvenue ?) |
+| `POST /api/chests/open` | Tirage serveur, écrit `chest_openings` + transactions + inventaire, gère pity/doublons |
+| Route `/shop` | Boutique |
+| Route `/character` | Équipement du personnage |
+
+**Modifications** : `/api/scores` (anti-triche + `add_game_rewards` + retour pièces/breakdown/coffres) ; `EndScreen` (compteur de pièces animé + détail des bonus + « Ouvrir ton coffre ! ») ; `NavigationHeader` (🪙 + 🔥 permanents) ; dashboard (avatar, coffre quotidien, calendrier streak) ; `+layout.server.js` (expose `coins`/`streak_days`) ; `LevelUpModal` (intègre le coffre de level-up) ; traductions `shop.*, character.*, chest.*, streak.*` ×4 langues.
+
+### 5.9 Production des assets
+
+**Catalogue de lancement : 42 items + 3 défauts gratuits** :
+
+| Slot | Commun (150) | Rare (500) | Épique (1500) | Légendaire (4500) |
+|---|---|---|---|---|
+| body ×5 | blob bleu, blob vert | blob à taches | dragon junior | phénix arc-en-ciel |
+| outfit ×7 | t-shirt étoile, salopette | tunique de mage, gilet pirate | armure de chevalier | armure galactique (nv 15) |
+| hat ×7 | casquette, bonnet | chapeau de sorcier, bandana | casque viking | couronne dorée (nv 20) |
+| weapon ×6 | bâton étoilé | épée en bois, baguette | trident de glace | épée laser des maths (nv 10) |
+| back ×5 | sac à dos | cape rouge | ailes de chauve-souris | ailes d'ange dorées |
+| pet ×7 | souris, escargot | chaton, hibou | bébé dragon | licorne (nv 25) |
+| background ×5 | prairie | forêt magique, plage | château | galaxie (nv 30) |
+| aura ×3 | — | — | étincelles, flammes bleues | halo doré arc-en-ciel |
+
+Dont ~6 items `is_purchasable = false` réservés aux coffres de level-up.
+
+**Pipeline de génération (IA)** : générer d'abord le **corps de base** (créature mignonne face caméra, flat cartoon, contours noirs épais, palette vive — cohérent avec les `level_N.png` existants) ; puis chaque item en **image-to-image sur ce template** pour garantir l'alignement des calques. PNG 512×512 transparents, compressés (~30–60 Ko). Stockage `static/images/items/{slot}_{code}.png` + `static/images/chests/` (fermé/tremblant/ouvert). **Fallback** si l'IA manque de cohérence : pack « avatar creator » (itch.io / CraftPix, calques pré-alignés).
+
+---
+
+## 6. Roadmap V2 (9 étapes, chacune déployable seule)
+
+| # | Étape | Volet | Contenu clé |
+|---|---|---|---|
+| 1 | Fondation moteur | A | `src/lib/modes/` + `engine.svelte.js` + `scoring.js`, iso-fonctionnel tables, suppression code mort, fix bug de préfixe. Zéro migration DB |
+| 2 | DB + API multi-modes | A | Migration `game_mode`/`mode_options`, double payload `/api/scores`, leaderboard param `mode` |
+| 3 | Mode addition + UI générique | A | `addition.js`, ModeSelector, DifficultySelector, QuestionPanel (posé), NumericKeypad, i18n |
+| 4 | Soustraction + mult. étendue + presets | A | `subtraction.js`, `multiplication.js`, presets CE1/CE2, stub division |
+| 5 | Leaderboard par mode + équilibrage | A | Filtre mode UI, vérif points/minute entre modes, mise à jour des tests |
+| 6 | Pièces d'or | B | Migration gamification, `add_game_rewards`, anti-triche, crédit rétroactif, EndScreen/header/dashboard |
+| 7 | Personnage + boutique | B | Tables items/inventory/equipment, `buy_item`, ~20 premiers assets, `/shop`, `/character` |
+| 8 | Coffres + récompenses streak | B | `chest_openings`, `/api/chests`, ChestModal, pity, gel de streak |
+| 9 | Boosters + finitions | B | Potion ×2, week-end ×2, offres du jour, catalogue complet 42 items, items de niveau |
+
+Les volets A et B sont indépendants jusqu'à l'EndScreen : **l'étape 6 peut démarrer en parallèle des étapes 3–5**. Toutes les migrations sont additives — aucune donnée existante (52 users, 423 scores, 381 sessions) n'est modifiée.
+
+### Hors scope V2 (pistes V3)
+Divisions (activer `division.js`), badges (`unlocked_badges` enfin exploité), défis entre amis, mode multijoueur, sons, `rewards` de `level_definitions`.

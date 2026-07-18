@@ -1,116 +1,70 @@
-# Jeu de Multiplication - SvelteKit
+# MultyFun - Jeu de calcul mental
 
-Application interactive pour pratiquer les tables de multiplication, développée avec SvelteKit et déployée sur Vercel avec SSR pour sécuriser les scores.
+Application interactive pour pratiquer le calcul mental (tables de multiplication, additions, soustractions, multiplications étendues), développée avec SvelteKit et déployée sur Vercel avec SSR pour sécuriser les scores.
 
 ## Fonctionnalités
 
-- Jeu de multiplication interactif avec deux niveaux (adulte et enfant)
-- Sélection personnalisée des tables à pratiquer
-- Calcul de score basé sur la vitesse de réponse
-- Tableau des meilleurs scores sécurisé
-- Interface responsive (desktop et mobile)
-- Sauvegarde des scores dans Supabase avec validation côté serveur
+- Modes de calcul multiples : tables, additions, soustractions, multiplications étendues, avec paliers pédagogiques CE1/CE2
+- Deux niveaux (adulte et enfant), 3 durées de partie (2/3/5 min)
+- Calcul de score basé sur la vitesse de réponse et la difficulté
+- Gamification : pièces d'or, boutique, personnage RPG à calques, coffres au trésor, streaks quotidiens
+- Progression par niveaux (XP) avec titres et avatars débloquables
+- Tableau des meilleurs scores par mode, filtré par niveau/durée
+- Interface responsive (desktop et mobile), PWA installable
 
 ## Prérequis
 
-- Node.js 18+
-- Compte Vercel
-- Compte Supabase (base de données)
+- Node.js 20+
+- Compte Neon (Postgres serverless)
+- Compte Vercel (déploiement)
 
 ## Installation
 
-1. Cloner le dépôt :
-```bash
-git clone https://github.com/votre-nom/svelte-multiplication-game-kit
-cd svelte-multiplication-game-kit
-```
-
-2. Installer les dépendances :
+1. Cloner le dépôt puis installer les dépendances :
 ```bash
 npm install
 ```
 
-3. Configurer les variables d'environnement :
-    - Copier `.env.example` vers `.env`
-    - Compléter avec vos identifiants Supabase
+2. Configurer les variables d'environnement :
+   - Copier `.env.example` vers `.env`
+   - Renseigner `DATABASE_URL` (chaîne de connexion Neon)
 
-4. Démarrer le serveur de développement :
+3. Démarrer le serveur de développement :
 ```bash
 npm run dev
 ```
 
-## Configuration de Supabase
+## Base de données
 
-1. Créer un nouveau projet sur [Supabase](https://supabase.com)
+Le schéma et les fonctions PL/pgSQL sont versionnés dans `db/` :
+- `db/create_level_definitions.sql`, `db/insert_level_definitions.sql` : les 30 niveaux de progression
+- `db/add_user_xp.sql` : fonction historique (conservée en transition)
+- `db/migrations/001_game_modes.sql` : colonnes `game_mode`/`mode_options` (modes de calcul)
+- `db/migrations/002_gamification.sql` : pièces, boutique, personnage, coffres, streaks
 
-2. Créer une table `scores` avec la structure suivante :
-
-```sql
-CREATE TABLE scores (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name TEXT NOT NULL,
-  score INTEGER NOT NULL,
-  level TEXT NOT NULL,
-  duration INTEGER NOT NULL,
-  cells_solved INTEGER,
-  total_cells INTEGER,
-  tables_used INTEGER[],
-  date TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Index pour améliorer les performances des requêtes
-CREATE INDEX idx_scores_level ON scores(level);
-CREATE INDEX idx_scores_score ON scores(score);
-```
-
-3. Configurer les politiques de sécurité RLS (Row Level Security) :
-
-```sql
--- Activer RLS
-ALTER TABLE scores ENABLE ROW LEVEL SECURITY;
-
--- Politique pour permettre à tous les utilisateurs de LIRE les scores
-CREATE POLICY "Scores are viewable by everyone" 
-ON scores FOR SELECT 
-USING (true);
-
--- Politique pour permettre l'insertion uniquement via l'API sécurisée
-CREATE POLICY "Scores can only be inserted via api" 
-ON scores FOR INSERT 
-USING (auth.role() = 'service_role');
-```
+Le catalogue d'items (personnage/boutique) est généré depuis `scripts/item-catalog.mjs` via `scripts/generate-item-placeholders.mjs`, qui produit les placeholders SVG (`static/images/items/`) et le bloc de seed SQL.
 
 ## Déploiement sur Vercel
 
-1. Créer un nouveau projet sur [Vercel](https://vercel.com)
+1. Connecter le dépôt GitHub à un projet Vercel
+2. Configurer la variable d'environnement `DATABASE_URL` dans l'interface Vercel
+3. Déployer
 
-2. Connecter le dépôt GitHub
+## Structure du projet
 
-3. Configurer les variables d'environnement dans l'interface Vercel :
-    - `VITE_SUPABASE_URL`
-    - `VITE_SUPABASE_ANON_KEY`
-    - `VITE_SUPABASE_SERVICE_KEY`
+- `src/routes` — pages et endpoints API
+- `src/lib/modes` — abstraction des modes de calcul (JS pur, testable et partagé client/serveur)
+- `src/lib/game` — moteur de jeu (`engine.svelte.js`), scoring, persistance des réglages
+- `src/lib/server` — accès DB, session, boutique, coffres (code serveur uniquement)
+- `src/lib/components` — composants réutilisables
+- `src/lib/translations` — traductions (fr, en, es, zh)
 
-4. Déployer l'application
+## Tests
 
-## Structure du Projet
-
-Le projet suit la structure standard de SvelteKit :
-
-- `src/routes` - Pages et endpoints API
-- `src/lib` - Composants, stores et utilitaires
-- `src/lib/components` - Composants réutilisables
-- `src/lib/stores` - Stores Svelte pour la gestion d'état
-- `src/lib/utils` - Fonctions utilitaires
-
-## Sécurité
-
-Les principales améliorations de sécurité par rapport à la version originale :
-
-1. **Validation côté serveur** : Toutes les données sont validées côté serveur avant l'insertion
-2. **Clé de service** : Utilisation d'une clé de service privée pour les opérations sensibles
-3. **API Routes sécurisées** : Les endpoints API gèrent l'insertion des scores de manière sécurisée
-4. **Row Level Security** : Configuration RLS dans Supabase pour restreindre les insertions
+```bash
+npm test           # Vitest (unitaire + intégration)
+npm run check      # svelte-check
+```
 
 ## Licence
 

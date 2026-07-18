@@ -14,6 +14,31 @@ vi.mock('@sveltejs/kit', async () => {
   };
 });
 
+// `sql` (src/lib/server/db.js) est créé UNE SEULE FOIS via neon(url) à l'import
+// du module : mockImplementationOnce sur `neon` n'a donc aucun effet après le
+// premier appel. On passe par un état mutable partagé (vi.hoisted) que les
+// tests ajustent, lu dynamiquement à chaque requête par la même closure.
+const { mockDb } = vi.hoisted(() => ({
+  mockDb: {
+    recentGame: false,
+    replayCalls: [],
+    rewardsCalls: [],
+    rewardsResponse: {
+      xp: 600,
+      level: 2,
+      previous_level: 1,
+      level_up: true,
+      streak_days: 1,
+      freeze_used: false,
+      coins_earned: 50,
+      coins_balance: 150,
+      coins_breakdown: { base: 50 },
+      streak_chest_due: 0,
+      perfect_chest_due: false
+    }
+  }
+}));
+
 // Mock de Neon
 vi.mock('@neondatabase/serverless', () => {
   return {
@@ -21,6 +46,10 @@ vi.mock('@neondatabase/serverless', () => {
       return async (strings, ...values) => {
         const query = typeof strings === 'string' ? strings : strings[0];
 
+        if (query.includes('SELECT 1 FROM game_sessions')) {
+          mockDb.replayCalls.push(values);
+          return mockDb.recentGame ? [{ '?column?': 1 }] : [];
+        }
         if (query.includes('INSERT INTO game_sessions')) {
           return [{ id: 'mock-id', user_id: 'user-id', score: 100, date: new Date() }];
         }
@@ -29,6 +58,13 @@ vi.mock('@neondatabase/serverless', () => {
         }
         if (query.includes('SELECT * FROM add_user_xp')) {
           return [{ user_id: 'user-id', total_xp: 100, current_level: 1, games_played: 1, total_score: 100, streak_days: 1 }];
+        }
+        if (query.includes('SELECT * FROM add_game_rewards')) {
+          mockDb.rewardsCalls.push(values);
+          return [mockDb.rewardsResponse];
+        }
+        if (query.includes('SELECT title FROM level_definitions')) {
+          return [{ title: 'Apprenti Calculateur' }];
         }
 
         return [];
@@ -44,6 +80,22 @@ describe('Endpoint API /api/scores', () => {
   beforeEach(() => {
     // Réinitialiser les mocks avant chaque test
     vi.clearAllMocks();
+    mockDb.recentGame = false;
+    mockDb.replayCalls = [];
+    mockDb.rewardsCalls = [];
+    mockDb.rewardsResponse = {
+      xp: 600,
+      level: 2,
+      previous_level: 1,
+      level_up: true,
+      streak_days: 1,
+      freeze_used: false,
+      coins_earned: 50,
+      coins_balance: 150,
+      coins_breakdown: { base: 50 },
+      streak_chest_due: 0,
+      perfect_chest_due: false
+    };
 
     // Créer un mock de la requête
     mockRequest = {
@@ -57,7 +109,7 @@ describe('Endpoint API /api/scores', () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it('devrait retourner une erreur 400 si des données requises sont manquantes', async () => {
@@ -159,6 +211,111 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body).toHaveProperty('success', true);
     expect(response.body).toHaveProperty('progressUpdate');
     expect(response.body.progressUpdate).not.toBeNull();
+    // Compat V1 (bug #2) : le client détecte le level-up sur ces champs précis
+    expect(response.body.progressUpdate.returned_level).toBe(2);
+    expect(response.body.progressUpdate.returned_previous_level).toBe(1);
+    expect(response.body.progressUpdate.returned_level_title).toBe('Apprenti Calculateur');
+    // Bloc rewards (pièces d'or, streak, coffres dus)
+    expect(response.body.rewards).toEqual({
+      coinsEarned: 50,
+      coinsBalance: 150,
+      coinsBreakdown: { base: 50 },
+      streakDays: 1,
+      freezeUsed: false,
+      levelUp: true,
+      chests: { levelup: true, streak: 0, perfect: false }
+    });
+  });
+
+  it('ne devrait pas appeler add_game_rewards pour un invité (pas de rewards)', async () => {
+    mockRequest.json.mockResolvedValue({
+      name: 'Invité',
+      score: 300,
+      duration: 3,
+      level: 'adulte',
+      questionsSolved: 15,
+      questionsTotal: 100
+    });
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body.progressUpdate).toBeNull();
+    expect(response.body.rewards).toBeNull();
+  });
+
+  it('devrait rejeter une seconde partie trop rapprochée (anti-replay)', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 200,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'tables'
+    });
+    mockCookies.get.mockReturnValue(
+      JSON.stringify({ user: { id: 'user-id', displayName: 'Joueur Test' } })
+    );
+
+    // Une partie récente existe déjà pour cet utilisateur
+    mockDb.recentGame = true;
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(429);
+    expect(response.body).toHaveProperty('error');
+  });
+
+  it("l'anti-replay se base sur le temps réellement joué (elapsedSec), pas la durée nominale", async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 50,
+      duration: 3, // 180s nominal...
+      elapsedSec: 15, // ...mais partie terminée tôt après 15s réelles
+      level: 'adulte',
+      gameMode: 'tables'
+    });
+    mockCookies.get.mockReturnValue(
+      JSON.stringify({ user: { id: 'user-id', displayName: 'Joueur Test' } })
+    );
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200); // pas de faux positif malgré une durée nominale de 3 min
+    expect(mockDb.replayCalls).toHaveLength(1);
+    expect(mockDb.replayCalls[0][1]).toBe(15); // make_interval(secs => 15), pas 180
+  });
+
+  it('devrait détecter une partie parfaite (errorsCount=0, >=10 questions) et la transmettre à add_game_rewards', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 400,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'addition',
+      modeOptions: { tiers: ['A1'] },
+      questionsSolved: 15,
+      errorsCount: 0
+    });
+    mockCookies.get.mockReturnValue(
+      JSON.stringify({ user: { id: 'user-id', displayName: 'Joueur Test' } })
+    );
+    mockDb.rewardsResponse = {
+      xp: 400,
+      level: 1,
+      previous_level: 1,
+      level_up: false,
+      streak_days: 1,
+      freeze_used: false,
+      coins_earned: 65,
+      coins_balance: 65,
+      coins_breakdown: { base: 40, perfect: 25 },
+      streak_chest_due: 0,
+      perfect_chest_due: true
+    };
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(200);
+    // isPerfect calculé côté serveur (errorsCount===0 && >=10) et passé en 3e paramètre
+    expect(mockDb.rewardsCalls).toHaveLength(1);
+    expect(mockDb.rewardsCalls[0][2]).toBe(true);
+    expect(response.body.rewards.chests.perfect).toBe(true);
   });
 
   it('devrait accepter un score avec plus de cellules résolues que possible (plusieurs grilles remplies)', async () => {
@@ -182,5 +339,91 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body).toHaveProperty('message', 'Score enregistré avec succès');
   });
 
-  // Les autres tests restent identiques...
+  // --- Tests V2 : multi-modes ---
+
+  it('devrait accepter le nouveau payload V2 (gameMode + modeOptions)', async () => {
+    mockRequest.json.mockResolvedValue({
+      name: 'Joueur Test',
+      score: 400,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'addition',
+      modeOptions: { tiers: ['A1', 'A2', 'A3'] },
+      questionsSolved: 25,
+      questionsTotal: null,
+      errorsCount: 2
+    });
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('gameMode', 'addition');
+  });
+
+  it('devrait rejeter le mode division (désactivé) et les modes inconnus', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'division',
+      modeOptions: { tiers: ['D1'] }
+    });
+    let response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('désactivé');
+
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'nawak'
+    });
+    response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('inconnu');
+  });
+
+  it('devrait rejeter des options de mode invalides (paliers inconnus)', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'addition',
+      modeOptions: { tiers: ['Z9'] }
+    });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain('Options de mode invalides');
+  });
+
+  it('devrait accepter l\'ancien payload V1 sans gameMode (PWA en cache)', async () => {
+    mockRequest.json.mockResolvedValue({
+      name: 'Vieux Client',
+      score: 300,
+      duration: 3,
+      level: 'enfant',
+      solvedCells: 15,
+      totalPossibleCells: 36,
+      selectedTables: [2, 5]
+    });
+    mockCookies.get.mockReturnValue(null);
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('success', true);
+    expect(response.body).toHaveProperty('gameMode', 'tables');
+  });
+
+  it('devrait rejeter un niveau invalide', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      level: 'expert'
+    });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(400);
+  });
 });

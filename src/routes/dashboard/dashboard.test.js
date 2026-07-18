@@ -28,7 +28,7 @@ vi.mock('@neondatabase/serverless', () => {
               min_xp: 3000,
               rewards: []
             }];
-          } else if (query.includes('level = 4')) {
+          } else if (values[0] === 4 || query.includes('level = 4')) {
             return [{
               level: 4,
               title: 'Expert en Multiplication',
@@ -38,6 +38,8 @@ vi.mock('@neondatabase/serverless', () => {
             }];
           }
           return [];
+        } else if (query.includes('DISTINCT') && query.includes('game_sessions')) {
+          return [{ d: new Date().toISOString().slice(0, 10) }];
         } else if (query.includes('FROM game_sessions')) {
           return [
             {
@@ -92,7 +94,7 @@ describe('Dashboard Page Server', () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it('devrait rediriger vers la page de login si non connecté', async () => {

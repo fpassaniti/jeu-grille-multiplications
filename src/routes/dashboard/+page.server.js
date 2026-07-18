@@ -1,5 +1,7 @@
 import { sql } from '$lib/server/db';
 import { redirect } from '@sveltejs/kit';
+import { getEquipment } from '$lib/server/shop.js';
+import { getChestAvailability } from '$lib/server/chests.js';
 
 export async function load({ locals }) {
   // Rediriger si non connecté
@@ -61,6 +63,22 @@ export async function load({ locals }) {
       LIMIT 5
     `;
 
+    // Jours joués sur les 7 derniers jours (calendrier streak, SPEC §5.6)
+    const playedDaysResult = await sql`
+      SELECT DISTINCT (date AT TIME ZONE 'Europe/Paris')::date AS d
+      FROM game_sessions
+      WHERE user_id = ${locals.user.id} AND date > NOW() - INTERVAL '7 days'
+    `;
+    const playedDays = (playedDaysResult ?? []).map((r) => new Date(r.d).toISOString().slice(0, 10));
+
+    // Prochain palier de streak (3/7/14/30) → coffre à gagner
+    const STREAK_MILESTONES = [3, 7, 14, 30];
+    const streakDays = progressData.streak_days ?? 0;
+    const nextStreakMilestone = STREAK_MILESTONES.find((m) => m > streakDays) ?? null;
+
+    const equipment = await getEquipment(locals.user.id);
+    const chests = await getChestAvailability(locals.user.id);
+
     return {
       user: locals.user,
       userProgress: {
@@ -71,7 +89,11 @@ export async function load({ locals }) {
         xpForNextLevel,
         xpUntilNextLevel
       },
-      recentGames: recentGames && recentGames.length > 0 ? recentGames : []
+      recentGames: recentGames && recentGames.length > 0 ? recentGames : [],
+      playedDays,
+      nextStreakMilestone,
+      equipment,
+      chests
     };
 
   } catch (err) {

@@ -1,9 +1,11 @@
 <!-- src/routes/dashboard/+page.svelte -->
 <script>
   import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  import { goto, invalidateAll } from '$app/navigation';
   import LevelAvatar from '$lib/components/LevelAvatar.svelte';
   import PrintableCard from '$lib/components/PrintableCard.svelte';
+  import CharacterAvatar from '$lib/components/character/CharacterAvatar.svelte';
+  import ChestModal from '$lib/components/chest/ChestModal.svelte';
   import { _ } from '$lib/utils/i18n';
 
   // Données utilisateur venant du serveur
@@ -12,6 +14,35 @@
   // État de l'interface
   let loading = false;
   let error = null;
+
+  const RARITY_LABEL = { 3: 'commun', 7: 'rare', 14: 'épique', 30: 'légendaire' };
+
+  // 7 derniers jours (aujourd'hui inclus), Europe/Paris
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    return d.toISOString().slice(0, 10);
+  });
+  $: playedSet = new Set(data.playedDays ?? []);
+
+  let chests = data.chests ?? {};
+  let dailyOpen = false;
+  // Le coffre de bienvenue s'ouvre automatiquement au premier chargement post-V2
+  let welcomeOpen = chests.welcome?.available ?? false;
+
+  function closeDailyChest() {
+    dailyOpen = false;
+    chests = { ...chests, daily: { available: false } };
+  }
+
+  function closeWelcomeChest() {
+    welcomeOpen = false;
+  }
+
+  // Rafraîchit les pièces/inventaire affichés (header + carte dashboard) après un gain
+  function handleChestOpened() {
+    invalidateAll();
+  }
 
   // Redirection si non connecté
   onMount(() => {
@@ -69,6 +100,11 @@
                 <span class="stat-label">{_('dashboard.totalXp')}</span>
                 <span class="stat-value">{data.userProgress?.xp || 0}</span>
               </div>
+
+              <div class="stat-item coins-stat">
+                <span class="stat-label">{_('common.coins')}</span>
+                <span class="stat-value">🪙 {data.userProgress?.coins || 0}</span>
+              </div>
             </div>
 
             {#if data.userProgress?.nextLevel}
@@ -114,6 +150,40 @@
         </div>
       </div>
 
+      <a href="/character" class="character-card card">
+        <CharacterAvatar equipment={data.equipment ?? {}} size={120} />
+        <span class="character-link-label">🦸 {_('character.title')}</span>
+      </a>
+
+      <div class="daily-chest-card card">
+        {#if chests.daily?.available}
+          <button class="daily-chest-button" on:click={() => (dailyOpen = true)}>
+            🎁 {_('chest.open')}
+          </button>
+        {:else}
+          <p class="daily-chest-done">🎁 {_('chest.comeBackTomorrow')}</p>
+        {/if}
+      </div>
+
+      <div class="streak-card card">
+        <h2>{_('streak.days', { count: data.userProgress?.streak_days || 0 })}</h2>
+        <div class="week-calendar">
+          {#each weekDays as day}
+            <div class="day-cell" class:played={playedSet.has(day)}>
+              {playedSet.has(day) ? '✅' : '⬜'}
+            </div>
+          {/each}
+        </div>
+        {#if data.nextStreakMilestone}
+          <p class="next-milestone">
+            {_('streak.nextMilestone', {
+              days: data.nextStreakMilestone - (data.userProgress?.streak_days || 0),
+              reward: RARITY_LABEL[data.nextStreakMilestone]
+            })}
+          </p>
+        {/if}
+      </div>
+
       <div class="recent-games card">
         <h2>{_('dashboard.recentGames')}</h2>
 
@@ -147,6 +217,12 @@
     </div>
   </div>
 </main>
+
+{#if dailyOpen}
+  <ChestModal chestType="daily" onClose={closeDailyChest} onOpened={handleChestOpened} />
+{:else if welcomeOpen}
+  <ChestModal chestType="welcome" onClose={closeWelcomeChest} onOpened={handleChestOpened} />
+{/if}
 
 
 <style>
@@ -324,6 +400,86 @@
 
   .emoji {
     margin-right: 5px;
+  }
+
+  .coins-stat .stat-value {
+    color: #ff8f00;
+  }
+
+  .character-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    text-decoration: none;
+    transition: transform 0.2s;
+  }
+
+  .character-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .character-link-label {
+    font-weight: bold;
+    color: var(--primary-dark);
+  }
+
+  .daily-chest-card {
+    padding: 15px;
+    text-align: center;
+  }
+
+  .daily-chest-button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--accent);
+    color: white;
+    font-weight: bold;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 0 var(--accent-dark);
+    animation: pulse 2s infinite;
+  }
+
+  .daily-chest-done {
+    color: var(--text-light);
+    font-style: italic;
+    margin: 0;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+
+  .streak-card {
+    padding: 20px;
+  }
+
+  .streak-card h2 {
+    margin-bottom: 15px;
+    color: var(--primary-dark);
+    text-align: center;
+  }
+
+  .week-calendar {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    font-size: 1.5rem;
+  }
+
+  .day-cell {
+    width: 32px;
+    text-align: center;
+  }
+
+  .next-milestone {
+    text-align: center;
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
   }
 
   .recent-games {

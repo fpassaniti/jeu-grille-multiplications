@@ -40,6 +40,9 @@ export default {
     selectLanguage: 'Seleccionar idioma',
     copyright: '© {year} {appName} - ¡Aprende las tablas de multiplicar divirtiéndote!',
     min: 'min',
+    coins: 'Monedas',
+    shop: 'Tienda',
+    character: 'Personaje',
   },
 
   navigation: {
@@ -149,11 +152,143 @@ export default {
     logoutError: 'Error al cerrar sesión'
   },
 
+  shop: {
+    title: 'Tienda',
+    subtitle: '¡Personaliza a tu aventurero!',
+    dailyOffers: 'Ofertas del día',
+    owned: 'Poseído',
+    buy: 'Comprar',
+    confirmTitle: 'Confirmar compra',
+    confirmBuy: '¿Comprar por {price} 🪙?',
+    confirmRemaining: 'Te quedarán {remaining} 🪙',
+    confirm: 'Confirmar',
+    cancel: 'Cancelar',
+    bought: '¡Comprado!',
+    insufficient_coins: 'No hay suficientes monedas',
+    already_owned: 'Ya lo tienes',
+    level_locked: 'Requiere nivel {level}',
+    levelLocked: 'Requiere nivel {level}',
+    not_purchasable: 'No disponible para comprar',
+    already_active: 'Ya está activo',
+    freeze_cap_reached: 'Máximo de congelaciones alcanzado',
+    tryOn: 'Probar',
+    potions: 'Pociones',
+    freezeName: 'Congelación de racha',
+    freezeDesc: 'Protege tu racha si fallas un día',
+    boosterName: 'Poción ×2',
+    boosterDesc: 'Duplica tus monedas durante 3 partidas',
+    boosterActive: '¡Poción activa!',
+    slots: {
+      background: 'Fondo',
+      aura: 'Aura',
+      back: 'Espalda',
+      body: 'Cuerpo',
+      outfit: 'Traje',
+      weapon: 'Arma',
+      hat: 'Sombrero',
+      pet: 'Mascota'
+    },
+    rarity: {
+      common: 'Común',
+      rare: 'Raro',
+      epic: 'Épico',
+      legendary: 'Legendario'
+    }
+  },
+
+  character: {
+    title: 'Mi personaje',
+    subtitle: 'Equipa los objetos que has desbloqueado',
+    equip: 'Equipar',
+    equipped: 'Equipado',
+    unequip: 'Quitar',
+    none: 'Ninguno',
+    empty: '¡Gana objetos en la tienda y los cofres!',
+    goToShop: 'Ir a la tienda'
+  },
+
+  chest: {
+    open: 'Abrir mi cofre',
+    tapToOpen: '¡Toca el cofre para abrirlo!',
+    daily: 'Cofre diario',
+    streak: 'Cofre de racha',
+    levelup: 'Cofre de nivel',
+    perfect: 'Cofre perfecto',
+    welcome: 'Cofre de bienvenida',
+    welcomeTitle: '¡Bienvenido a la nueva aventura!',
+    welcomeText: 'Aquí tienes un regalo para celebrar las novedades de MultyFun.',
+    youWon: '¡Ganaste {coins} 🪙!',
+    newItem: '¡Nuevo objeto desbloqueado!',
+    duplicate: '¡Ya lo tienes! +{refund} 🪙',
+    comeBackTomorrow: '¡Vuelve mañana para un nuevo cofre!',
+    alreadyOpened: 'Ya abierto hoy'
+  },
+
+  rewards: {
+    base: 'Monedas ganadas',
+    weekend: '¡Bono de fin de semana ×2!',
+    booster: 'Poción ×2 ⚡',
+    firstOfDay: 'Primera partida del día',
+    streakBonus: 'Bono de racha 🔥',
+    perfectBonus: 'Partida perfecta 💯',
+    openChest: '¡Un cofre te espera!'
+  },
+
+  streak: {
+    days: '{count} días seguidos 🔥',
+    calendarTitle: 'Tu semana',
+    nextMilestone: '¡{days} día(s) más → cofre {reward}!',
+    freezeUsed: '¡Tu congelación de racha 🛡️ te salvó!',
+    freezeCount: 'Congelaciones de racha disponibles',
+    milestoneReached: '¡Meta de racha alcanzada!'
+  },
+
   game: {
     answerPlaceholder: 'Tu respuesta',
-    recentlySolved: 'Multiplicaciones resueltas recientemente',
-    noSolved: 'Aún no hay multiplicaciones resueltas.',
-    pointsEarned: '+{points} pts'
+    recentlySolved: 'Respuestas correctas recientes',
+    noSolved: 'Aún no hay preguntas resueltas.',
+    pointsEarned: '+{points} pts',
+    validate: 'OK ✓'
+  },
+
+  modes: {
+    chooseMode: 'Elige tu operación:',
+    tables: 'Tablas',
+    addition: 'Sumas',
+    subtraction: 'Restas',
+    multiplication: 'Multiplicaciones',
+    division: 'Divisiones'
+  },
+
+  difficulty: {
+    chooseTitle: 'Elige tu dificultad:',
+    customHint: 'Marca los ejercicios que quieres practicar:',
+    presets: {
+      ce1: '2º Primaria',
+      ce2: '3º Primaria',
+      libre: 'Libre'
+    },
+    tiers: {
+      A1: 'Sin llevada, hasta 20',
+      A2: 'Sin llevada, hasta 100',
+      A3: 'Con llevada, hasta 100',
+      A4: 'Sin llevada, hasta 1000',
+      A5: 'Con llevada, hasta 1000',
+      A6: 'Con llevada, hasta 10 000',
+      S1: 'Sin llevada, hasta 20',
+      S2: 'Sin llevada, hasta 100',
+      S3: 'Con llevada, hasta 100',
+      S4: 'Sin llevada, hasta 1000',
+      S5: 'Con llevada, hasta 1000',
+      M1: 'Multiplicar por 10',
+      M2: 'Multiplicar por 100 o 1000',
+      M3: '2 cifras × 1 cifra, sin llevada',
+      M4: '2 cifras × 1 cifra, con llevada',
+      M5: '3 cifras × 1 cifra',
+      D1: 'Dividir por 2, 5 o 10',
+      D2: 'Dividir por 3, 4 o 6',
+      D3: 'Dividir por 7, 8 o 9'
+    }
   },
 
   leaderboard: {
@@ -216,6 +351,8 @@ export default {
     solvedLabel: 'Multiplicaciones resueltas:',
     tablesLabel: 'Tablas seleccionadas:',
     currentMultiplicationLabel: 'Multiplicación actual:',
+    currentQuestionLabel: 'Pregunta:',
+    solvedGenericLabel: '{count} respuestas correctas',
     gameOver: '¡Juego terminado!',
     yourScore: 'Tu puntuación:',
     solvedMultiplications: 'Multiplicaciones resueltas:',

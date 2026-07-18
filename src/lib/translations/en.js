@@ -40,6 +40,9 @@ export default {
     selectLanguage: 'Select language',
     copyright: '© {year} {appName} - Learn multiplication tables while having fun!',
     min: 'min',
+    coins: 'Coins',
+    shop: 'Shop',
+    character: 'Character',
   },
 
   navigation: {
@@ -149,11 +152,143 @@ export default {
     logoutError: 'Error logging out'
   },
 
+  shop: {
+    title: 'Shop',
+    subtitle: 'Customize your adventurer!',
+    dailyOffers: "Today's offers",
+    owned: 'Owned',
+    buy: 'Buy',
+    confirmTitle: 'Confirm purchase',
+    confirmBuy: 'Buy for {price} 🪙?',
+    confirmRemaining: "You'll have {remaining} 🪙 left",
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    bought: 'Bought!',
+    insufficient_coins: 'Not enough coins',
+    already_owned: 'Already owned',
+    level_locked: 'Level {level} required',
+    levelLocked: 'Level {level} required',
+    not_purchasable: 'Not available for purchase',
+    already_active: 'Already active',
+    freeze_cap_reached: 'Maximum freezes reached',
+    tryOn: 'Try on',
+    potions: 'Potions',
+    freezeName: 'Streak freeze',
+    freezeDesc: 'Protects your streak if you miss a day',
+    boosterName: 'Potion ×2',
+    boosterDesc: 'Doubles your coins for 3 games',
+    boosterActive: 'Potion active!',
+    slots: {
+      background: 'Background',
+      aura: 'Aura',
+      back: 'Back',
+      body: 'Body',
+      outfit: 'Outfit',
+      weapon: 'Weapon',
+      hat: 'Hat',
+      pet: 'Pet'
+    },
+    rarity: {
+      common: 'Common',
+      rare: 'Rare',
+      epic: 'Epic',
+      legendary: 'Legendary'
+    }
+  },
+
+  character: {
+    title: 'My character',
+    subtitle: 'Equip the items you have unlocked',
+    equip: 'Equip',
+    equipped: 'Equipped',
+    unequip: 'Remove',
+    none: 'None',
+    empty: 'Earn items in the shop and chests!',
+    goToShop: 'Go to the shop'
+  },
+
+  chest: {
+    open: 'Open my chest',
+    tapToOpen: 'Tap the chest to open it!',
+    daily: 'Daily chest',
+    streak: 'Streak chest',
+    levelup: 'Level-up chest',
+    perfect: 'Perfect chest',
+    welcome: 'Welcome chest',
+    welcomeTitle: 'Welcome to the new adventure!',
+    welcomeText: 'Here is a gift to celebrate the new MultyFun features.',
+    youWon: 'You won {coins} 🪙!',
+    newItem: 'New item unlocked!',
+    duplicate: 'You already have it! +{refund} 🪙',
+    comeBackTomorrow: 'Come back tomorrow for a new chest!',
+    alreadyOpened: 'Already opened today'
+  },
+
+  rewards: {
+    base: 'Coins earned',
+    weekend: 'Weekend bonus ×2!',
+    booster: 'Potion ×2 ⚡',
+    firstOfDay: 'First game of the day',
+    streakBonus: 'Streak bonus 🔥',
+    perfectBonus: 'Perfect game 💯',
+    openChest: 'A chest is waiting for you!'
+  },
+
+  streak: {
+    days: '{count} days in a row 🔥',
+    calendarTitle: 'Your week',
+    nextMilestone: '{days} more day(s) → {reward} chest!',
+    freezeUsed: 'Your streak freeze 🛡️ saved you!',
+    freezeCount: 'Streak freezes available',
+    milestoneReached: 'Streak milestone reached!'
+  },
+
   game: {
     answerPlaceholder: 'Your answer',
-    recentlySolved: 'Recently solved multiplications',
-    noSolved: 'No multiplications solved yet.',
-    pointsEarned: '+{points} pts'
+    recentlySolved: 'Recent correct answers',
+    noSolved: 'No questions solved yet.',
+    pointsEarned: '+{points} pts',
+    validate: 'OK ✓'
+  },
+
+  modes: {
+    chooseMode: 'Choose your operation:',
+    tables: 'Times tables',
+    addition: 'Additions',
+    subtraction: 'Subtractions',
+    multiplication: 'Multiplications',
+    division: 'Divisions'
+  },
+
+  difficulty: {
+    chooseTitle: 'Choose your difficulty:',
+    customHint: 'Tick the exercises you want to practice:',
+    presets: {
+      ce1: 'Grade 2',
+      ce2: 'Grade 3',
+      libre: 'Custom'
+    },
+    tiers: {
+      A1: 'No carrying, up to 20',
+      A2: 'No carrying, up to 100',
+      A3: 'With carrying, up to 100',
+      A4: 'No carrying, up to 1000',
+      A5: 'With carrying, up to 1000',
+      A6: 'With carrying, up to 10,000',
+      S1: 'No borrowing, up to 20',
+      S2: 'No borrowing, up to 100',
+      S3: 'With borrowing, up to 100',
+      S4: 'No borrowing, up to 1000',
+      S5: 'With borrowing, up to 1000',
+      M1: 'Multiply by 10',
+      M2: 'Multiply by 100 or 1000',
+      M3: '2 digits × 1 digit, no carrying',
+      M4: '2 digits × 1 digit, with carrying',
+      M5: '3 digits × 1 digit',
+      D1: 'Divide by 2, 5 or 10',
+      D2: 'Divide by 3, 4 or 6',
+      D3: 'Divide by 7, 8 or 9'
+    }
   },
 
   leaderboard: {
@@ -216,6 +351,8 @@ export default {
     solvedLabel: 'Multiplications solved:',
     tablesLabel: 'Selected tables:',
     currentMultiplicationLabel: 'Current multiplication:',
+    currentQuestionLabel: 'Question:',
+    solvedGenericLabel: '{count} correct answers',
     gameOver: 'Game over!',
     yourScore: 'Your score:',
     solvedMultiplications: 'Multiplications solved:',

@@ -8,7 +8,7 @@
   export let data;
 </script>
 
-<NavigationHeader user={data.user} />
+<NavigationHeader user={data.user} userProgress={data.userProgress} />
 <PwaInstallPrompt />
 
 <div class="main-content">

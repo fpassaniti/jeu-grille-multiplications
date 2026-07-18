@@ -1,25 +1,41 @@
 <script>
   import TableSelector from '$lib/components/TableSelector.svelte';
+  import DifficultySelector from '$lib/components/DifficultySelector.svelte';
+  import { getMode } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
   // Props
+  export let modeId = 'tables';
   export let level = 'adulte';
-  export let gameDuration = 3;
-  export let setLevel = () => {};
-  export let setGameDuration = () => {};
-  export let toggleTable = () => {};
-  export let selectAllTables = () => {};
-  export let getSelectedTableNumbers = () => [];
+  export let duration = 3;
+  export let options = {};
+  export let onLevelSelect = () => {};
+  export let onDurationSelect = () => {};
+  export let onOptionsChange = () => {};
+
+  $: mode = getMode(modeId);
+
+  function toggleTable(n) {
+    const current = options.selectedTables ?? [];
+    const selectedTables = current.includes(n)
+      ? current.filter((t) => t !== n)
+      : [...current, n].sort((a, b) => a - b);
+    onOptionsChange({ selectedTables });
+  }
+
+  function selectAllTables(select) {
+    onOptionsChange({ selectedTables: select ? [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] : [] });
+  }
 </script>
 
 <div class="game-options">
   <div class="option-section card-inset">
     <h2>{_('play.chooseLevel')}</h2>
     <div class="option-buttons">
-      <button class:active={level === 'adulte'} on:click={() => setLevel('adulte')}>
+      <button class:active={level === 'adulte'} on:click={() => onLevelSelect('adulte')}>
         <span class="emoji">👨‍💼</span> {_('common.adult')}
       </button>
-      <button class:active={level === 'enfant'} on:click={() => setLevel('enfant')}>
+      <button class:active={level === 'enfant'} on:click={() => onLevelSelect('enfant')}>
         <span class="emoji">🧒</span> {_('common.child')}
       </button>
     </div>
@@ -28,26 +44,32 @@
     </p>
   </div>
 
-  {#if level === 'enfant'}
+  {#if mode.boardType === 'grid'}
+    {#if level === 'enfant'}
+      <div class="option-section card-inset">
+        <TableSelector
+          selectedNumbers={options.selectedTables ?? []}
+          onToggle={toggleTable}
+          onSelectAll={selectAllTables}
+        />
+      </div>
+    {/if}
+  {:else}
     <div class="option-section card-inset">
-      <TableSelector
-        {toggleTable}
-        {selectAllTables}
-        selectedNumbers={getSelectedTableNumbers()}
-      />
+      <DifficultySelector {mode} {options} onChange={onOptionsChange} />
     </div>
   {/if}
 
   <div class="option-section card-inset">
     <h2>{_('play.chooseDuration')}</h2>
     <div class="option-buttons">
-      <button class:active={gameDuration === 2} on:click={() => setGameDuration(2)}>
+      <button class:active={duration === 2} on:click={() => onDurationSelect(2)}>
         <span class="emoji">⏱️</span> 2 {_('common.min')}
       </button>
-      <button class:active={gameDuration === 3} on:click={() => setGameDuration(3)}>
+      <button class:active={duration === 3} on:click={() => onDurationSelect(3)}>
         <span class="emoji">⏱️</span> 3 {_('common.min')}
       </button>
-      <button class:active={gameDuration === 5} on:click={() => setGameDuration(5)}>
+      <button class:active={duration === 5} on:click={() => onDurationSelect(5)}>
         <span class="emoji">⏱️</span> 5 {_('common.min')}
       </button>
     </div>

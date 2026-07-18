@@ -2,12 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build Commands
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run check` - Run svelte-kit sync and svelte-check
-- `npm run check:watch` - Run svelte-kit sync and svelte-check in watch mode
+## Always DO
+- Read SPEC.md before planning
+- Update SPEC.md for major architectural and technical changes
 
 ## Code Style Guidelines
 

@@ -20,7 +20,10 @@ vi.mock('@neondatabase/serverless', () => {
         const query = typeof strings === 'string' ? strings : strings[0];
 
         if (query.includes('SELECT') && query.includes('FROM users')) {
-          // Return user for login
+          // L'utilisateur 'newuser' n'existe pas (cas register) ; les autres existent (cas login)
+          if (values.includes('newuser')) {
+            return [];
+          }
           return [{ id: 'user-id', username: 'test', display_name: 'Test User', password_char: '🍎' }];
         }
         if (query.includes('UPDATE users')) {
@@ -67,7 +70,7 @@ describe('API d\'authentification', () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   describe('Endpoint login', () => {

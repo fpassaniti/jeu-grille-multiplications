@@ -1,5 +1,6 @@
 import { json } from '@sveltejs/kit';
 import { sql } from '$lib/server/db';
+import { isKnownMode } from '$lib/modes/index.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ url }) {
@@ -7,12 +8,18 @@ export async function GET({ url }) {
     // Extraire les paramètres de requête
     const level = url.searchParams.get('level') || 'adulte';
     const duration = url.searchParams.get('duration') || '5'; // Par défaut 5 minutes
+    // Défaut 'tables' : l'historique V1 reste le classement des tables
+    const mode = url.searchParams.get('mode') || 'tables';
 
-    // Récupérer tous les scores filtré par niveau et durée
+    if (!isKnownMode(mode)) {
+      return json({ error: 'Mode de jeu inconnu' }, { status: 400 });
+    }
+
+    // Récupérer tous les scores filtrés par mode, niveau et durée
     const allScores = await sql`
       SELECT id, name, score, duration, level, date, tables_used
       FROM scores
-      WHERE level = ${level} AND duration = ${parseInt(duration, 10)}
+      WHERE game_mode = ${mode} AND level = ${level} AND duration = ${parseInt(duration, 10)}
       ORDER BY score DESC
     `;
 
@@ -61,6 +68,7 @@ export async function GET({ url }) {
     // Retourner les données
     return json({
       scores: processedScores,
+      mode,
       level,
       duration: parseInt(duration, 10)
     });

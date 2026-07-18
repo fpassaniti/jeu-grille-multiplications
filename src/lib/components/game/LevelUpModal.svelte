@@ -1,22 +1,48 @@
 <script>
+  import ChestModal from '$lib/components/chest/ChestModal.svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { _ } from '$lib/utils/i18n';
+
   // Props
   export let gameResults = null;
   export let reloadPageOnDashboard = () => {};
+
+  $: levelupChestDue = gameResults?.rewards?.chests?.levelup ?? false;
+  let openChest = false;
+  let chestClaimed = false;
 </script>
 
 <div class="level-up-animation">
   <div class="level-up-content">
     <div class="level-up-icon">🏆</div>
-    <h2 class="level-up-title">Niveau Supérieur!</h2>
+    <h2 class="level-up-title">{_('play.levelUp')}</h2>
     <p class="level-up-info">
-      Tu as atteint le niveau {gameResults.newLevel}:
+      {_('home.levelNumber', { level: gameResults.newLevel })}
       <span class="new-level-title">{gameResults.newLevelTitle}</span>
     </p>
+
+    {#if levelupChestDue && !chestClaimed}
+      <button class="chest-button" on:click={() => (openChest = true)}>
+        🎁 {_('rewards.openChest')}
+      </button>
+    {/if}
+
     <button class="view-level-button" on:click={reloadPageOnDashboard}>
-      Voir mon nouveau niveau
+      {_('play.viewNewLevel')}
     </button>
   </div>
 </div>
+
+{#if openChest}
+  <ChestModal
+    chestType="levelup"
+    onClose={() => {
+      openChest = false;
+      chestClaimed = true;
+    }}
+    onOpened={invalidateAll}
+  />
+{/if}
 
 <style>
   .level-up-animation {
@@ -75,6 +101,20 @@
     box-shadow: 0 4px 0 var(--accent-dark);
   }
 
+  .chest-button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    background-color: var(--success);
+    color: white;
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: bold;
+    box-shadow: 0 4px 0 var(--success-dark);
+    animation: pulse 2s infinite;
+  }
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
@@ -89,5 +129,11 @@
     0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
     40% { transform: translateY(-20px); }
     60% { transform: translateY(-10px); }
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
   }
 </style>

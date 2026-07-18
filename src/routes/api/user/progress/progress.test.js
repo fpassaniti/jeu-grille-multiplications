@@ -72,7 +72,7 @@ describe('API Progression Utilisateur', () => {
   });
 
   afterEach(() => {
-    vi.resetAllMocks();
+    vi.clearAllMocks();
   });
 
   it('devrait retourner une erreur 401 si l\'utilisateur n\'est pas connecté', async () => {

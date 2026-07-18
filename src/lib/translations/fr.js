@@ -40,6 +40,9 @@ export default {
     selectLanguage: 'Sélectionner la langue',
     copyright: '© {year} {appName} - Apprends les multiplications en t\'amusant!',
     min: 'min',
+    coins: 'Pièces',
+    shop: 'Boutique',
+    character: 'Personnage',
   },
 
   navigation: {
@@ -149,11 +152,143 @@ export default {
     logoutError: 'Erreur lors de la déconnexion'
   },
 
+  shop: {
+    title: 'Boutique',
+    subtitle: 'Personnalise ton aventurier !',
+    dailyOffers: 'Offres du jour',
+    owned: 'Possédé',
+    buy: 'Acheter',
+    confirmTitle: 'Confirmer l\'achat',
+    confirmBuy: 'Acheter pour {price} 🪙 ?',
+    confirmRemaining: 'Il te restera {remaining} 🪙',
+    confirm: 'Confirmer',
+    cancel: 'Annuler',
+    bought: 'Acheté !',
+    insufficient_coins: 'Pas assez de pièces',
+    already_owned: 'Déjà possédé',
+    level_locked: 'Niveau {level} requis',
+    levelLocked: 'Niveau {level} requis',
+    not_purchasable: 'Non disponible à l\'achat',
+    already_active: 'Déjà actif',
+    freeze_cap_reached: 'Nombre maximum de gels atteint',
+    tryOn: 'Essayer',
+    potions: 'Potions',
+    freezeName: 'Gel de streak',
+    freezeDesc: 'Protège ta série si tu rates un jour',
+    boosterName: 'Potion ×2',
+    boosterDesc: 'Double tes pièces sur 3 parties',
+    boosterActive: 'Potion active !',
+    slots: {
+      background: 'Décor',
+      aura: 'Aura',
+      back: 'Dos',
+      body: 'Corps',
+      outfit: 'Tenue',
+      weapon: 'Arme',
+      hat: 'Chapeau',
+      pet: 'Familier'
+    },
+    rarity: {
+      common: 'Commun',
+      rare: 'Rare',
+      epic: 'Épique',
+      legendary: 'Légendaire'
+    }
+  },
+
+  character: {
+    title: 'Mon personnage',
+    subtitle: 'Équipe les objets que tu as débloqués',
+    equip: 'Équiper',
+    equipped: 'Équipé',
+    unequip: 'Retirer',
+    none: 'Aucun',
+    empty: 'Gagne des items dans la boutique et les coffres !',
+    goToShop: 'Aller à la boutique'
+  },
+
+  chest: {
+    open: 'Ouvrir mon coffre',
+    tapToOpen: 'Tape sur le coffre pour l\'ouvrir !',
+    daily: 'Coffre quotidien',
+    streak: 'Coffre de série',
+    levelup: 'Coffre de niveau',
+    perfect: 'Coffre parfait',
+    welcome: 'Coffre de bienvenue',
+    welcomeTitle: 'Bienvenue dans la nouvelle aventure !',
+    welcomeText: 'Voici un cadeau pour fêter les nouveautés de MultyFun.',
+    youWon: 'Tu as gagné {coins} 🪙 !',
+    newItem: 'Nouvel objet débloqué !',
+    duplicate: 'Tu l\'as déjà ! +{refund} 🪙',
+    comeBackTomorrow: 'Reviens demain pour un nouveau coffre !',
+    alreadyOpened: 'Déjà ouvert aujourd\'hui'
+  },
+
+  rewards: {
+    base: 'Pièces gagnées',
+    weekend: 'Bonus week-end ×2 !',
+    booster: 'Potion ×2 ⚡',
+    firstOfDay: 'Première partie du jour',
+    streakBonus: 'Bonus streak 🔥',
+    perfectBonus: 'Partie parfaite 💯',
+    openChest: 'Un coffre t\'attend !'
+  },
+
+  streak: {
+    days: '{count} jours de suite 🔥',
+    calendarTitle: 'Ta semaine',
+    nextMilestone: 'Encore {days} jour(s) → coffre {reward} !',
+    freezeUsed: 'Ton gel de streak 🛡️ t\'a sauvé !',
+    freezeCount: 'Gels de streak disponibles',
+    milestoneReached: 'Palier de streak atteint !'
+  },
+
   game: {
     answerPlaceholder: 'Ta réponse',
-    recentlySolved: 'Dernières multiplications résolues',
-    noSolved: 'Aucune multiplication résolue pour le moment.',
-    pointsEarned: '+{points} pts'
+    recentlySolved: 'Dernières réponses justes',
+    noSolved: 'Aucune question résolue pour le moment.',
+    pointsEarned: '+{points} pts',
+    validate: 'OK ✓'
+  },
+
+  modes: {
+    chooseMode: 'Choisis ton calcul :',
+    tables: 'Tables',
+    addition: 'Additions',
+    subtraction: 'Soustractions',
+    multiplication: 'Multiplications',
+    division: 'Divisions'
+  },
+
+  difficulty: {
+    chooseTitle: 'Choisis ta difficulté :',
+    customHint: 'Coche les exercices que tu veux travailler :',
+    presets: {
+      ce1: 'CE1',
+      ce2: 'CE2',
+      libre: 'Libre'
+    },
+    tiers: {
+      A1: 'Sans retenue, jusqu\'à 20',
+      A2: 'Sans retenue, jusqu\'à 100',
+      A3: 'Avec retenue, jusqu\'à 100',
+      A4: 'Sans retenue, jusqu\'à 1000',
+      A5: 'Avec retenue, jusqu\'à 1000',
+      A6: 'Avec retenue, jusqu\'à 10 000',
+      S1: 'Sans emprunt, jusqu\'à 20',
+      S2: 'Sans emprunt, jusqu\'à 100',
+      S3: 'Avec emprunt, jusqu\'à 100',
+      S4: 'Sans emprunt, jusqu\'à 1000',
+      S5: 'Avec emprunt, jusqu\'à 1000',
+      M1: 'Multiplier par 10',
+      M2: 'Multiplier par 100 ou 1000',
+      M3: '2 chiffres × 1 chiffre, sans retenue',
+      M4: '2 chiffres × 1 chiffre, avec retenue',
+      M5: '3 chiffres × 1 chiffre',
+      D1: 'Diviser par 2, 5 ou 10',
+      D2: 'Diviser par 3, 4 ou 6',
+      D3: 'Diviser par 7, 8 ou 9'
+    }
   },
 
   leaderboard: {
@@ -216,6 +351,8 @@ export default {
     solvedLabel: 'Multiplications résolues:',
     tablesLabel: 'Tables sélectionnées:',
     currentMultiplicationLabel: 'Multiplication actuelle:',
+    currentQuestionLabel: 'Question :',
+    solvedGenericLabel: '{count} réponses justes',
     gameOver: 'Partie terminée!',
     yourScore: 'Ton score:',
     solvedMultiplications: 'Multiplications résolues:',

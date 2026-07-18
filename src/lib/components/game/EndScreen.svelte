@@ -1,69 +1,133 @@
 <script>
   import SaveScoreForm from './SaveScoreForm.svelte';
   import LevelUpModal from './LevelUpModal.svelte';
+  import CoinCounter from '$lib/components/CoinCounter.svelte';
+  import ChestModal from '$lib/components/chest/ChestModal.svelte';
+  import { invalidateAll } from '$app/navigation';
+  import { getMode } from '$lib/modes/index.js';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
-  export let score = 0;
-  export let level = 'adulte';
-  export let solvedCountAdult = 0;
-  export let solvedCountChild = { count: 0, total: 0 };
-  export let totalSolvedCountAdult = 0;
-  export let totalSolvedCountChild = { count: 0, total: 0 };
-  export let getSelectedTableNumbers = () => [];
+  export let results = null; // engine.results : {modeId, options, level, score, questionsSolved, questionsTotal, errorsCount}
   export let isLoggedIn = false;
   export let playerName = '';
   export let saveScore = () => {};
   export let isLoading = false;
   export let scoreSaved = false;
+  export let saveError = null;
   export let gameResults = null;
   export let levelUp = false;
   export let reloadPageOnDashboard = () => {};
   export let restartGame = () => {};
   export let resetGame = () => {};
+
+  $: mode = getMode(results?.modeId ?? 'tables');
+  $: rewards = scoreSaved ? gameResults?.rewards : null;
+  $: hasChestDue = rewards?.chests && (rewards.chests.streak > 0 || rewards.chests.perfect);
+  // Priorité perfect > streak si les deux sont dus le même jour (rare)
+  $: dueChestType = rewards?.chests?.perfect ? 'perfect' : rewards?.chests?.streak ? 'streak' : null;
+
+  let openChest = false;
+  let chestClaimed = false;
+
+  function closeChest() {
+    openChest = false;
+    chestClaimed = true;
+  }
+
+  const BONUS_LABELS = {
+    base: 'rewards.base',
+    weekend: 'rewards.weekend',
+    booster: 'rewards.booster',
+    first_of_day: 'rewards.firstOfDay',
+    streak: 'rewards.streakBonus',
+    perfect: 'rewards.perfectBonus'
+  };
 </script>
 
 <div class="end-screen card">
-  <h1>🎉 Partie terminée! 🎉</h1>
+  <h1>🎉 {_('play.gameOver')} 🎉</h1>
 
-  <div class="results-container">
-    <div class="result-card">
-      <div class="result-icon">🏆</div>
-      <p>Ton score: <span class="final-score">{score}</span></p>
-    </div>
+  {#if results}
+    <div class="results-container">
+      <div class="result-card">
+        <div class="result-icon">🏆</div>
+        <p>{_('play.yourScore')} <span class="final-score">{results.score}</span></p>
+      </div>
 
-    <div class="result-card">
-      <div class="result-icon">{level === 'adulte' ? '👨‍💼' : '🧒'}</div>
-      <p>Niveau: <span class="final-level">{level === 'adulte' ? 'Adulte' : 'Enfant'}</span></p>
-    </div>
+      <div class="result-card">
+        <div class="result-icon">{mode.icon}</div>
+        <p>
+          <span class="final-mode">{_(mode.labelKey)}</span> —
+          <span class="final-level"
+            >{results.level === 'adulte' ? _('common.adult') : _('common.child')}</span
+          >
+        </p>
+      </div>
 
-    <div class="result-card">
-      <div class="result-icon">✅</div>
-      {#if level === 'adulte'}
-        <p>Multiplications résolues: <span class="final-solved">{totalSolvedCountAdult + solvedCountAdult}/100</span></p>
-      {:else}
-        <p>Multiplications résolues: <span class="final-solved">{totalSolvedCountChild.count + solvedCountChild.count}/{solvedCountChild.total}</span></p>
+      <div class="result-card">
+        <div class="result-icon">✅</div>
+        <p>
+          {_('play.solvedLabel')}
+          <span class="final-solved"
+            >{results.questionsSolved}{results.questionsTotal !== null
+              ? `/${results.questionsTotal}`
+              : ''}</span
+          >
+        </p>
+      </div>
+
+      {#if mode.boardType === 'grid' && results.level === 'enfant' && results.options?.selectedTables?.length}
+        <div class="result-card">
+          <div class="result-icon">📚</div>
+          <p>
+            {_('play.practicedTables')}
+            <span class="final-tables">{results.options.selectedTables.join(', ')}</span>
+          </p>
+        </div>
+      {/if}
+
+      {#if isLoggedIn}
+        <div class="result-card xp-card">
+          <div class="result-icon">⭐</div>
+          <p>{_('play.earnedXp')} <span class="final-xp">+{results.score}</span></p>
+        </div>
       {/if}
     </div>
+  {/if}
 
-    {#if level === 'enfant'}
-      <div class="result-card">
-        <div class="result-icon">📚</div>
-        <p>Tables pratiquées: <span class="final-tables">{getSelectedTableNumbers().join(', ')}</span></p>
+  {#if rewards}
+    <div class="rewards-card">
+      <div class="rewards-title">
+        <CoinCounter value={rewards.coinsEarned} />
       </div>
-    {/if}
+      {#if rewards.coinsBreakdown}
+        <ul class="rewards-breakdown">
+          {#each Object.entries(rewards.coinsBreakdown) as [key, amount]}
+            <li>{_(BONUS_LABELS[key] ?? 'rewards.base')} <strong>+{amount} 🪙</strong></li>
+          {/each}
+        </ul>
+      {/if}
+      {#if hasChestDue && !chestClaimed}
+        <button class="chest-due-button" on:click={() => (openChest = true)}>
+          🎁 {_('rewards.openChest')}
+        </button>
+      {/if}
+    </div>
+  {/if}
 
-    {#if isLoggedIn}
-      <div class="result-card xp-card">
-        <div class="result-icon">⭐</div>
-        <p>XP gagnée: <span class="final-xp">+{score}</span></p>
-      </div>
-    {/if}
-  </div>
+  {#if openChest && dueChestType}
+    <ChestModal chestType={dueChestType} onClose={closeChest} onOpened={invalidateAll} />
+  {/if}
 
   {#if isLoggedIn && !scoreSaved}
     <div class="adventure-progress">
-      <h2>Progression dans l'aventure</h2>
-      <p class="adventure-info">Ton score est en cours de sauvegarde...</p>
+      <h2>{_('play.progressionTitle')}</h2>
+      {#if saveError}
+        <p class="adventure-error">⚠️ {saveError}</p>
+      {:else}
+        <p class="adventure-info">{_('play.savingScore')}</p>
+      {/if}
     </div>
   {/if}
 
@@ -71,27 +135,20 @@
     <LevelUpModal {gameResults} {reloadPageOnDashboard} />
   {/if}
 
-  <SaveScoreForm
-    {isLoggedIn}
-    {playerName}
-    {saveScore}
-    {isLoading}
-    {scoreSaved}
-    {gameResults}
-  />
+  <SaveScoreForm {isLoggedIn} bind:playerName {saveScore} {isLoading} {scoreSaved} {gameResults} />
 
   <div class="end-buttons">
     <button class="restart-button" on:click={restartGame}>
-      <span class="emoji">🔄</span> Nouvelle partie
+      <span class="emoji">🔄</span> {_('play.newGame')}
     </button>
 
     <button class="home-button" on:click={resetGame}>
-      <span class="emoji">🏠</span> Retour à l'accueil
+      <span class="emoji">🏠</span> {_('play.backToHome')}
     </button>
 
     {#if isLoggedIn && scoreSaved}
       <a href="/dashboard" class="button dashboard-button">
-        <span class="emoji">📊</span> Tableau de bord
+        <span class="emoji">📊</span> {_('play.dashboardButton')}
       </a>
     {/if}
   </div>
@@ -139,6 +196,7 @@
     color: var(--success);
   }
 
+  .final-mode,
   .final-level {
     font-weight: bold;
     color: var(--primary);
@@ -164,6 +222,48 @@
     font-weight: bold;
   }
 
+  .rewards-card {
+    background-color: #fff8e1;
+    border: 2px solid #ffca28;
+    border-radius: var(--border-radius-md);
+    padding: 20px;
+    margin: 20px auto;
+    max-width: 400px;
+  }
+
+  .rewards-title {
+    font-size: 1.6rem;
+    text-align: center;
+  }
+
+  .rewards-breakdown {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+  }
+
+  .rewards-breakdown li {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+
+  .chest-due-button {
+    display: block;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    color: white;
+    background-color: var(--accent);
+    box-shadow: 0 4px 0 var(--accent-dark);
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: var(--border-radius-md);
+    animation: pulse 2s infinite;
+  }
+
   .adventure-progress {
     margin: 20px 0;
     padding: 15px;
@@ -176,6 +276,11 @@
     font-style: italic;
   }
 
+  .adventure-error {
+    color: var(--secondary-dark, #c62828);
+    font-weight: bold;
+  }
+
   .end-buttons {
     display: flex;
     gap: 15px;
@@ -183,7 +288,9 @@
     margin-top: 20px;
   }
 
-  .restart-button, .home-button, .dashboard-button {
+  .restart-button,
+  .home-button,
+  .dashboard-button {
     padding: 12px 20px;
     font-size: 1rem;
     border-radius: var(--border-radius-md);

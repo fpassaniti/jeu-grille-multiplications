@@ -9,9 +9,14 @@
  * @param {number} gameData.score - Score
  * @param {number} gameData.duration - Durée de la partie en minutes
  * @param {string} gameData.level - Niveau de jeu ('adulte' ou 'enfant')
- * @param {number} gameData.solvedCells - Nombre de cellules résolues
- * @param {number} gameData.totalPossibleCells - Nombre total de cellules possibles
- * @param {Array<number>} gameData.selectedTables - Tables sélectionnées (pour le niveau enfant)
+ * @param {string} gameData.gameMode - Mode de calcul ('tables', 'addition', ...)
+ * @param {Object} gameData.modeOptions - Options du mode (paliers, tables sélectionnées)
+ * @param {number} gameData.questionsSolved - Questions résolues
+ * @param {number|null} gameData.questionsTotal - Taille du pool (null = infini)
+ * @param {number} gameData.errorsCount - Nombre d'erreurs
+ * @param {number} [gameData.solvedCells] - Champ V1 (compat)
+ * @param {number|null} [gameData.totalPossibleCells] - Champ V1 (compat)
+ * @param {Array<number>} [gameData.selectedTables] - Champ V1 (compat)
  * @returns {Promise<Object>} - Réponse de l'API
  */
 export async function saveScore(gameData) {
@@ -35,10 +40,11 @@ export async function saveScore(gameData) {
  * Récupère le classement
  * @param {string} level - Niveau ('adulte' ou 'enfant')
  * @param {number} duration - Durée en minutes
+ * @param {string} mode - Mode de calcul ('tables' par défaut = classement historique)
  * @returns {Promise<Object>} - Réponse de l'API
  */
-export async function getLeaderboard(level = 'adulte', duration = 5) {
-  const response = await fetch(`/api/leaderboard?level=${level}&duration=${duration}`);
+export async function getLeaderboard(level = 'adulte', duration = 5, mode = 'tables') {
+  const response = await fetch(`/api/leaderboard?level=${level}&duration=${duration}&mode=${mode}`);
 
   if (!response.ok) {
     throw new Error('Erreur lors de la récupération des scores');

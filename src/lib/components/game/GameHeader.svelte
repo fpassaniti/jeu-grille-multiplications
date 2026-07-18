@@ -7,6 +7,7 @@
   export let gameTimer = 0;
   export let level = 'adulte';
   export let score = 0;
+  export let modeIcon = '';
   export let endGame = () => {};
 </script>
 
@@ -16,7 +17,7 @@
     <button class="smaller-button" on:click={endGame}>{_('play.endGame')}</button>
   </div>
   <div class="level">
-    <span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> {_('play.levelLabel')} {level === 'adulte' ? _('common.adult') : _('common.child')}
+    <span class="emoji">{modeIcon}</span><span class="emoji">{level === 'adulte' ? '👨‍💼' : '🧒'}</span> {_('play.levelLabel')} {level === 'adulte' ? _('common.adult') : _('common.child')}
   </div>
   <div class="score">
     <span class="emoji">🏆</span> {_('play.scoreLabel')} {score}

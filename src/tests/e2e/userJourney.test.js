@@ -47,10 +47,10 @@ test.describe('Parcours utilisateur MultyFun', () => {
 
   test('devrait afficher le lien vers la page du classement', async ({page}) => {
     // Vérifier que le bouton vers le leaderboard est présent
-    await expect(page.locator('button').filter({hasText: 'Voir le classement'})).toBeVisible();
+    await expect(page.locator('a').filter({hasText: 'Voir le classement'})).toBeVisible();
 
     // Cliquer sur le bouton du leaderboard
-    await page.locator('button').filter({hasText: 'Voir le classement'}).click();
+    await page.locator('a').filter({hasText: 'Voir le classement'}).click();
 
     // Vérifier que la navigation vers la page de classement fonctionne
     await expect(page).toHaveURL(/\/leaderboard/);

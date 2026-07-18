@@ -34,3 +34,16 @@ vi.mock('@neondatabase/serverless', () => {
 
 // Mock des variables d'environnement
 process.env.DATABASE_URL = 'postgresql://fake:fake@fake.neon.tech/fake';
+
+// jsdom sous Vitest 1.6 n'expose pas localStorage : stub minimal pour les
+// modules qui y accèdent à l'import (languageStore). Les tests qui pilotent
+// localStorage (persistence.test.js) posent leur propre stub par-dessus.
+if (typeof globalThis.localStorage === 'undefined') {
+  const map = new Map();
+  globalThis.localStorage = {
+    getItem: (k) => (map.has(k) ? map.get(k) : null),
+    setItem: (k, v) => map.set(k, String(v)),
+    removeItem: (k) => map.delete(k),
+    clear: () => map.clear()
+  };
+}
