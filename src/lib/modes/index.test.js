@@ -14,12 +14,12 @@ describe('registre des modes', () => {
     expect(getMode(undefined).id).toBe('tables');
   });
 
-  it('listEnabledModes exclut division', () => {
+  it('listEnabledModes inclut division', () => {
     const ids = listEnabledModes().map((m) => m.id);
-    expect(ids).toEqual(['tables', 'addition', 'subtraction', 'multiplication']);
+    expect(ids).toEqual(['tables', 'addition', 'subtraction', 'multiplication', 'division']);
   });
 
-  it('isKnownMode distingue inconnu de désactivé', () => {
+  it('isKnownMode reconnaît un mode déclaré, pas un id inconnu', () => {
     expect(isKnownMode('division')).toBe(true);
     expect(isKnownMode('nawak')).toBe(false);
   });

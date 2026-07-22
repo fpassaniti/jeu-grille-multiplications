@@ -80,8 +80,10 @@ export function saveSettings(settings) {
  * @param {string} modeId
  */
 export function optionsFor(settings, modeId) {
+  // JSON.parse/stringify plutôt que structuredClone : ce dernier échoue sur les proxys
+  // Svelte 5 ($state) que `settings` peut contenir côté appelant (DataCloneError).
   const saved = settings.optionsByMode[modeId];
-  return saved ? structuredClone(saved) : structuredClone(getMode(modeId).defaultOptions);
+  return JSON.parse(JSON.stringify(saved ?? getMode(modeId).defaultOptions));
 }
 
 function migrateLegacyTables(settings) {

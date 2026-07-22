@@ -1,6 +1,7 @@
 <script>
   import GameOptions from './GameOptions.svelte';
   import ModeSelector from '$lib/components/ModeSelector.svelte';
+  import LiveLeaderboardPanel from './LiveLeaderboardPanel.svelte';
   import { getMode } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
@@ -16,35 +17,34 @@
   export let onStart = () => {};
 
   $: mode = getMode(modeId);
-  // Le mode tables/enfant exige au moins une table ; les autres au moins un palier
-  $: canStart =
-    mode.boardType === 'grid'
-      ? level === 'adulte' || (options.selectedTables?.length ?? 0) > 0
-      : mode.validateOptions(options).ok;
+  // validateOptions tolère déjà 0 table sélectionnée (≡ toutes les tables) ;
+  // on délègue uniformément à chaque mode plutôt que de spécialiser le cas grid.
+  $: canStart = mode.validateOptions(options).ok;
 </script>
 
 <div class="start-screen card">
-  <ModeSelector selected={modeId} onSelect={onModeSelect} />
+  <div class="start-layout">
+    <div class="start-main">
+      <ModeSelector selected={modeId} onSelect={onModeSelect} />
 
-  <GameOptions
-    {modeId}
-    {level}
-    {duration}
-    {options}
-    {onLevelSelect}
-    {onDurationSelect}
-    {onOptionsChange}
-  />
+      <GameOptions
+        {modeId}
+        {level}
+        {duration}
+        {options}
+        {onLevelSelect}
+        {onDurationSelect}
+        {onOptionsChange}
+      />
 
-  <button class="start-button" on:click={onStart} disabled={!canStart}>
-    <span class="emoji">🚀</span> {_('play.start')}
-  </button>
+      <button class="start-button" on:click={onStart} disabled={!canStart}>
+        <span class="emoji">🚀</span> {_('play.start')}
+      </button>
+    </div>
 
-  <div class="leaderboard-link-section">
-    <h3>{_('play.viewLeaderboard')}</h3>
-    <a href="/leaderboard" class="button leaderboard-link">
-      <span class="emoji">🏆</span> {_('play.viewLeaderboardButton')}
-    </a>
+    <div class="start-leaderboard">
+      <LiveLeaderboardPanel mode={modeId} {level} {duration} />
+    </div>
   </div>
 </div>
 
@@ -54,6 +54,24 @@
     padding: 10px 30px;
     margin: 20px auto;
     background-color: white;
+  }
+
+  .start-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+    text-align: left;
+  }
+
+  .start-main {
+    text-align: center;
+  }
+
+  @media (max-width: 767px) {
+    .start-layout {
+      grid-template-columns: 1fr;
+    }
   }
 
   .start-button {
@@ -79,29 +97,5 @@
     font-size: 1.2em;
     margin-right: 5px;
     display: inline-block;
-  }
-
-  .leaderboard-link-section {
-    text-align: center;
-    margin: 30px 0;
-    padding: 20px;
-    background-color: var(--bg-secondary);
-    border-radius: var(--border-radius-md);
-  }
-
-  .leaderboard-link {
-    background-color: var(--primary);
-    color: white;
-    padding: 10px 20px;
-    border-radius: var(--border-radius-md);
-    margin-top: 15px;
-    box-shadow: 0 4px 0 var(--primary-dark);
-    white-space: nowrap;
-    transition: all 0.2s;
-  }
-
-  .leaderboard-link:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 0 var(--primary-dark);
   }
 </style>

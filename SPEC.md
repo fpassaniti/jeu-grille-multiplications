@@ -2,7 +2,7 @@
 
 > Document de spécification vivant. Il décrit l'existant (V1), les points d'attention, puis les spécifications de la V2 : modes de calcul multiples et gamification (pièces d'or, boutique, personnage RPG, coffres, streaks). Il est fait pour itérer : chaque section peut être amendée avant implémentation.
 
-**Dernière mise à jour** : 2026-07-18
+**Dernière mise à jour** : 2026-07-21
 
 ---
 
@@ -12,7 +12,7 @@
 |---|---|
 | **Produit** | Jeu éducatif d'entraînement au calcul mental, pensé pour des enfants de CE1/CE2 (7–9 ans) |
 | **V1** | Tables de multiplication uniquement (grille 10×10) |
-| **V2 (cible)** | Multi-modes : tables, additions, soustractions, multiplications étendues (divisions préparées pour V3) + gamification complète |
+| **V2 (cible)** | Multi-modes : tables, additions, soustractions, multiplications étendues, divisions + gamification complète |
 | **Stack** | SvelteKit 2 + Svelte 5, Neon Postgres (`@neondatabase/serverless`), déployé sur Vercel, PWA (`@vite-pwa/sveltekit`) |
 | **i18n** | 4 langues : fr (défaut), en, es, zh — `src/lib/translations/` |
 | **Utilisateurs** | ~52 comptes réels, 423 scores, 381 sessions de jeu (données à préserver) |
@@ -110,7 +110,8 @@
 | 7 | `POST /api/scores` ne valide pas la plausibilité du score | Triche triviale (XP et bientôt pièces) | Anti-triche V2 (§5.7) |
 | 8 | `login/+page.svelte` fait un GET `/api/auth/login` inexistant | Erreur silencieuse | Nettoyage |
 | 9 | Restes Supabase (`vite.config.js`, README) après migration Neon | Confusion | Nettoyage |
-| 10 | Streak calculé mais invisible ; `unlocked_badges` et `rewards` inutilisés | Potentiel gaspillé | Exploités par la V2 (§5) |
+| 10 | Streak calculé mais invisible ; `unlocked_badges` et `rewards` inutilisés | Potentiel gaspillé | Streak exploité par la V2 (§5) ; badges repris (nouveau modèle relationnel) par le Volet C (§7) |
+| 11 | Deux avatars concurrents : `LevelAvatar` (image fixe par niveau) et `CharacterAvatar` (personnage équipable) affichés côte à côte sans lien, notamment sur le dashboard | Confusion "lequel est mon vrai personnage ?", dilue la valeur perçue de la boutique | Résolu (2026-07-20) — voir §5.3.1 |
 
 ---
 
@@ -126,7 +127,7 @@ Ne plus proposer uniquement les tables, mais un choix de **modes de calcul** ave
 | Additions posées | `addition` | ✅ Nouveau | Question générique (posée en colonnes) |
 | Soustractions posées | `subtraction` | ✅ Nouveau | Question générique (posée en colonnes) |
 | Multiplications étendues | `multiplication` | ✅ Nouveau | Question générique |
-| Divisions | `division` | 🔜 V3 — architecture prête, `enabled: false` | Question générique |
+| Divisions | `division` | ✅ Activé (V2) — non intégré aux presets CE1/CE2, accessible via « Libre » | Question générique |
 
 ### 4.2 Abstraction « mode » — `src/lib/modes/` (JS pur, sans import Svelte)
 
@@ -254,14 +255,18 @@ i18n : nouvelles clés `modes.*`, `difficulty.*` (tiers libellés), `game.valida
 
 Revenu d'un joueur régulier (2-3 parties/jour) : **~300–400 🪙/jour** (avec coffre quotidien).
 
-**Prix boutique** :
+**Prix boutique (6 raretés — décision 2026-07-21, extension à 350 items, §5.9.1)** : prix de base par rareté (bande A), avec deux bandes premium (B ×1,4 / C ×2,0) au sein de chaque rareté à partir d'`uncommon` (`common` reste à prix plat, sans bande — l'entrée dans le catalogue doit rester rapide et uniforme) :
 
-| Rareté | Prix | Rythme d'acquisition cible |
-|---|---|---|
-| Commun | 150 🪙 | ~2 parties |
-| Rare | 500 🪙 | 1-2 jours |
-| Épique | 1 500 🪙 | 4-5 jours |
-| Légendaire | 4 500 🪙 | ~2 semaines de jeu régulier |
+| Rareté | Prix bande A | Bande B (×1,4) | Bande C (×2,0) | Rythme d'acquisition cible (bande A) |
+|---|---|---|---|---|
+| Commun | 150 🪙 | — | — | ~2 parties |
+| Peu commun | 350 🪙 | 490 🪙 | 700 🪙 | ~1 jour |
+| Rare | 900 🪙 | 1 260 🪙 | 1 800 🪙 | 2-3 jours |
+| Épique | 2 700 🪙 | 3 780 🪙 | 5 400 🪙 | ~1 semaine |
+| Légendaire | 8 000 🪙 | 11 200 🪙 | 16 000 🪙 | ~3 semaines |
+| Mythique | 45 000 🪙 | 63 000 🪙 | 90 000 🪙 | 4 à 8 mois de jeu régulier |
+
+Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 350 🪙/jour pour tout posséder — **volontairement hors de portée à court terme** : 55% du catalogue (commun + peu commun) reste rapide (0,4-2 jours/item) pour la boucle de récompense courte, tandis que la complétion à 100% est un horizon pluriannuel d'aspiration. Aucune contradiction avec le principe « catalogue entièrement visible, pas de FOMO » (§5.1) : rien n'est retiré ni limité dans le temps, un item cher reste achetable dès le jour 1 dès que le joueur a économisé.
 
 **Crédit rétroactif au lancement** : `LEAST(800, FLOOR(xp/50))` pour les 52 joueurs existants (les vétérans à 25 000–41 000 XP touchent 500–800 🪙 : moment « waouh » sans vider la boutique) + **1 coffre de bienvenue** pour tous au premier login post-V2.
 
@@ -284,6 +289,12 @@ Revenu d'un joueur régulier (2-3 parties/jour) : **~300–400 🪙/jour** (avec
 - **Composant** `src/lib/components/character/CharacterAvatar.svelte` (prop `equipment`, `size`). Affiché : `/character` (300 px), dashboard (150 px), header (mini 40 px).
 - **Lien avec les niveaux** : `unlock_level` sur certains items (« Reviens au niveau 10 pour l'acheter ! » → double motivation) ; ~6 items `is_purchasable = false` exclusifs aux coffres de level-up (niveaux 5/10/15/20/25/30).
 
+#### 5.3.1 Unification avec l'ancien avatar de niveau (décision 2026-07-20)
+
+À l'implémentation, `LevelAvatar` (image statique `level_N.png` par niveau, §2.3) et `CharacterAvatar` coexistaient sans être unifiés : `LevelAvatar` seul sur l'accueil, les deux côte à côte sur le dashboard, aucun sur le header (dette #11, §3). Décision : le niveau (XP, titre, seuils, `color_theme`) reste — il structure les déblocages d'items (`unlock_level`) et les coffres de level-up — mais `LevelAvatar` n'est plus utilisé pour représenter le joueur là où il rivalisait avec `CharacterAvatar` :
+- **Accueil, dashboard, header** : un seul avatar visible, `CharacterAvatar`, avec le niveau réduit à une pastille (`LevelBadge.svelte`, dégradé `color_theme` réutilisé de `LevelAvatar` via `src/lib/utils/level-theme.js`) en overlay — le niveau redevient un statut/décoration, pas un second personnage.
+- **`/collection`** : `LevelAvatar` + `PrintableCard` inchangés — repositionné comme galerie de badges/certificats de progression à collectionner et imprimer (texte `collection.description` mis à jour en ce sens), une fonctionnalité distincte de la personnalisation du personnage.
+
 ### 5.4 Boutique (`/shop`)
 
 - Onglets par slot (🎩 👕 ⚔️ 🐾 🌈 ✨ 🦸), cartes style « 3D » existant, fond de couleur de rareté (gris/bleu/violet/or), badge « ✅ Possédé ».
@@ -295,11 +306,13 @@ Revenu d'un joueur régulier (2-3 parties/jour) : **~300–400 🪙/jour** (avec
 
 | Type | Déclencheur | Contenu |
 |---|---|---|
-| 🎁 Quotidien | 1 clic/jour (dashboard + accueil) | 30–80 🪙 ; 15 % item commun, 3 % rare |
-| 🔥 Streak | Paliers 3 / 7 / 14 / 30 jours | commun garanti / rare + 100 🪙 / épique / légendaire |
-| ⬆️ Level-up | Chaque montée de niveau | `100 + 20×niveau` 🪙 + item exclusif aux nv 5/10/15/20/25/30 |
-| 💯 Perfect | Partie parfaite (max 1/jour) | 25–75 🪙, 10 % item commun |
+| 🎁 Quotidien | 1 clic/jour (dashboard + accueil) | 30–80 🪙 ; 15 % item commun, 5 % peu commun (le tirage rare du lancement est retiré : un catalogue ~8x plus gros rendrait un rare gratuit quotidien trop généreux) |
+| 🔥 Streak | Paliers 3 / 7 / 14 / 30 / **60 jours (nouveau, extension 350 items)** | commun garanti / peu commun + 100 🪙 / rare + 150 🪙 / épique + 300 🪙 / légendaire + 500 🪙 |
+| ⬆️ Level-up | Chaque montée de niveau | `100 + 20×niveau` 🪙 + item exclusif à chaque **niveau pair** (2 à 30, 15 exclusifs au total — remplace les seuls nv 5/10/15/20/25/30 du lancement) |
+| 💯 Perfect | Partie parfaite (max 1/jour) | 25–75 🪙, 8 % item commun, 2 % peu commun (taux global d'item inchangé, 10 %) |
 | 👋 Bienvenue | Premier login post-V2 | pièces + item commun garanti |
+
+**Mythique n'est jamais tiré d'un coffre** (ni quotidien, ni streak, ni perfect) — uniquement obtenu par achat boutique ou via 2 des 15 exclusifs de level-up (niveaux 28 et 30). Un effort quotidien à faible coût (streak) ne doit pas à lui seul ouvrir l'accès à la rareté la plus prestigieuse ; seul le double verrou prix + niveau protège vraiment `mythic`.
 
 - **Doublons** : convertis en pièces (50 % du prix) avec message positif (« Tu l'as déjà ! +250 🪙 »).
 - **`ChestModal.svelte`** : coffre qui tremble (CSS), tap pour ouvrir, confettis emoji, halo couleur de rareté.
@@ -398,22 +411,13 @@ CREATE TABLE chest_openings (
 
 ### 5.9 Production des assets
 
-**Catalogue de lancement : 42 items + 3 défauts gratuits** :
+**Catalogue à la main, un item à la fois (décision 2026-07-22 — remplace le catalogue procédural décrit dans les versions précédentes de ce document, §5.9.1 ci-dessous conservé comme trace historique)** : la table `items` a été entièrement vidée (`db/migrations/005_items_reset.sql`) — plus de catalogue à 353 items pré-généré, plus de placeholders SVG, plus de source de vérité en code (`scripts/item-catalog.mjs` et `scripts/generate-item-placeholders.mjs` supprimés). **La base de données EST le catalogue.** Chaque item est ajouté un par un, au fil de la production réelle de son art, via `scripts/add-shop-item.mjs` (nom 4 langues, slot, rareté, prix, niveau de déblocage, image PNG — copie le fichier dans `static/images/items/{code}.png` et insère directement la ligne en base, pas de migration à appliquer à part). Raison du changement : la production d'art réel via IA s'est révélée être un travail curé, manuel, un item à la fois (édition itérative + nettoyage humain, cf. `PROMPT_ASSETS.md`) — pas la génération en volume qui justifiait un catalogue pré-rempli de 353 entrées procédurales.
 
-| Slot | Commun (150) | Rare (500) | Épique (1500) | Légendaire (4500) |
-|---|---|---|---|---|
-| body ×5 | blob bleu, blob vert | blob à taches | dragon junior | phénix arc-en-ciel |
-| outfit ×7 | t-shirt étoile, salopette | tunique de mage, gilet pirate | armure de chevalier | armure galactique (nv 15) |
-| hat ×7 | casquette, bonnet | chapeau de sorcier, bandana | casque viking | couronne dorée (nv 20) |
-| weapon ×6 | bâton étoilé | épée en bois, baguette | trident de glace | épée laser des maths (nv 10) |
-| back ×5 | sac à dos | cape rouge | ailes de chauve-souris | ailes d'ange dorées |
-| pet ×7 | souris, escargot | chaton, hibou | bébé dragon | licorne (nv 25) |
-| background ×5 | prairie | forêt magique, plage | château | galaxie (nv 30) |
-| aura ×3 | — | — | étincelles, flammes bleues | halo doré arc-en-ciel |
+**Pipeline de production visuelle** : voir [`PROMPT_ASSETS.md`](./PROMPT_ASSETS.md) pour le prompt de référence et le processus (édition itérative d'une image de personnage de référence sur fond chroma-key, un ajout à la fois). **Décision de compositing (tranchée 2026-07-22)** : calque plein cadre — chaque item est extrait d'une édition itérative d'une image de référence unique (`scripts/extract-item-diff.mjs` → `scripts/compose-item-layer.mjs`), pas généré indépendamment ; il garde le cadrage exact du personnage de base et se superpose sans offset en code (§5.3 inchangé), au prix d'un verrouillage à un seul personnage canonique pour l'instant. Stockage `static/images/items/{code}.png` + `static/images/chests/` (fermé/tremblant/ouvert).
 
-Dont ~6 items `is_purchasable = false` réservés aux coffres de level-up.
+#### 5.9.1 Extension à 350 items — abandonné (décision 2026-07-21, puis 2026-07-22)
 
-**Pipeline de génération (IA)** : générer d'abord le **corps de base** (créature mignonne face caméra, flat cartoon, contours noirs épais, palette vive — cohérent avec les `level_N.png` existants) ; puis chaque item en **image-to-image sur ce template** pour garantir l'alignement des calques. PNG 512×512 transparents, compressés (~30–60 Ko). Stockage `static/images/items/{slot}_{code}.png` + `static/images/chests/` (fermé/tremblant/ouvert). **Fallback** si l'IA manque de cohérence : pack « avatar creator » (itch.io / CraftPix, calques pré-alignés).
+Cette section décrivait un catalogue procédural à 353 items généré par thèmes verticaux (`scripts/item-catalog.mjs`, supprimé). Conservée ici uniquement comme trace historique de cette approche abandonnée — voir §5.9 ci-dessus pour l'approche actuelle. Le détail de la répartition par slot/rareté et des exclusifs de level-up n'est plus d'actualité ; à reconstruire au fil de l'ajout manuel des items si la logique de progression (`unlock_level`, exclusifs de coffres) redevient pertinente à plus grande échelle.
 
 ---
 
@@ -430,8 +434,105 @@ Dont ~6 items `is_purchasable = false` réservés aux coffres de level-up.
 | 7 | Personnage + boutique | B | Tables items/inventory/equipment, `buy_item`, ~20 premiers assets, `/shop`, `/character` |
 | 8 | Coffres + récompenses streak | B | `chest_openings`, `/api/chests`, ChestModal, pity, gel de streak |
 | 9 | Boosters + finitions | B | Potion ×2, week-end ×2, offres du jour, catalogue complet 42 items, items de niveau |
+| 10 | Extension catalogue 350 items | B | `003_item_catalog_expansion.sql` (6 raretés, repricing, `open_chest`/`add_game_rewards` mis à jour), ~305 nouveaux items générés par thèmes, filtre/tri boutique par rareté |
 
 Les volets A et B sont indépendants jusqu'à l'EndScreen : **l'étape 6 peut démarrer en parallèle des étapes 3–5**. Toutes les migrations sont additives — aucune donnée existante (52 users, 423 scores, 381 sessions) n'est modifiée.
 
 ### Hors scope V2 (pistes V3)
-Divisions (activer `division.js`), badges (`unlocked_badges` enfin exploité), défis entre amis, mode multijoueur, sons, `rewards` de `level_definitions`.
+Mode multijoueur temps réel, sons, `rewards` de `level_definitions`.
+
+### Exclu définitivement (décision produit, 2026-07-19)
+MultyFun est un **jeu vidéo avec gamification** dont la mécanique de jeu est le calcul mental — pas un outil pédagogique de suivi de maîtrise. Sont donc explicitement hors périmètre, y compris pour les versions futures :
+- adaptativité de la difficulté en cours de partie selon la performance ;
+- suivi de maîtrise par notion/table, répétition espacée, ciblage des points faibles.
+
+Les paliers de difficulté choisis en amont d'une partie (CE1/CE2/Libre, §4.5) restent le seul levier de progression pédagogique du jeu.
+
+---
+
+## 7. Spec V2 — Volet C : Défis entre joueurs et badges
+
+> Design documenté ici pour une implémentation ultérieure (non planifiée dans la roadmap §6). Aucun code n'existe encore pour ce volet.
+
+### 7.1 Objectif
+
+Ajouter une dimension sociale légère : un joueur peut défier un autre joueur MultyFun sur un enchaînement de parties (mode + format imposés), le score total déterminant un vainqueur récompensé — sans graphe d'amis ni système d'événements complexe. En complément, un système de **badges/trophées** capitalise sur cette activité (et sur d'autres jalons du jeu), en remplacement de la colonne `unlocked_badges` (JSON, jamais versionnée, jamais exploitée — dette #10, §3).
+
+### 7.2 Défis
+
+- Un joueur choisit un adversaire dans la liste des joueurs MultyFun (simple requête sur `users`/`user_progress` — pas de graphe d'amis à ce stade), un mode de calcul, une durée (2/3/5 min) et un nombre de manches (ex. 3, 5 ou 6).
+- Le défi enchaîne ce nombre de manches par joueur, dans le mode/format imposé. Le score du défi est la **somme des scores** de chaque joueur sur ses manches.
+- Le vainqueur remporte un **bonus de pièces** en plus des gains classiques de chaque partie (montant à calibrer, cohérent avec l'économie §5.2).
+- Cycle de vie : `pending` (envoyé, en attente de réponse) → `declined` ou `active` (accepté, manches en cours) → `completed` (les deux joueurs ont fini leurs manches, vainqueur déterminé).
+
+**Modèle de données** (nouvelle migration `db/migrations/003_challenges_badges.sql`) :
+
+```sql
+CREATE TABLE challenges (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  challenger_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  opponent_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game_mode VARCHAR(20) NOT NULL,
+  duration INTEGER NOT NULL CHECK (duration IN (2,3,5)),
+  games_count INTEGER NOT NULL CHECK (games_count BETWEEN 3 AND 7),
+  status VARCHAR(20) NOT NULL DEFAULT 'pending', -- pending|declined|active|completed
+  challenger_total INTEGER NOT NULL DEFAULT 0,
+  opponent_total INTEGER NOT NULL DEFAULT 0,
+  winner_id UUID REFERENCES users(id),
+  coins_bonus INTEGER,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  completed_at TIMESTAMPTZ
+);
+
+CREATE TABLE challenge_games (
+  id SERIAL PRIMARY KEY,
+  challenge_id UUID NOT NULL REFERENCES challenges(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  game_index INTEGER NOT NULL,
+  game_session_id UUID REFERENCES game_sessions(id),
+  score INTEGER NOT NULL,
+  UNIQUE(challenge_id, user_id, game_index)
+);
+
+ALTER TABLE user_progress
+  ADD COLUMN challenges_issued INTEGER NOT NULL DEFAULT 0,
+  ADD COLUMN challenges_won INTEGER NOT NULL DEFAULT 0;
+```
+
+**API à prévoir** :
+
+| Endpoint | Rôle |
+|---|---|
+| `GET /api/players` | Liste des joueurs (username, displayName, niveau, avatar) pour choisir un adversaire |
+| `POST /api/challenges` | Créer un défi `{opponentId, gameMode, duration, gamesCount}` |
+| `GET /api/challenges` | Mes défis (reçus / envoyés / actifs / terminés) |
+| `POST /api/challenges/[id]/respond` | `{accept: bool}` |
+| `POST /api/challenges/[id]/games` | Enregistrer le score d'une manche ; recalcule les totaux et, si les deux joueurs ont fini, résout le défi (vainqueur, bonus de pièces, incrément des stats) |
+
+**UI à prévoir** : nouvelle route `/challenges` (liste des joueurs + défis en cours/reçus/terminés) ; intégration au flux `/play` pour verrouiller mode/durée/manche pendant un défi actif ; écran de résultat de défi (deux totaux + vainqueur + bonus).
+
+### 7.3 Badges / trophées
+
+Remplacer `unlocked_badges` par un modèle relationnel cohérent avec le pattern déjà utilisé pour la boutique (`items`/`user_inventory`, §5.7) :
+
+```sql
+CREATE TABLE badges (
+  code VARCHAR(50) PRIMARY KEY,
+  category VARCHAR(20) NOT NULL DEFAULT 'duelist',
+  name JSONB NOT NULL,          -- {"fr":"Premier duel","en":...}
+  description JSONB NOT NULL,
+  icon VARCHAR(10) NOT NULL,    -- emoji
+  criteria JSONB NOT NULL       -- {"type":"challenges_won","threshold":1}
+);
+
+CREATE TABLE user_badges (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  badge_code VARCHAR(50) NOT NULL REFERENCES badges(code),
+  unlocked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, badge_code)
+);
+```
+
+Premiers badges visés — trophées de duelliste, alimentés par `challenges_issued`/`challenges_won` : « premier défi lancé », « premier défi gagné », paliers de victoires cumulées (5, 10, 25...). Catalogue extensible à d'autres catégories plus tard (niveaux, streaks...).
+
+**UI à prévoir** : un onglet/section badges (sur `/character` ou `/collection`) affichant le catalogue avec état verrouillé/débloqué.

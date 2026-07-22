@@ -1,5 +1,6 @@
 <script>
   import { getLevelImagePath } from '$lib/utils/image-paths.js';
+  import { getLevelGradient } from '$lib/utils/level-theme.js';
 
   // Props
   export let level = 1;
@@ -32,26 +33,7 @@
   }[size] || '1.8rem';
 
   // Générer un dégradé basé sur le thème de couleur
-  $: gradient = getColorGradient(colorTheme);
-
-  // Fonctions utilitaires
-  function getColorGradient(theme) {
-    // Correspondance des thèmes aux gradients spécifiques (sans utiliser de variables CSS)
-    const themeMap = {
-      'blue': 'linear-gradient(45deg, #4d57ff, #8a90ff)',
-      'green': 'linear-gradient(45deg, #43d787, #7df0b2)',
-      'purple': 'linear-gradient(45deg, #9c5fff, #c29aff)',
-      'orange': 'linear-gradient(45deg, #ff8f3e, #ffb585)',
-      'red': 'linear-gradient(45deg, #ff6b6b, #ff9999)',
-      'teal': 'linear-gradient(45deg, #26c0c0, #7fe7e7)',
-      'indigo': 'linear-gradient(45deg, #4f46e5, #a5b4fc)',
-      'pink': 'linear-gradient(45deg, #ec4899, #f9a8d4)',
-      'amber': 'linear-gradient(45deg, #d97706, #fbbf24)',
-      'gold': 'linear-gradient(45deg, #d4af37, #f9e29c)'
-    };
-
-    return themeMap[theme] || 'linear-gradient(45deg, #4d57ff, #8a90ff)';
-  }
+  $: gradient = getLevelGradient(colorTheme);
 
   // Vérifier si l'image est valide
   let imageError = false;

@@ -16,8 +16,6 @@
   let settings = $state(loadSettings());
 
   // État de sauvegarde de fin de partie
-  let playerName = $state('');
-  let isLoading = $state(false);
   let scoreSaved = $state(false);
   let saveAttempted = $state(false); // évite les tentatives automatiques en boucle sur échec
   let saveError = $state(null);
@@ -29,13 +27,12 @@
   let windowHeight = $state(0);
   const isMobile = $derived(windowWidth > 0 && windowWidth < 768);
 
-  const isLoggedIn = $derived(!!data.user);
   const currentOptions = $derived(optionsFor(settings, settings.lastMode));
 
-  // Sauvegarde automatique en fin de partie (connecté) — une seule tentative :
+  // Sauvegarde automatique en fin de partie — une seule tentative :
   // en cas d'échec (ex. anti-replay), on n'entre pas dans une boucle de retry.
   $effect(() => {
-    if (engine.state === 'finished' && isLoggedIn && !saveAttempted) {
+    if (engine.state === 'finished' && !saveAttempted) {
       saveAttempted = true;
       saveScore();
     }
@@ -69,8 +66,6 @@
   }
 
   async function saveScore() {
-    if (!isLoggedIn && playerName.trim() === '') return;
-
     const results = engine.results;
     const isTables = getMode(results.modeId).boardType === 'grid';
     const selectedTables =
@@ -78,7 +73,7 @@
 
     // Double payload : nouveau format V2 + champs V1 (compat serveur pas-encore-déployé)
     const gameData = {
-      name: isLoggedIn ? data.user.username : playerName,
+      name: data.user.username,
       score: results.score,
       duration: results.durationMin,
       level: results.level,
@@ -94,13 +89,11 @@
     };
 
     try {
-      isLoading = true;
       saveError = null;
       const resultData = await postScore(gameData);
       gameResults = resultData;
 
       if (
-        isLoggedIn &&
         resultData.progressUpdate &&
         resultData.progressUpdate.returned_level > resultData.progressUpdate.returned_previous_level
       ) {
@@ -113,12 +106,6 @@
     } catch (e) {
       console.error('Erreur lors de la sauvegarde du score:', e);
       saveError = e.message || 'Impossible de sauvegarder le score en ligne';
-      if (!isLoggedIn) {
-        // Le formulaire invité reste réessayable manuellement ; on informe immédiatement
-        alert(`Erreur: ${saveError}. Essayez à nouveau plus tard.`);
-      }
-    } finally {
-      isLoading = false;
     }
   }
 
@@ -132,7 +119,7 @@
   }
 
   function reloadPageOnDashboard() {
-    window.location.href = '/dashboard';
+    window.location.href = '/';
   }
 
   onDestroy(() => engine.destroy());
@@ -189,10 +176,6 @@
   {:else if engine.state === 'finished'}
     <EndScreen
       results={engine.results}
-      {isLoggedIn}
-      bind:playerName
-      {saveScore}
-      {isLoading}
       {scoreSaved}
       {saveError}
       {gameResults}

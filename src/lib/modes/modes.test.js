@@ -139,9 +139,9 @@ describe('multiplication — conformité des paliers', () => {
     }));
 });
 
-describe('division (V3, désactivée)', () => {
-  it('est désactivée mais son générateur fonctionne (quotients exacts)', () => {
-    expect(division.enabled).toBe(false);
+describe('division', () => {
+  it('est activée et son générateur produit des quotients exacts', () => {
+    expect(division.enabled).toBe(true);
     const gen = division.createGenerator({ tiers: ['D1'] }, 'adulte', seededRng(10));
     for (let i = 0; i < 100; i++) {
       const q = gen.next();

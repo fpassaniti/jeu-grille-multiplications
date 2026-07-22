@@ -37,7 +37,7 @@
 
   <p class="selection-info">
     {selectedNumbers.length === 0
-      ? _('tableSelector.errorMessage')
+      ? _('tableSelector.allTablesInfo')
       : `${_('tableSelector.selectedTables')} ${selectedNumbers.join(', ')}`}
   </p>
 </div>

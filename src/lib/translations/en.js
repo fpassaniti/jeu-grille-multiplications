@@ -3,8 +3,6 @@ export default {
     appName: 'MultyFun',
     home: 'Home',
     play: 'Play',
-    leaderboard: 'Leaderboard',
-    dashboard: 'Dashboard',
     collection: 'Collection',
     login: 'Login',
     register: 'Register',
@@ -54,10 +52,7 @@ export default {
     metaDescription: 'Improve your multiplication skills with this fun interactive game and earn levels!',
     gameTitle: 'Multiplication Game',
     gameIntro: 'Solve as many multiplications as possible before time runs out!',
-    welcome: 'Welcome, {name}!',
     levelNumber: 'Level {level}:',
-    defaultLevelName: 'Number Explorer',
-    continueAdventure: 'Continue the adventure',
     startOptions: {
       startAdventure: {
         title: 'Start the adventure',
@@ -66,10 +61,28 @@ export default {
       login: {
         title: 'Log in',
         description: 'Continue your math adventure!'
+      }
+    },
+    modesShowcase: {
+      title: 'Choose your calculation'
+    },
+    gamificationShowcase: {
+      title: 'A game that rewards you every day',
+      character: {
+        title: 'Your character',
+        description: 'Equip your adventurer with outfits, weapons and pets to unlock.'
       },
-      quickPlay: {
-        title: 'Quick play',
-        description: 'Play without creating an account'
+      coins: {
+        title: 'Gold coins',
+        description: 'Earn coins in every game and spend them in the shop.'
+      },
+      chests: {
+        title: 'Chests to open',
+        description: 'Daily chest, level chest, streak chest... plenty of surprises await.'
+      },
+      streaks: {
+        title: 'A streak to keep alive',
+        description: 'Come back every day to grow your streak and unlock rewards.'
       }
     },
     features: {
@@ -190,10 +203,13 @@ export default {
     },
     rarity: {
       common: 'Common',
+      uncommon: 'Uncommon',
       rare: 'Rare',
       epic: 'Epic',
-      legendary: 'Legendary'
-    }
+      legendary: 'Legendary',
+      mythic: 'Mythic'
+    },
+    allRarities: 'All'
   },
 
   character: {
@@ -292,17 +308,6 @@ export default {
   },
 
   leaderboard: {
-    pageTitle: 'Top Scores Leaderboard - MultyFun',
-    metaDescription: 'Discover the best MultyFun players and their impressive scores!',
-    title: 'Top Scores Leaderboard',
-    levelLabel: 'Level',
-    adultLevel: 'Adult Level',
-    childLevel: 'Child Level',
-    durationLabel: 'Duration',
-    filterExplanation: 'Scores are filtered by level and game duration.',
-    challenge: 'Take the challenge and get your name on the leaderboard!',
-    playNow: 'Play now',
-    loading: 'Loading scores...',
     nameHeader: 'Name',
     scoreHeader: 'Score',
     tablesHeader: 'Tables',
@@ -315,7 +320,7 @@ export default {
   collection: {
     pageTitle: 'My Collection - MultyFun',
     title: 'My Level Collection',
-    description: 'Discover all the levels you can unlock by playing MultyFun! Each level gives you a new title and a new image.',
+    description: 'Discover all the levels you can unlock by playing MultyFun! Each level you reach gives you a new title and a badge to collect and print. To dress up your character, head to the shop!',
     unlockedLevels: 'Unlocked levels:',
     currentLevel: 'Current level:',
     levelLabel: 'Level',
@@ -343,12 +348,11 @@ export default {
     childResponseTime: 'Response time: 15-45 seconds',
     chooseDuration: 'Choose duration:',
     start: 'Start',
-    viewLeaderboard: 'Want to see the top scores?',
-    viewLeaderboardButton: 'View full leaderboard',
     timeLabel: 'Time:',
     levelLabel: 'Level:',
     scoreLabel: 'Score:',
     solvedLabel: 'Multiplications solved:',
+    errorsLabel: 'Errors:',
     tablesLabel: 'Selected tables:',
     currentMultiplicationLabel: 'Current multiplication:',
     currentQuestionLabel: 'Question:',
@@ -363,14 +367,12 @@ export default {
     levelUp: 'Level Up!',
     reachedLevel: 'You\'ve reached level...',
     viewNewLevel: 'View my new level',
-    saveScore: 'Save your score',
-    firstNamePlaceholder: 'Your first name',
-    saveButton: 'Save',
     scoreSaved: 'Score saved successfully!',
     xpEarned: 'You earned {xp} experience points.',
     newGame: 'New game',
     backToHome: 'Back to home',
     dashboardButton: 'Dashboard',
+    viewLeaderboardButton: 'View leaderboard',
     gridReset: 'New grid! Keep playing!',
     endGame: 'End game',
   },
@@ -379,7 +381,7 @@ export default {
     title: 'Tables to practice:',
     selectAll: 'Select all',
     deselectAll: 'Deselect all',
-    errorMessage: 'Please select at least one table!',
+    allTablesInfo: 'No table selected = all tables will be used!',
     selectedTables: 'Selected tables:'
   },
 

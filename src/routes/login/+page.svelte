@@ -37,7 +37,7 @@
         error = data.error || "Erreur lors de la connexion";
       } else {
         // Forcer un rechargement complet pour mettre à jour tous les composants
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }
     } catch (err) {
       console.error("Erreur de connexion:", err);

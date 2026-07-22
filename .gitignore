@@ -7,3 +7,5 @@
 /.svelte-kit/
 /.idea/
 /db/backup_2025_05_08/
+/item-art/raw/
+/item-art/extracted/

@@ -3,8 +3,6 @@ export default {
     appName: 'MultyFun',
     home: '首页',
     play: '开始游戏',
-    leaderboard: '排行榜',
-    dashboard: '控制面板',
     collection: '收藏',
     login: '登录',
     register: '注册',
@@ -54,10 +52,7 @@ export default {
     metaDescription: '通过这个有趣的互动游戏提高你的乘法技能并获得等级！',
     gameTitle: '乘法游戏',
     gameIntro: '在时间结束前解决尽可能多的乘法题！',
-    welcome: '欢迎，{name}！',
     levelNumber: '等级 {level}：',
-    defaultLevelName: '数字探险家',
-    continueAdventure: '继续冒险',
     startOptions: {
       startAdventure: {
         title: '开始冒险',
@@ -66,10 +61,28 @@ export default {
       login: {
         title: '登录',
         description: '继续你的数学冒险！'
+      }
+    },
+    modesShowcase: {
+      title: '选择你的计算方式'
+    },
+    gamificationShowcase: {
+      title: '每天都有奖励的游戏',
+      character: {
+        title: '你的角色',
+        description: '为你的冒险家装备可解锁的服装、武器和伙伴。'
       },
-      quickPlay: {
-        title: '快速游戏',
-        description: '无需创建账号即可游戏'
+      coins: {
+        title: '金币',
+        description: '每局游戏都能赚取金币，用于商店消费。'
+      },
+      chests: {
+        title: '待开启的宝箱',
+        description: '每日宝箱、等级宝箱、连续宝箱……许多惊喜等着你。'
+      },
+      streaks: {
+        title: '保持连续记录',
+        description: '每天回来增加你的连续天数，解锁奖励。'
       }
     },
     features: {
@@ -190,10 +203,13 @@ export default {
     },
     rarity: {
       common: '普通',
+      uncommon: '优良',
       rare: '稀有',
       epic: '史诗',
-      legendary: '传奇'
-    }
+      legendary: '传奇',
+      mythic: '神话'
+    },
+    allRarities: '全部'
   },
 
   character: {
@@ -292,17 +308,6 @@ export default {
   },
 
   leaderboard: {
-    pageTitle: '最高分排行榜 - MultyFun',
-    metaDescription: '发现MultyFun最好的玩家和他们令人印象深刻的分数！',
-    title: '最高分排行榜',
-    levelLabel: '级别',
-    adultLevel: '成人级别',
-    childLevel: '儿童级别',
-    durationLabel: '时长',
-    filterExplanation: '分数按级别和游戏时长筛选。',
-    challenge: '接受挑战，将你的名字写入排行榜！',
-    playNow: '现在游戏',
-    loading: '加载分数中...',
     nameHeader: '名称',
     scoreHeader: '分数',
     tablesHeader: '乘法表',
@@ -315,7 +320,7 @@ export default {
   collection: {
     pageTitle: '我的收藏 - MultyFun',
     title: '我的等级收藏',
-    description: '发现通过玩MultyFun可以解锁的所有等级！每个等级都会给你一个新的称号和新的图像。',
+    description: '发现通过玩MultyFun可以解锁的所有等级！每达到一个新等级，都会获得一个新称号和一枚可收藏、可打印的徽章。想给你的角色换装，请前往商店！',
     unlockedLevels: '已解锁等级：',
     currentLevel: '当前等级：',
     levelLabel: '等级',
@@ -343,12 +348,11 @@ export default {
     childResponseTime: '响应时间：15-45秒',
     chooseDuration: '选择时长：',
     start: '开始',
-    viewLeaderboard: '想看看最高分？',
-    viewLeaderboardButton: '查看完整排行榜',
     timeLabel: '时间：',
     levelLabel: '级别：',
     scoreLabel: '分数：',
     solvedLabel: '已解决的乘法题：',
+    errorsLabel: '错误数：',
     tablesLabel: '已选择的乘法表：',
     currentMultiplicationLabel: '当前乘法题：',
     currentQuestionLabel: '题目：',
@@ -363,14 +367,12 @@ export default {
     levelUp: '升级！',
     reachedLevel: '你已达到等级...',
     viewNewLevel: '查看我的新等级',
-    saveScore: '保存你的分数',
-    firstNamePlaceholder: '你的名字',
-    saveButton: '保存',
     scoreSaved: '分数成功保存！',
     xpEarned: '你获得了{xp}点经验值。',
     newGame: '新游戏',
     backToHome: '返回首页',
     dashboardButton: '控制面板',
+    viewLeaderboardButton: '查看排行榜',
     gridReset: '新网格！继续游戏！',
     endGame: '结束游戏',
   },
@@ -379,7 +381,7 @@ export default {
     title: '要练习的乘法表：',
     selectAll: '全选',
     deselectAll: '全不选',
-    errorMessage: '请至少选择一个乘法表！',
+    allTablesInfo: '未选择任何表 = 将使用所有乘法表！',
     selectedTables: '已选择的乘法表：'
   },
 

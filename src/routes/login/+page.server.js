@@ -4,7 +4,7 @@ import { redirect } from '@sveltejs/kit';
 // endpoint qui n'existe qu'en POST — dette #8).
 export function load({ locals }) {
   if (locals.user) {
-    throw redirect(302, '/dashboard');
+    throw redirect(302, '/');
   }
   return {};
 }

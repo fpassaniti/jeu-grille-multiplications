@@ -25,30 +25,30 @@ export async function POST({ request, cookies }) {
       elapsedSec
     } = normalized.value;
 
-    // Vérifier si l'utilisateur est connecté
+    // Le jeu est réservé aux comptes connectés : plus de partie invitée.
     const sessionUser = getSessionUser(cookies);
-    const userId = sessionUser?.id ?? null;
-    const userDisplayName = sessionUser ? sessionUser.displayName || sessionUser.username : null;
+    if (!sessionUser) {
+      return json({ error: 'Authentification requise' }, { status: 401 });
+    }
+    const userId = sessionUser.id;
+    const userDisplayName = sessionUser.displayName || sessionUser.username;
 
     // Anti-replay (#7) : basé sur le temps RÉELLEMENT joué (elapsedSec), pas la
     // durée nominale — une partie terminée tôt ("Finir la partie") ne doit pas
     // bloquer la suivante puisqu'elle ne prétend pas avoir duré plus longtemps.
-    if (userId) {
-      const recent = await sql`
-        SELECT 1 FROM game_sessions
-         WHERE user_id = ${userId} AND date > NOW() - make_interval(secs => ${elapsedSec})
-         LIMIT 1
-      `;
-      if (recent && recent.length > 0) {
-        return json(
-          { error: 'Partie trop rapprochée de la précédente, réessaie dans un instant' },
-          { status: 429 }
-        );
-      }
+    const recent = await sql`
+      SELECT 1 FROM game_sessions
+       WHERE user_id = ${userId} AND date > NOW() - make_interval(secs => ${elapsedSec})
+       LIMIT 1
+    `;
+    if (recent && recent.length > 0) {
+      return json(
+        { error: 'Partie trop rapprochée de la précédente, réessaie dans un instant' },
+        { status: 429 }
+      );
     }
 
-    // Nom : celui de la requête, sinon le nom d'affichage, sinon "Invité"
-    const playerName = body.name || (userId ? userDisplayName : 'Invité');
+    const playerName = body.name || userDisplayName;
     const isPerfect = errorsCount === 0 && questionsSolved >= MIN_PERFECT_QUESTIONS;
 
     // tables_used conservé pour compat (leaderboard V1, anciens clients)
@@ -71,47 +71,45 @@ export async function POST({ request, cookies }) {
       RETURNING id
     `;
 
-    // Si l'utilisateur est connecté, attribuer XP + pièces + streak (add_game_rewards)
+    // Attribuer XP + pièces + streak (add_game_rewards)
     let progressUpdate = null;
     let rewards = null;
-    if (userId) {
-      const rewardsData = await sql`
-        SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect})
-      `;
-      if (rewardsData && rewardsData.length > 0) {
-        const r = rewardsData[0];
+    const rewardsData = await sql`
+      SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect})
+    `;
+    if (rewardsData && rewardsData.length > 0) {
+      const r = rewardsData[0];
 
-        let levelTitle = null;
-        if (r.level_up) {
-          const titleRows = await sql`SELECT title FROM level_definitions WHERE level = ${r.level}`;
-          levelTitle = titleRows?.[0]?.title ?? null;
-        }
-
-        // Compat client V1 (corrige le bug #2 : add_user_xp ne retournait pas ces champs)
-        progressUpdate = {
-          returned_user_id: userId,
-          returned_xp: r.xp,
-          returned_level: r.level,
-          returned_previous_level: r.previous_level,
-          returned_level_title: levelTitle,
-          returned_streak_days: r.streak_days,
-          returned_total_xp: r.xp
-        };
-
-        rewards = {
-          coinsEarned: r.coins_earned,
-          coinsBalance: r.coins_balance,
-          coinsBreakdown: r.coins_breakdown,
-          streakDays: r.streak_days,
-          freezeUsed: r.freeze_used,
-          levelUp: r.level_up,
-          chests: {
-            levelup: r.level_up,
-            streak: r.streak_chest_due,
-            perfect: r.perfect_chest_due
-          }
-        };
+      let levelTitle = null;
+      if (r.level_up) {
+        const titleRows = await sql`SELECT title FROM level_definitions WHERE level = ${r.level}`;
+        levelTitle = titleRows?.[0]?.title ?? null;
       }
+
+      // Compat client V1 (corrige le bug #2 : add_user_xp ne retournait pas ces champs)
+      progressUpdate = {
+        returned_user_id: userId,
+        returned_xp: r.xp,
+        returned_level: r.level,
+        returned_previous_level: r.previous_level,
+        returned_level_title: levelTitle,
+        returned_streak_days: r.streak_days,
+        returned_total_xp: r.xp
+      };
+
+      rewards = {
+        coinsEarned: r.coins_earned,
+        coinsBalance: r.coins_balance,
+        coinsBreakdown: r.coins_breakdown,
+        streakDays: r.streak_days,
+        freezeUsed: r.freeze_used,
+        levelUp: r.level_up,
+        chests: {
+          levelup: r.level_up,
+          streak: r.streak_chest_due,
+          perfect: r.perfect_chest_due
+        }
+      };
     }
 
     return json({

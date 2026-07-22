@@ -84,4 +84,15 @@ describe('persistence des réglages', () => {
     opts.tiers.push('A6');
     expect(settings.optionsByMode.addition.tiers).toHaveLength(1);
   });
+
+  it('optionsFor : ne plante pas avec un objet réactif Svelte 5 ($state)', () => {
+    // Régression : `settings` vient d'un $state() dans /play/+page.svelte, donc ses
+    // valeurs imbriquées sont des Proxy. structuredClone() rejette tout Proxy
+    // ("could not be cloned"), même transparent — ce qui cassait le $derived
+    // currentOptions dès la 1re sélection de difficulté et gelait tous les boutons.
+    const reactiveOptions = new Proxy({ tiers: ['A5'] }, {});
+    const settings = { ...defaultSettings(), optionsByMode: { addition: reactiveOptions } };
+    expect(() => optionsFor(settings, 'addition')).not.toThrow();
+    expect(optionsFor(settings, 'addition')).toEqual({ tiers: ['A5'] });
+  });
 });

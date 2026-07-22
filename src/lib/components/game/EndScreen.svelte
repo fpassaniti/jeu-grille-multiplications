@@ -1,5 +1,4 @@
 <script>
-  import SaveScoreForm from './SaveScoreForm.svelte';
   import LevelUpModal from './LevelUpModal.svelte';
   import CoinCounter from '$lib/components/CoinCounter.svelte';
   import ChestModal from '$lib/components/chest/ChestModal.svelte';
@@ -9,10 +8,6 @@
 
   // Props
   export let results = null; // engine.results : {modeId, options, level, score, questionsSolved, questionsTotal, errorsCount}
-  export let isLoggedIn = false;
-  export let playerName = '';
-  export let saveScore = () => {};
-  export let isLoading = false;
   export let scoreSaved = false;
   export let saveError = null;
   export let gameResults = null;
@@ -77,6 +72,16 @@
         </p>
       </div>
 
+      {#if typeof results.errorsCount === 'number'}
+        <div class="result-card">
+          <div class="result-icon">❌</div>
+          <p>
+            {_('play.errorsLabel')}
+            <span class="final-errors">{results.errorsCount}</span>
+          </p>
+        </div>
+      {/if}
+
       {#if mode.boardType === 'grid' && results.level === 'enfant' && results.options?.selectedTables?.length}
         <div class="result-card">
           <div class="result-icon">📚</div>
@@ -87,17 +92,18 @@
         </div>
       {/if}
 
-      {#if isLoggedIn}
-        <div class="result-card xp-card">
-          <div class="result-icon">⭐</div>
-          <p>{_('play.earnedXp')} <span class="final-xp">+{results.score}</span></p>
-        </div>
-      {/if}
+      <div class="result-card xp-card">
+        <div class="result-icon">⭐</div>
+        <p>{_('play.earnedXp')} <span class="final-xp">+{results.score}</span></p>
+      </div>
     </div>
   {/if}
 
   {#if rewards}
     <div class="rewards-card">
+      {#if rewards.freezeUsed}
+        <p class="freeze-used-banner">{_('streak.freezeUsed')}</p>
+      {/if}
       <div class="rewards-title">
         <CoinCounter value={rewards.coinsEarned} />
       </div>
@@ -120,7 +126,7 @@
     <ChestModal chestType={dueChestType} onClose={closeChest} onOpened={invalidateAll} />
   {/if}
 
-  {#if isLoggedIn && !scoreSaved}
+  {#if !scoreSaved}
     <div class="adventure-progress">
       <h2>{_('play.progressionTitle')}</h2>
       {#if saveError}
@@ -129,13 +135,18 @@
         <p class="adventure-info">{_('play.savingScore')}</p>
       {/if}
     </div>
+  {:else if gameResults}
+    <div class="save-score card-inset saved">
+      <div class="score-saved-message">
+        <span class="emoji">✅</span> {_('play.scoreSaved')}
+        <p class="xp-confirmation">{_('play.xpEarned', { xp: gameResults.xpEarned })}</p>
+      </div>
+    </div>
   {/if}
 
   {#if levelUp && scoreSaved}
     <LevelUpModal {gameResults} {reloadPageOnDashboard} />
   {/if}
-
-  <SaveScoreForm {isLoggedIn} bind:playerName {saveScore} {isLoading} {scoreSaved} {gameResults} />
 
   <div class="end-buttons">
     <button class="restart-button" on:click={restartGame}>
@@ -146,8 +157,12 @@
       <span class="emoji">🏠</span> {_('play.backToHome')}
     </button>
 
-    {#if isLoggedIn && scoreSaved}
-      <a href="/dashboard" class="button dashboard-button">
+    <button class="leaderboard-button" on:click={resetGame}>
+      <span class="emoji">🏆</span> {_('play.viewLeaderboardButton')}
+    </button>
+
+    {#if scoreSaved}
+      <a href="/" class="button dashboard-button">
         <span class="emoji">📊</span> {_('play.dashboardButton')}
       </a>
     {/if}
@@ -205,6 +220,17 @@
   .final-solved {
     font-weight: bold;
     color: var(--info);
+  }
+
+  .final-errors {
+    font-weight: bold;
+    color: var(--secondary-dark, #c62828);
+  }
+
+  .freeze-used-banner {
+    font-weight: bold;
+    color: var(--info-dark, #01579b);
+    margin: 0 0 12px;
   }
 
   .final-tables {
@@ -281,6 +307,29 @@
     font-weight: bold;
   }
 
+  .save-score {
+    margin: 30px auto;
+    max-width: 500px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .save-score.saved {
+    background-color: var(--success-light);
+    transition: background-color 0.3s ease;
+  }
+
+  .score-saved-message {
+    padding: 15px;
+    color: var(--success-dark);
+    font-weight: bold;
+  }
+
+  .xp-confirmation {
+    margin-top: 10px;
+    font-weight: normal;
+  }
+
   .end-buttons {
     display: flex;
     gap: 15px;
@@ -290,6 +339,7 @@
 
   .restart-button,
   .home-button,
+  .leaderboard-button,
   .dashboard-button {
     padding: 12px 20px;
     font-size: 1rem;
@@ -317,6 +367,12 @@
     background-color: var(--info);
     color: white;
     box-shadow: 0 4px 0 var(--info-dark);
+  }
+
+  .leaderboard-button {
+    background-color: var(--secondary, #7b5cff);
+    color: white;
+    box-shadow: 0 4px 0 var(--secondary-dark, #5a3fc0);
   }
 
   .emoji {

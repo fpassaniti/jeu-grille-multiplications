@@ -3,8 +3,6 @@ export default {
     appName: 'MultyFun',
     home: 'Accueil',
     play: 'Jouer',
-    leaderboard: 'Classement',
-    dashboard: 'Tableau de bord',
     collection: 'Collection',
     login: 'Connexion',
     register: 'Inscription',
@@ -54,10 +52,7 @@ export default {
     metaDescription: 'Améliore tes compétences en multiplication avec ce jeu interactif amusant et gagne des niveaux!',
     gameTitle: 'Jeu de Multiplication',
     gameIntro: 'Résous autant de multiplications que possible avant la fin du temps!',
-    welcome: 'Bienvenue, {name}!',
     levelNumber: 'Niveau {level}:',
-    defaultLevelName: 'Explorateur des Nombres',
-    continueAdventure: 'Continuer l\'aventure',
     startOptions: {
       startAdventure: {
         title: 'Commencer l\'aventure',
@@ -66,10 +61,28 @@ export default {
       login: {
         title: 'Se connecter',
         description: 'Continue ton aventure mathématique!'
+      }
+    },
+    modesShowcase: {
+      title: 'Choisis ton calcul'
+    },
+    gamificationShowcase: {
+      title: 'Un jeu qui te récompense chaque jour',
+      character: {
+        title: 'Ton personnage',
+        description: 'Équipe ton aventurier avec des tenues, armes et compagnons à débloquer.'
       },
-      quickPlay: {
-        title: 'Partie rapide',
-        description: 'Joue sans créer de compte'
+      coins: {
+        title: 'Des pièces d\'or',
+        description: 'Gagne des pièces à chaque partie et dépense-les dans la boutique.'
+      },
+      chests: {
+        title: 'Des coffres à ouvrir',
+        description: 'Coffre quotidien, coffre de niveau, coffre de série... plein de surprises t\'attendent.'
+      },
+      streaks: {
+        title: 'Une série à préserver',
+        description: 'Reviens chaque jour pour faire grandir ta série et débloquer des récompenses.'
       }
     },
     features: {
@@ -190,10 +203,13 @@ export default {
     },
     rarity: {
       common: 'Commun',
+      uncommon: 'Peu commun',
       rare: 'Rare',
       epic: 'Épique',
-      legendary: 'Légendaire'
-    }
+      legendary: 'Légendaire',
+      mythic: 'Mythique'
+    },
+    allRarities: 'Tous'
   },
 
   character: {
@@ -292,17 +308,6 @@ export default {
   },
 
   leaderboard: {
-    pageTitle: 'Classement des meilleurs scores - MultyFun',
-    metaDescription: 'Découvre les meilleurs joueurs de MultyFun et leurs scores impressionnants!',
-    title: 'Classement des Meilleurs Scores',
-    levelLabel: 'Niveau',
-    adultLevel: 'Niveau Adulte',
-    childLevel: 'Niveau Enfant',
-    durationLabel: 'Durée',
-    filterExplanation: 'Les scores sont filtrés par niveau et durée de jeu.',
-    challenge: 'Relève le défi et inscris ton nom dans le classement !',
-    playNow: 'Jouer maintenant',
-    loading: 'Chargement des scores...',
     nameHeader: 'Nom',
     scoreHeader: 'Score',
     tablesHeader: 'Tables',
@@ -315,7 +320,7 @@ export default {
   collection: {
     pageTitle: 'Ma Collection - MultyFun',
     title: 'Ma Collection de Niveaux',
-    description: 'Découvre tous les niveaux que tu peux débloquer en jouant à MultyFun! Chaque niveau te donne un nouveau titre et une nouvelle image.',
+    description: 'Découvre tous les niveaux que tu peux débloquer en jouant à MultyFun! Chaque niveau franchi te donne un nouveau titre et un badge à collectionner et imprimer. Pour habiller ton personnage, direction la boutique !',
     unlockedLevels: 'Niveaux débloqués:',
     currentLevel: 'Niveau actuel:',
     levelLabel: 'Niveau',
@@ -343,12 +348,11 @@ export default {
     childResponseTime: 'Temps de réponse: 15-45 secondes',
     chooseDuration: 'Choisis la durée:',
     start: 'Commencer',
-    viewLeaderboard: 'Envie de voir les meilleurs scores?',
-    viewLeaderboardButton: 'Voir le classement complet',
     timeLabel: 'Temps:',
     levelLabel: 'Niveau:',
     scoreLabel: 'Score:',
     solvedLabel: 'Multiplications résolues:',
+    errorsLabel: 'Erreurs:',
     tablesLabel: 'Tables sélectionnées:',
     currentMultiplicationLabel: 'Multiplication actuelle:',
     currentQuestionLabel: 'Question :',
@@ -363,14 +367,12 @@ export default {
     levelUp: 'Niveau Supérieur!',
     reachedLevel: 'Tu as atteint le niveau...',
     viewNewLevel: 'Voir mon nouveau niveau',
-    saveScore: 'Enregistre ton score',
-    firstNamePlaceholder: 'Ton prénom',
-    saveButton: 'Sauvegarder',
     scoreSaved: 'Score sauvegardé avec succès!',
     xpEarned: 'Tu as gagné {xp} points d\'expérience.',
     newGame: 'Nouvelle partie',
     backToHome: 'Retour à l\'accueil',
     dashboardButton: 'Tableau de bord',
+    viewLeaderboardButton: 'Voir le classement',
     gridReset: 'Nouvelle grille! Continue à jouer!',
     endGame: 'Finir la partie',
   },
@@ -379,7 +381,7 @@ export default {
     title: 'Tables à pratiquer:',
     selectAll: 'Tout sélectionner',
     deselectAll: 'Tout désélectionner',
-    errorMessage: 'Veuillez sélectionner au moins une table!',
+    allTablesInfo: 'Aucune table choisie = toutes les tables seront utilisées !',
     selectedTables: 'Tables sélectionnées:'
   },
 

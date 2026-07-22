@@ -44,15 +44,4 @@ test.describe('Parcours utilisateur MultyFun', () => {
     // La suite du test dépend de l'implémentation exacte de votre page de jeu
     // Nous vérifions simplement que la page est chargée
   });
-
-  test('devrait afficher le lien vers la page du classement', async ({page}) => {
-    // Vérifier que le bouton vers le leaderboard est présent
-    await expect(page.locator('a').filter({hasText: 'Voir le classement'})).toBeVisible();
-
-    // Cliquer sur le bouton du leaderboard
-    await page.locator('a').filter({hasText: 'Voir le classement'}).click();
-
-    // Vérifier que la navigation vers la page de classement fonctionne
-    await expect(page).toHaveURL(/\/leaderboard/);
-  });
 });

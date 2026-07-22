@@ -46,9 +46,9 @@
       // Inscription réussie
       success = true;
 
-      // Rediriger vers le dashboard après 2 secondes avec rechargement complet
+      // Rediriger vers l'accueil après 2 secondes avec rechargement complet
       setTimeout(() => {
-        window.location.href = '/dashboard';
+        window.location.href = '/';
       }, 2000);
 
     } catch (err) {

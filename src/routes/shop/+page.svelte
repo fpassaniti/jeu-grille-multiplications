@@ -19,12 +19,15 @@
     { slot: 'pet', icon: '🐾' }
   ];
 
+  const RARITY_ORDER = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
+
   let coins = data.shop.coins;
   let items = data.shop.items;
   let level = data.shop.level;
   let equipment = data.equipment;
 
   let activeSlot = 'body';
+  let activeRarity = null; // null = toutes les raretés
   let previewItem = null; // item survolé/sélectionné, essayé visuellement
   let pendingItem = null; // item en attente de confirmation d'achat (2 taps)
   let isBuying = false;
@@ -34,12 +37,23 @@
   let freezePending = false;
   let consumableError = null;
 
-  $: visibleItems = items.filter((item) => item.slot === activeSlot);
+  // Non possédés d'abord, puis rareté croissante au sein de chaque groupe
+  // (le sort_order en base n'est pas strictement croissant par rareté, cf. UX_AUDIT.md)
+  $: visibleItems = items
+    .filter((item) => item.slot === activeSlot)
+    .filter((item) => !activeRarity || item.rarity === activeRarity)
+    .slice()
+    .sort((a, b) => {
+      const ownedDiff = Number(a.owned) - Number(b.owned);
+      if (ownedDiff !== 0) return ownedDiff;
+      return RARITY_ORDER.indexOf(a.rarity) - RARITY_ORDER.indexOf(b.rarity);
+    });
   $: previewEquipment = previewItem
     ? { ...equipment, [previewItem.slot]: { itemId: previewItem.id, code: previewItem.code, assetUrl: previewItem.assetUrl } }
     : equipment;
 
   function selectItem(item) {
+    if (!item.owned && item.unlockLevel > level) return; // verrouillé par niveau : pas de panneau d'achat
     previewItem = item;
     pendingItem = item.owned ? null : item;
     buyError = null;
@@ -120,14 +134,35 @@
     {/each}
   </div>
 
+  <div class="rarity-filters">
+    <button class="rarity-chip" class:active={activeRarity === null} on:click={() => (activeRarity = null)}>
+      {_('shop.allRarities')}
+    </button>
+    {#each RARITY_ORDER as rarity}
+      <button
+        class="rarity-chip rarity-{rarity}"
+        class:active={activeRarity === rarity}
+        on:click={() => (activeRarity = rarity)}
+      >
+        {_(`shop.rarity.${rarity}`)}
+      </button>
+    {/each}
+  </div>
+
   {#if pendingItem}
     <div class="confirm-panel card">
       <p class="confirm-text">
         {_('shop.confirmBuy', { price: pendingItem.finalPrice })}
       </p>
-      <p class="confirm-remaining">
-        {_('shop.confirmRemaining', { remaining: coins - pendingItem.finalPrice })}
-      </p>
+      {#if coins >= pendingItem.finalPrice}
+        <p class="confirm-remaining">
+          {_('shop.confirmRemaining', { remaining: coins - pendingItem.finalPrice })}
+        </p>
+      {:else}
+        <p class="confirm-remaining confirm-remaining--insufficient">
+          {_('shop.insufficient_coins')}
+        </p>
+      {/if}
       {#if buyError}
         <p class="confirm-error">⚠️ {_(`shop.${buyError}`) ?? buyError}</p>
       {/if}
@@ -145,6 +180,7 @@
       <button
         class="item-card rarity-{item.rarity ?? 'default'}"
         class:selected={previewItem?.id === item.id}
+        class:locked={!item.owned && item.unlockLevel > level}
         on:click={() => selectItem(item)}
       >
         {#if item.isDailyOffer && !item.owned}
@@ -256,6 +292,30 @@
     margin-right: 4px;
   }
 
+  .rarity-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 16px;
+  }
+
+  .rarity-chip {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+    background: white;
+    border: 2px solid var(--bg-secondary);
+    border-radius: 999px;
+    cursor: pointer;
+    color: var(--text-secondary);
+  }
+
+  .rarity-chip.active {
+    border-color: var(--primary);
+    color: var(--primary-dark);
+    font-weight: bold;
+  }
+
   .confirm-panel {
     padding: 20px;
     text-align: center;
@@ -271,6 +331,11 @@
   .confirm-remaining {
     color: var(--text-secondary);
     font-size: 0.9rem;
+  }
+
+  .confirm-remaining--insufficient {
+    color: var(--secondary-dark, #c62828);
+    font-weight: bold;
   }
 
   .confirm-error {
@@ -321,8 +386,18 @@
     border-color: var(--primary);
   }
 
+  .item-card.locked {
+    opacity: 0.5;
+    filter: grayscale(0.6);
+    cursor: not-allowed;
+  }
+
   .item-card.rarity-common {
     background-color: #eceff1;
+  }
+
+  .item-card.rarity-uncommon {
+    background-color: #e0f2e9;
   }
 
   .item-card.rarity-rare {
@@ -335,6 +410,10 @@
 
   .item-card.rarity-legendary {
     background: linear-gradient(135deg, #fff8e1, #ffe082);
+  }
+
+  .item-card.rarity-mythic {
+    background: linear-gradient(135deg, #ffe0ec, #d6c9ff, #c8f0ff);
   }
 
   .item-thumb {

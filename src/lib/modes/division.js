@@ -1,8 +1,7 @@
 /**
- * Mode « divisions » — préparé pour la V3 (SPEC §4.1) : architecture prête,
- * générateur implémenté et testé, mais `enabled: false` → absent de
- * listEnabledModes() et rejeté par POST /api/scores.
- * Quotients exacts : inverse des tables de multiplication.
+ * Mode « divisions » — activé (SPEC §4.1). Quotients exacts : inverse des
+ * tables de multiplication. Non intégré aux presets CE1/CE2 (public encore
+ * jeune sur cette notion) : accessible via le mode "Libre" uniquement.
  */
 import { randInt, makeGenericGenerator, makeTiersValidator } from './generator-utils.js';
 
@@ -42,7 +41,7 @@ const TIERS = [
 /** @type {import('./types.js').GameMode} */
 export default {
   id: 'division',
-  enabled: false,
+  enabled: true,
   labelKey: 'modes.division',
   icon: '➗',
   boardType: 'generic',

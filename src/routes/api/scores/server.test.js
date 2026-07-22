@@ -102,9 +102,13 @@ describe('Endpoint API /api/scores', () => {
       json: vi.fn()
     };
 
-    // Créer un mock des cookies
+    // Créer un mock des cookies — authentifié par défaut (le jeu n'a plus de
+    // mode invité) ; les tests qui veulent simuler un visiteur non connecté
+    // surchargent explicitement avec mockReturnValue(null).
     mockCookies = {
-      get: vi.fn()
+      get: vi.fn().mockReturnValue(
+        JSON.stringify({ user: { id: 'user-id', displayName: 'Joueur Test' } })
+      )
     };
   });
 
@@ -164,10 +168,10 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body).toHaveProperty('success', true);
   });
 
-  it('devrait accepter un score valide et retourner un succès pour un utilisateur non connecté', async () => {
+  it('devrait rejeter une soumission de score sans session (authentification requise)', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Test',
-      score: 500, // Score raisonnable
+      score: 500,
       duration: 5,
       level: 'adulte',
       solvedCells: 20,
@@ -175,15 +179,13 @@ describe('Endpoint API /api/scores', () => {
       selectedTables: []
     });
 
-    // Simuler aucun cookie de session (utilisateur non connecté)
+    // Simuler aucun cookie de session (plus de mode invité)
     mockCookies.get.mockReturnValue(null);
 
     const response = await POST({ request: mockRequest, cookies: mockCookies });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('success', true);
-    expect(response.body).toHaveProperty('message', 'Score enregistré avec succès');
-    expect(response.body).toHaveProperty('gameData');
+    expect(response.status).toBe(401);
+    expect(response.body).toHaveProperty('error');
   });
 
   it('devrait accepter un score et mettre à jour la progression pour un utilisateur connecté', async () => {
@@ -225,24 +227,6 @@ describe('Endpoint API /api/scores', () => {
       levelUp: true,
       chests: { levelup: true, streak: 0, perfect: false }
     });
-  });
-
-  it('ne devrait pas appeler add_game_rewards pour un invité (pas de rewards)', async () => {
-    mockRequest.json.mockResolvedValue({
-      name: 'Invité',
-      score: 300,
-      duration: 3,
-      level: 'adulte',
-      questionsSolved: 15,
-      questionsTotal: 100
-    });
-    mockCookies.get.mockReturnValue(null);
-
-    const response = await POST({ request: mockRequest, cookies: mockCookies });
-
-    expect(response.status).toBe(200);
-    expect(response.body.progressUpdate).toBeNull();
-    expect(response.body.rewards).toBeNull();
   });
 
   it('devrait rejeter une seconde partie trop rapprochée (anti-replay)', async () => {
@@ -329,9 +313,6 @@ describe('Endpoint API /api/scores', () => {
       selectedTables: []
     });
 
-    // Simuler aucun cookie de session (utilisateur non connecté)
-    mockCookies.get.mockReturnValue(null);
-
     const response = await POST({ request: mockRequest, cookies: mockCookies });
 
     expect(response.status).toBe(200);
@@ -353,7 +334,6 @@ describe('Endpoint API /api/scores', () => {
       questionsTotal: null,
       errorsCount: 2
     });
-    mockCookies.get.mockReturnValue(null);
 
     const response = await POST({ request: mockRequest, cookies: mockCookies });
 
@@ -362,7 +342,7 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body).toHaveProperty('gameMode', 'addition');
   });
 
-  it('devrait rejeter le mode division (désactivé) et les modes inconnus', async () => {
+  it('devrait accepter le mode division (activé)', async () => {
     mockRequest.json.mockResolvedValue({
       score: 100,
       duration: 3,
@@ -370,17 +350,19 @@ describe('Endpoint API /api/scores', () => {
       gameMode: 'division',
       modeOptions: { tiers: ['D1'] }
     });
-    let response = await POST({ request: mockRequest, cookies: mockCookies });
-    expect(response.status).toBe(400);
-    expect(response.body.error).toContain('désactivé');
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('gameMode', 'division');
+  });
 
+  it('devrait rejeter les modes inconnus', async () => {
     mockRequest.json.mockResolvedValue({
       score: 100,
       duration: 3,
       level: 'adulte',
       gameMode: 'nawak'
     });
-    response = await POST({ request: mockRequest, cookies: mockCookies });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
     expect(response.status).toBe(400);
     expect(response.body.error).toContain('inconnu');
   });
@@ -408,7 +390,6 @@ describe('Endpoint API /api/scores', () => {
       totalPossibleCells: 36,
       selectedTables: [2, 5]
     });
-    mockCookies.get.mockReturnValue(null);
 
     const response = await POST({ request: mockRequest, cookies: mockCookies });
 
