@@ -1,10 +1,21 @@
 /**
  * Mode « tables de multiplication » : grille 10×10, matrice de difficulté
  * et règles de temps migrées de la V1 (game-logic.js + /play).
+ *
+ * Mode « rappel » (SPEC §4.4) : une table est un seul fait mémorisé, pas un
+ * algorithme multi-étapes — la variance de la grille ci-dessous (raw 0.5–3.0,
+ * pic 7×7) reflète une difficulté purement psychologique de mémorisation,
+ * rescalée via `rescaleRecall` vers une plage resserrée pour ne pas rivaliser
+ * avec les modes posés (addition/soustraction/multiplication étendue).
  */
 import { pick, createAntiRepeat } from './generator-utils.js';
+import {
+  rescaleRecall,
+  RECALL_DIFFICULTY_RANGE,
+  RECALL_TIME_RANGE_SEC
+} from '../game/balance-config.js';
 
-// Difficulté cognitive relative des multiplications (0.5–3.0, pic 7×7)
+// Difficulté cognitive relative brute des multiplications, avant rescale (0.5–3.0, pic 7×7)
 export const DIFFICULTY_MATRIX = [
   // 1    2    3    4    5    6    7    8    9   10
   [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5], // Table de 1
@@ -19,28 +30,41 @@ export const DIFFICULTY_MATRIX = [
   [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]  // Table de 10
 ];
 
+const RAW_DIFFICULTY_MIN = 0.5;
+const RAW_DIFFICULTY_MAX = 3.0;
+
 /**
- * Difficulté d'une cellule (indices 1-based).
+ * Difficulté d'une cellule (indices 1-based), rescalée dans la plage
+ * « rappel » (SPEC §4.4) — la forme relative de la grille brute est
+ * conservée (7×7 reste le pic), seule la plage de sortie change.
  * @param {number} row
  * @param {number} col
  * @returns {number}
  */
 export function tableDifficulty(row, col) {
-  if (row < 1 || row > 10 || col < 1 || col > 10) {
-    return 1.0;
-  }
-  return DIFFICULTY_MATRIX[row - 1][col - 1];
+  const raw =
+    row < 1 || row > 10 || col < 1 || col > 10 ? 1.0 : DIFFICULTY_MATRIX[row - 1][col - 1];
+  return (
+    Math.round(
+      rescaleRecall(raw, RAW_DIFFICULTY_MIN, RAW_DIFFICULTY_MAX, RECALL_DIFFICULTY_RANGE) * 100
+    ) / 100
+  );
 }
 
 /**
- * Temps alloué pour une cellule, iso-V1 : 5–15 s, ×3 en mode enfant.
+ * Temps alloué pour une cellule (mode « rappel », SPEC §4.4), rescalé dans
+ * `RECALL_TIME_RANGE_SEC` (au lieu de l'ancienne échelle brute 5–15 s),
+ * ×3 en mode enfant.
  * @param {number} row
  * @param {number} col
  * @param {'adulte'|'enfant'} level
  * @returns {number}
  */
 export function tableTime(row, col, level) {
-  const base = Math.floor(5 + ((row + col) / 20) * 10);
+  const rawMin = 5 + (2 / 20) * 10; // row=1, col=1
+  const rawMax = 5 + (20 / 20) * 10; // row=10, col=10
+  const raw = Math.floor(5 + ((row + col) / 20) * 10);
+  const base = Math.round(rescaleRecall(raw, rawMin, rawMax, RECALL_TIME_RANGE_SEC));
   return level === 'enfant' ? base * 3 : base;
 }
 

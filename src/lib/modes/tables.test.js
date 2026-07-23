@@ -2,12 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { seededRng } from '../../test/seeded-rng.js';
 import tables, { DIFFICULTY_MATRIX, tableDifficulty, tableTime } from './tables.js';
 
-describe('matrice de difficulté (iso-V1)', () => {
-  it('valeurs de référence', () => {
-    expect(tableDifficulty(7, 7)).toBe(3.0); // pic
-    expect(tableDifficulty(1, 1)).toBe(0.5);
-    expect(tableDifficulty(10, 5)).toBe(0.5);
-    expect(tableDifficulty(2, 8)).toBe(1.2);
+describe('matrice de difficulté brute (forme relative iso-V1)', () => {
+  it('valeurs de référence de la grille brute', () => {
     expect(DIFFICULTY_MATRIX).toHaveLength(10);
     DIFFICULTY_MATRIX.forEach((row) => {
       expect(row).toHaveLength(10);
@@ -16,20 +12,33 @@ describe('matrice de difficulté (iso-V1)', () => {
         expect(d).toBeLessThanOrEqual(3.0);
       });
     });
-  });
-
-  it('hors limites → 1.0', () => {
-    expect(tableDifficulty(0, 5)).toBe(1.0);
-    expect(tableDifficulty(11, 5)).toBe(1.0);
+    expect(DIFFICULTY_MATRIX[6][6]).toBe(3.0); // pic 7×7
+    expect(DIFFICULTY_MATRIX[0][0]).toBe(0.5);
   });
 });
 
-describe('tableTime (iso-V1 : 5–15 s, ×3 enfant)', () => {
+describe('tableDifficulty (rescalée en mode « rappel », SPEC §4.4)', () => {
+  it('rescale la grille brute dans RECALL_DIFFICULTY_RANGE = [0.3, 0.7]', () => {
+    expect(tableDifficulty(7, 7)).toBe(0.7); // pic brut 3.0 → borne haute
+    expect(tableDifficulty(1, 1)).toBe(0.3); // brut 0.5 → borne basse
+    expect(tableDifficulty(10, 5)).toBe(0.3);
+    expect(tableDifficulty(2, 8)).toBeCloseTo(0.41, 2);
+    expect(tableDifficulty(3, 3)).toBeGreaterThanOrEqual(0.3);
+    expect(tableDifficulty(3, 3)).toBeLessThanOrEqual(0.7);
+  });
+
+  it('hors limites → valeur intermédiaire (brut 1.0 rescalé)', () => {
+    expect(tableDifficulty(0, 5)).toBeCloseTo(0.38, 2);
+    expect(tableDifficulty(11, 5)).toBeCloseTo(0.38, 2);
+  });
+});
+
+describe('tableTime (mode « rappel » : 6–10 s adulte, ×3 enfant)', () => {
   it('bornes', () => {
     expect(tableTime(1, 1, 'adulte')).toBe(6);
-    expect(tableTime(10, 10, 'adulte')).toBe(15);
+    expect(tableTime(10, 10, 'adulte')).toBe(10);
     expect(tableTime(1, 1, 'enfant')).toBe(18);
-    expect(tableTime(10, 10, 'enfant')).toBe(45);
+    expect(tableTime(10, 10, 'enfant')).toBe(30);
   });
 });
 

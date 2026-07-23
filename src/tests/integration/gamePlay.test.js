@@ -29,10 +29,30 @@ describe('Intégration : partie + sauvegarde du score', () => {
     vi.restoreAllMocks();
   });
 
+  /** Résout la question courante : réponse entière, ou chiffre par chiffre
+   * (droite → gauche) si posée, en avançant le minuteur factice entre les
+   * lignes d'une multiplication à produits partiels. */
+  function answerCurrentQuestion() {
+    const q = engine.question;
+    if (!q.posed) {
+      engine.onAnswerInput(String(q.answer));
+      return;
+    }
+    const stages = q.stages;
+    stages.forEach((stage, i) => {
+      for (let p = 0; p < stage.digits; p++) {
+        engine.onAnswerInput(String(Math.floor(stage.value / 10 ** p) % 10));
+      }
+      if (i < stages.length - 1) {
+        vi.advanceTimersByTime(500); // CORRECT_DELAY_MS entre deux lignes
+      }
+    });
+  }
+
   async function playAndSave(config, questionsToSolve = 5) {
     engine.start(config);
     for (let i = 0; i < questionsToSolve; i++) {
-      engine.onAnswerInput(String(engine.question.answer));
+      answerCurrentQuestion();
       vi.advanceTimersByTime(500);
     }
     engine.end();

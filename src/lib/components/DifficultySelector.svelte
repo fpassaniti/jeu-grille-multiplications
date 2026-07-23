@@ -1,28 +1,43 @@
 <script>
-  import { PRESETS, presetOptionsFor, detectPreset } from '$lib/modes/presets.js';
+  import { PRESETS, presetOptionsFor, detectPreset, groupPresetsForMode } from '$lib/modes/presets.js';
   import { _ } from '$lib/utils/i18n';
 
   // Props
   export let mode; // objet GameMode (config statique)
   export let options = { tiers: [] };
+  export let level = 'adulte';
   export let onChange = () => {};
 
-  let showTiers = false;
+  let previousModeId = null;
+  let previousLevel = null;
 
-  $: activePreset = detectPreset(mode.id, options);
-  $: if (activePreset === 'libre') showTiers = true;
+  // Seuls les modes ayant un preset dédié affichent le bouton correspondant
+  // (ex. la division n'a pas de preset CE1/CE2 : seul CM1 lui est proposé).
+  // Les presets pointant vers les mêmes paliers pour ce mode (ex. CE2 = CM1
+  // en soustraction) sont fusionnés en un seul bouton.
+  $: presetGroups = level === 'enfant' ? groupPresetsForMode(mode.id) : [];
 
-  function selectPreset(presetId) {
-    if (presetId === 'libre') {
-      // « Libre » : conserve la sélection courante, déplie juste les paliers
-      showTiers = true;
-      return;
+  $: activePreset = level === 'enfant' ? detectPreset(mode.id, options) : null;
+
+  // Verrouillage adulte : dès qu'on est en mode adulte (au montage ou après un
+  // changement de mode/niveau), on applique automatiquement le jeu de paliers
+  // le plus difficile (identique au preset CM1) — aucun choix de difficulté
+  // n'est proposé aux adultes.
+  $: if (mode.id !== previousModeId || level !== previousLevel) {
+    previousModeId = mode.id;
+    previousLevel = level;
+    if (level === 'adulte') {
+      const hardest = presetOptionsFor('cm1', mode.id);
+      if (hardest) onChange(hardest);
     }
-    showTiers = false;
-    const presetOptions = presetOptionsFor(presetId, mode.id);
-    if (presetOptions) {
-      onChange(presetOptions);
-    }
+  }
+
+  function presetById(id) {
+    return PRESETS.find((preset) => preset.id === id);
+  }
+
+  function selectPresetGroup(group) {
+    onChange(structuredClone(group.options));
   }
 
   function toggleTier(tierId) {
@@ -35,6 +50,14 @@
     }
   }
 
+  $: allChecked =
+    mode.tiers.length > 0 && mode.tiers.every((tier) => options.tiers?.includes(tier.id));
+
+  function toggleAll() {
+    if (allChecked) return;
+    onChange({ tiers: mode.tiers.map((tier) => tier.id) });
+  }
+
   function stars(difficulty) {
     return '⭐'.repeat(Math.max(1, Math.round(difficulty)));
   }
@@ -43,21 +66,29 @@
 <div class="difficulty-selector">
   <h2>{_('difficulty.chooseTitle')}</h2>
 
-  <div class="preset-buttons">
-    {#each PRESETS as preset}
-      <button
-        class="preset-button"
-        class:active={activePreset === preset.id && (preset.id !== 'libre' || showTiers)}
-        on:click={() => selectPreset(preset.id)}
-      >
-        <span class="emoji">{preset.icon}</span> {_(preset.labelKey)}
-      </button>
-    {/each}
-  </div>
+  {#if presetGroups.length > 0}
+    <div class="preset-buttons">
+      {#each presetGroups as group}
+        <button
+          class="preset-button"
+          class:active={group.ids.includes(activePreset)}
+          on:click={() => selectPresetGroup(group)}
+        >
+          <span class="emoji">{group.ids.map((id) => presetById(id).icon).join('')}</span>
+          {group.ids.map((id) => _(presetById(id).labelKey)).join(' / ')}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
-  {#if showTiers || activePreset === 'libre'}
+  <details class="tiers-accordion">
+    <summary>{_('difficulty.editExercises')}</summary>
     <div class="tiers-list">
       <p class="tiers-hint">{_('difficulty.customHint')}</p>
+      <label class="tier-row select-all-row" class:selected={allChecked}>
+        <input type="checkbox" checked={allChecked} on:change={toggleAll} />
+        <span class="tier-label">{_('difficulty.selectAll')}</span>
+      </label>
       {#each mode.tiers as tier}
         <label class="tier-row" class:selected={options.tiers?.includes(tier.id)}>
           <input
@@ -70,7 +101,7 @@
         </label>
       {/each}
     </div>
-  {/if}
+  </details>
 </div>
 
 <style>
@@ -101,12 +132,37 @@
     display: inline-block;
   }
 
+  .tiers-accordion {
+    max-width: 420px;
+    margin: 15px auto 0;
+    text-align: left;
+  }
+
+  .tiers-accordion summary {
+    cursor: pointer;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    text-align: center;
+    list-style: none;
+  }
+
+  .tiers-accordion summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .tiers-accordion summary::before {
+    content: '▸ ';
+  }
+
+  .tiers-accordion[open] summary::before {
+    content: '▾ ';
+  }
+
   .tiers-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    max-width: 420px;
-    margin: 10px auto 0;
+    margin-top: 10px;
   }
 
   .tiers-hint {
@@ -131,6 +187,11 @@
   .tier-row.selected {
     border-color: var(--primary-light);
     background-color: var(--bg-primary);
+  }
+
+  .select-all-row {
+    border-style: dashed;
+    margin-bottom: 4px;
   }
 
   .tier-label {

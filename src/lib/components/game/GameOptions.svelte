@@ -56,7 +56,7 @@
     {/if}
   {:else}
     <div class="option-section card-inset">
-      <DifficultySelector {mode} {options} onChange={onOptionsChange} />
+      <DifficultySelector {mode} {options} {level} onChange={onOptionsChange} />
     </div>
   {/if}
 

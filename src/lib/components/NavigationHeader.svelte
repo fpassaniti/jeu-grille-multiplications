@@ -1,8 +1,19 @@
 <script>
   import LanguagePicker from './LanguagePicker.svelte';
   import { _ } from '$lib/utils/i18n';
+  import { page } from '$app/stores';
+  import { requestPlayReset } from '$lib/stores/playNavStore.js';
   // Props
   export let user = null;
+
+  // Si on est déjà sur /play, le routeur ne remonte pas la page en cliquant sur "Jouer" :
+  // on signale explicitement une demande de retour à l'écran de sélection de mode.
+  function handlePlayClick(event) {
+    if ($page.url.pathname === '/play') {
+      event.preventDefault();
+      requestPlayReset();
+    }
+  }
 
   // État du menu mobile
   let mobileMenuOpen = false;
@@ -56,7 +67,7 @@
             <a href="/" class="nav-link button">{_('common.home')}</a>
           </li>
           <li>
-            <a href="/play" class="nav-link button">{_('common.play')}</a>
+            <a href="/play" class="nav-link button" on:click={handlePlayClick}>{_('common.play')}</a>
           </li>
           {#if user}
             <li>
@@ -116,7 +127,11 @@
           </a>
         </li>
         <li>
-          <a href="/play" class="mobile-nav-link" on:click={closeMobileMenu}>
+          <a
+            href="/play"
+            class="mobile-nav-link"
+            on:click={(e) => { handlePlayClick(e); closeMobileMenu(); }}
+          >
             <span class="nav-icon">🎮</span> {_('common.play')}
           </a>
         </li>

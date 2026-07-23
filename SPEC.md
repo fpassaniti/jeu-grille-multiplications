@@ -2,7 +2,7 @@
 
 > Document de spécification vivant. Il décrit l'existant (V1), les points d'attention, puis les spécifications de la V2 : modes de calcul multiples et gamification (pièces d'or, boutique, personnage RPG, coffres, streaks). Il est fait pour itérer : chaque section peut être amendée avant implémentation.
 
-**Dernière mise à jour** : 2026-07-21
+**Dernière mise à jour** : 2026-07-23
 
 ---
 
@@ -166,39 +166,63 @@ src/lib/modes/
 points = Math.round(15 * question.difficulty * (0.25 + 0.75 * timeRemaining / timeAllowed))
 ```
 
-- La vitesse est un **ratio** → insensible au ×3 enfant et équitable entre une table à 8 s et une addition posée à 40 s.
-- Difficulté = échelle commune 0.5–3.0 calibrée entre modes (§4.5).
 - Plancher 0.25 : une bonne réponse lente rapporte toujours (motivation CE1).
-- Max 45 pts/question ≈ ancien max adulte → continuité des leaderboards. XP = score 1:1 conservé.
-- L'ajustement enfant `×0.7+0.3` est supprimé (le leaderboard sépare déjà adulte/enfant).
-- À valider en test : `points/minute` du même ordre (±30 %) entre modes ; ajuster les `difficulty` des paliers sinon.
+- XP = score 1:1 ; pièces = `FLOOR(score/10)` côté SQL (§5.2) → un seul levier (`difficulty`/`timeAllowedSec`) pilote XP et pièces à la fois.
+
+**Modèle de calibration par opérations élémentaires (décision 2026-07-23, remplace l'objectif « points/minute égal entre modes »)** — `src/lib/game/balance-config.js` :
+
+- Un calcul complexe (ex. multiplication posée 3×2 chiffres = 6 multiplications + 4 additions) doit rapporter **nettement plus** qu'un calcul simple (table = 1 fait mémorisé), y compris en pièces et XP, quitte à rapporter moins de points par minute (l'objectif d'égalité points/minute de la V2 initiale est abandonné : il masquait l'écart d'effort réel entre modes).
+- **Modes posés** (addition, soustraction, multiplication étendue) : chaque palier porte un `operationCount` (nombre d'opérations élémentaires à un chiffre requises par l'algorithme posé, +1 opération-équivalent si retenue/emprunt). `difficulty = OP_DIFFICULTY(0.5) × operationCount` ; `timeSec (adulte) = BASE_SEC(5) + OP_SEC(4) × operationCount`. Exemple M6 (6 mult + 4 add = 10 opérations) : difficulty 5.0, 45 s adulte — soit 10× la difficulté d'une table ou d'un M1 (≥ plancher 6× demandé).
+- **Modes « rappel »** (tables, division) : un seul fait mémorisé (pas un algorithme multi-étapes) → la grille de difficulté psychologique existante (7×7 plus dur que 1×1, diviser par 9 plus dur que par 10) est conservée pour sa forme relative mais **rescalée** dans une plage resserrée `RECALL_DIFFICULTY_RANGE = [0.3, 0.7]` / `RECALL_TIME_RANGE_SEC = [6, 10] s` (adulte) via `rescaleRecall()`, pour ne pas rivaliser avec les modes posés.
+- `MAX_DIFFICULTY = 5.0` (M6) → `maxPointsPerQuestion() = 75` (utilisé par l'anti-triche §5.7, dérivé dynamiquement dans `scoreValidation.js` pour éviter le drift).
+- Le facteur enfant `LEVEL_TIME_FACTOR = ×3` (`generator-utils.js`) reste global et suffit à satisfaire les bornes demandées avec les nouvelles valeurs de base : tables adulte ≤ 10 s, multiplication complexe (M6) enfant ≥ 1 min (135 s).
+- Testé par `src/lib/game/balance.test.js` (nouvel invariant : `difficulty` proportionnelle à `operationCount`, bornes de temps par niveau, plancher ×6 M6/table).
 
 ### 4.5 Paliers pédagogiques (échelle de difficulté commune)
 
-| Mode | Palier | Contenu | Difficulté |
-|---|---|---|---|
-| Addition | A1 | Sans retenue, résultat ≤ 20 | 0.5 |
-| | A2 | Sans retenue, ≤ 100 | 0.8 |
-| | A3 | Avec retenue, ≤ 100 | 1.2 |
-| | A4 | Sans retenue, ≤ 1000 | 1.4 |
-| | A5 | Avec retenue, ≤ 1000 | 1.8 |
-| | A6 | Avec retenue, ≤ 10 000 (option 3 opérandes) | 2.4 |
-| Soustraction | S1 | Sans emprunt, ≤ 20 (résultat ≥ 0) | 0.6 |
-| | S2 | Sans emprunt, ≤ 100 | 0.9 |
-| | S3 | Avec emprunt, ≤ 100 | 1.4 |
-| | S4 | Sans emprunt, ≤ 1000 | 1.6 |
-| | S5 | Avec emprunt, ≤ 1000 | 2.0 |
-| Multiplication | M1 | n × 10 | 0.6 |
-| | M2 | n × 100, n × 1000 | 0.8 |
-| | M3 | 2 chiffres × 1 chiffre, sans retenue | 1.5 |
-| | M4 | 2 chiffres × 1 chiffre, avec retenue | 2.2 |
-| | M5 | 3 chiffres × 1 chiffre | 2.8 |
-| Division (V3) | D1–D3 | Inverse des tables → quotients exacts | déclarés, désactivés |
-| Tables | — | Matrice 10×10 existante | 0.5–3.0 |
+Difficulté et temps alloué (adulte) dérivés du modèle par opérations élémentaires (§4.4, `balance-config.js`) : `operationCount` = nb d'opérations à un chiffre de l'algorithme posé (+1 si retenue/emprunt) pour les modes posés ; rappel resserré `[0.3, 0.7]`/`[6, 10] s` pour tables et division.
+
+| Mode | Palier | Contenu | Opérations | Difficulté | Temps adulte |
+|---|---|---|---|---|---|
+| Addition | A1 | Sans retenue, résultat ≤ 20 | 2 | 1.0 | 13 s |
+| | A2 | Sans retenue, ≤ 100 | 2 | 1.0 | 13 s |
+| | A3 | Avec retenue, ≤ 100 | 2+1 | 1.5 | 17 s |
+| | A4 | Sans retenue, ≤ 1000 | 3 | 1.5 | 17 s |
+| | A5 | Avec retenue, ≤ 1000 | 3+1 | 2.0 | 21 s |
+| | A6 | Avec retenue, ≤ 10 000 (option 3 opérandes) | 6 | 3.0 | 29 s |
+| Soustraction | S1 | Sans emprunt, ≤ 20 (résultat ≥ 0) | 2 | 1.0 | 13 s |
+| | S2 | Sans emprunt, ≤ 100 | 2 | 1.0 | 13 s |
+| | S3 | Avec emprunt, ≤ 100 | 2+1 | 1.5 | 17 s |
+| | S4 | Sans emprunt, ≤ 1000 | 3 | 1.5 | 17 s |
+| | S5 | Avec emprunt, ≤ 1000 | 3+1 | 2.0 | 21 s |
+| Multiplication | M1 | n × 10 (règle mentale) | 1 | 0.5 | 9 s |
+| | M2 | n × 100, n × 1000 (règle mentale) | 1 | 0.5 | 9 s |
+| | M3 | 2 chiffres × 1 chiffre, sans retenue | 2 | 1.0 | 13 s |
+| | M4 | 2 chiffres × 1 chiffre, avec retenue | 2+1 | 1.5 | 17 s |
+| | M5 | 3 chiffres × 1 chiffre | 3+1 | 2.0 | 21 s |
+| | M6 | 2-3 chiffres × 2 chiffres (6 multiplications + 4 additions) | 10 | **5.0** | **45 s** |
+| Division | D1–D3 | Inverse des tables → quotients exacts (rappel, non posé) | 1 (rappel) | 0.30–0.70 | 6–10 s |
+| Tables | — | Matrice 10×10 existante (rappel, non posé) | 1 (rappel) | 0.30–0.70 | 6–10 s |
+
+M6/table (ou M6/M1) = 5.0/0.5 = **10×** — au-delà du plancher ×6 demandé. Enfant = ×3 sur le temps adulte (`LEVEL_TIME_FACTOR`, `generator-utils.js`) : M6 enfant = 135 s (2 min 15), tables enfant ≤ 30 s.
 
 Génération chiffre par chiffre pour **contrôler exactement** la retenue/l'emprunt (sans retenue : chaque colonne somme ≤ 9 ; avec : au moins une colonne > 9).
 
-**Presets** (`presets.js`) : **CE1** = A1–A3, S1–S3, tables {2,3,4,5,10}, M1 · **CE2** = A3–A5, S3–S5, toutes tables, M1–M4 · **Libre** = sélection manuelle des paliers.
+**Presets** (`presets.js`) : **CE1** = A1–A3, S1–S3, tables {2,3,4,5,10}, M1 · **CE2** = A3–A5, S3–S5, toutes tables, M1–M4 · **CM1** (nouveau, réservé au niveau enfant) = A3–A6, S3–S5 (identique à CE2), M2–M6, D1–D3. `M6` n'est ajouté à aucun preset CE1/CE2 (comme `M5`) — accessible via CM1 ou en cochant la case manuellement.
+
+Le niveau **adulte** (`GameOptions.svelte`) ne propose plus aucun bouton de preset : il applique automatiquement le même jeu de paliers que CM1 pour le mode courant (seule différence : `LEVEL_TIME_FACTOR` reste à `×1` pour l'adulte contre `×3` pour l'enfant, cf. `generator-utils.js`). Cliquer sur CE1/CE2/CM1 ne fait que précocher les cases correspondantes (une case « Tout cocher » permet aussi de tout sélectionner d'un coup) — il n'y a plus de bouton « Libre » séparé. La liste des paliers à cocher est repliée dans un accordéon discret (fermé par défaut, on fait confiance au preset précoché par l'application) que l'on peut ouvrir pour l'ajuster manuellement. Quand deux presets pointent vers le même jeu de paliers pour un mode (ex. CM1 = CE2 en soustraction), `groupPresetsForMode` les fusionne en un seul bouton libellé « CE2 / CM1 » plutôt que d'afficher deux boutons dont un seul peut être en surbrillance à la fois.
+
+#### 4.5.1 Multiplication posée à produits partiels (M6, décision 2026-07-22)
+
+À l'école, une multiplication dont le multiplicateur a plusieurs chiffres se pose avec un étage par produit partiel, additionnés ensuite. `M3`-`M6` retournent `posed: true` (absent pour `M1`/`M2` : `×10`/`×100`/`×1000` restent une règle mentale, pas une technique posée). `M6` retourne en plus `partials: [{value, shift}, ...]` (un par chiffre du multiplicateur, `shift` = position décimale).
+
+`computeStages(operator, answer, meta)` (`src/lib/modes/generator-utils.js`, appelée dans `makeGenericGenerator`) construit `question.stages` — une ligne par étape que l'enfant doit remplir : un seul stage `final` pour toutes les opérations posées à réponse unique (addition/soustraction/multiplication simple), ou un stage par produit partiel puis `final` pour `M6`. `computePosed(operator, operands, meta)` calcule `question.posed` (même fichier) — c'est ce champ, pas une heuristique dupliquée côté UI, que consultent à la fois `GameEngine` et `QuestionPanel` pour choisir la mécanique de saisie.
+
+**Saisie chiffre par chiffre, de droite à gauche (décision 2026-07-22, corrige un premier essai gauche→droite)** : à l'école on commence par les unités (à droite) et on remonte vers la gauche à cause des retenues — et une case fausse **reste active** (on la retape) plutôt que d'effacer toute la ligne. `GameEngine` matérialise ça avec deux compteurs seulement : `stageIndex` (quelle ligne) et `digitIndex` (chiffres déjà verrouillés dans la ligne active, **comptés depuis la droite** — chiffre attendu = `Math.floor(stage.value / 10 ** digitIndex) % 10`). Un chiffre verrouillé n'a pas besoin d'être mémorisé séparément : par construction c'est celui de `stage.value` à cette position, donc pas de tableau `completedStages` à maintenir.
+
+- `#checkDigit` (remplace l'ancien `#checkStage`) : chiffre faux → `digitIndex` inchangé, la case reste active pour réessai (flash rouge `INCORRECT_FLASH_MS`) ; chiffre juste et ligne pas encore complète → verrouillage immédiat, **aucun délai**, la case suivante (à gauche) est saisissable tout de suite ; ligne complète et étapes restantes → flash vert puis `CORRECT_DELAY_MS` avant la ligne suivante ; dernière ligne de la dernière étape → scoring/historique/question suivante (`#markQuestionSolved`, factorisé avec l'ancienne mécanique).
+- Cette mécanique par chiffre ne s'applique **qu'aux questions posées** (`question.posed === true`) : les questions non posées (tables, `n×10/×100/×1000`, petites additions) gardent la mécanique historique V1/V2 intacte (`#checkWhole`, réponse entière, auto-check à longueur atteinte — fix du bug de préfixe #6 inchangé).
+- `QuestionPanel.svelte` : `isPosed = question.posed`. Pour chaque case, position depuis la droite `p = stage.digits - 1 - j` (j = index visuel gauche→droite) ; verrouillée (verte, définitive) si `p < digitIndex` ou ligne antérieure ; active (curseur clignotant, rouge pendant le flash d'erreur) si `p === digitIndex` de la ligne courante ; sinon en attente (grisée). Le décalage des produits partiels (`shift`) reste purement visuel (cases « spacer » invisibles ajoutées à droite), l'enfant ne tape aucun zéro de décalage. Un seul `<input>` réel (visuellement masqué, focus repris au clic n'importe où sur la zone posée) reste la source de saisie unique — clavier physique ou `NumericKeypad` selon `isMobile` — les cases ne sont qu'un reflet d'affichage : pas de gestion de focus multi-input à maintenir.
 
 ### 4.6 DB + API (migration `db/migrations/001_game_modes.sql`, rétrocompatible)
 
@@ -221,8 +245,8 @@ ALTER TABLE game_sessions ADD COLUMN game_mode text NOT NULL DEFAULT 'tables',
 | Composant | Rôle |
 |---|---|
 | `ModeSelector.svelte` (nouveau) | Cartes icône + nom (✖️ ➕ ➖) en tête de StartScreen, depuis `listEnabledModes()` |
-| `DifficultySelector.svelte` (nouveau) | 3 gros boutons CE1 / CE2 / Libre ; « Libre » déplie les paliers du mode |
-| `QuestionPanel.svelte` (généralise `MobileGame`) | Rendu `operands/operator` ; **présentation posée en colonnes** pour additions/soustractions multi-chiffres (technique opératoire CE1/CE2) ; historique `{question, points}` |
+| `DifficultySelector.svelte` (nouveau) | Boutons CE1 / CE2 / CM1 (enfant uniquement — l'adulte n'a aucun choix, verrouillé sur le preset le plus difficile) ; liste des paliers à cocher repliée dans un accordéon fermé par défaut, avec case « Tout cocher » |
+| `QuestionPanel.svelte` (généralise `MobileGame`) | Rendu `operands/operator` ; **présentation posée en colonnes** pour additions/soustractions multi-chiffres et multiplications posées (M3-M6, §4.5.1), saisie **une case par chiffre** avec retour immédiat ; historique `{question, points}` |
 | `CurrentQuestion.svelte` (généralise `CurrentMultiplication`) | Question dans le header desktop |
 | `NumericKeypad.svelte` (nouveau) | Pavé 0-9 + effacer + OK sur mobile/tablette (`inputmode="none"`) ; clavier physique + Enter sur desktop |
 | `GameOptions.svelte` (modifié) | Niveau + durée communs ; section spécifique par mode (`TableSelector` pour tables, `DifficultySelector` sinon) |
@@ -446,7 +470,7 @@ MultyFun est un **jeu vidéo avec gamification** dont la mécanique de jeu est l
 - adaptativité de la difficulté en cours de partie selon la performance ;
 - suivi de maîtrise par notion/table, répétition espacée, ciblage des points faibles.
 
-Les paliers de difficulté choisis en amont d'une partie (CE1/CE2/Libre, §4.5) restent le seul levier de progression pédagogique du jeu.
+Les paliers de difficulté choisis en amont d'une partie (CE1/CE2/CM1, §4.5) restent le seul levier de progression pédagogique du jeu.
 
 ---
 

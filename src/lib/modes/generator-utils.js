@@ -273,6 +273,49 @@ export function generateNonRepeating(genFn, antiRepeat, maxTries = 8) {
   return question;
 }
 
+/**
+ * Étapes de saisie posée d'une question (une ligne = un nombre à faire deviner).
+ * Multiplication à multiplicateur multi-chiffres (meta.partials) : un étage
+ * par produit partiel puis la somme finale. Sinon : une seule étape (le résultat).
+ * @param {'+'|'−'|'×'|'÷'} operator
+ * @param {number} answer
+ * @param {Object} meta
+ * @returns {{key: string, value: number, digits: number, shift: number}[]}
+ */
+export function computeStages(operator, answer, meta) {
+  if (operator === '×' && Array.isArray(meta?.partials)) {
+    const stages = meta.partials.map((p, i) => ({
+      key: `partial${i}`,
+      value: p.value,
+      digits: String(p.value).length,
+      shift: p.shift
+    }));
+    stages.push({ key: 'final', value: answer, digits: String(answer).length, shift: 0 });
+    return stages;
+  }
+  return [{ key: 'final', value: answer, digits: String(answer).length, shift: 0 }];
+}
+
+/**
+ * Vrai si la question doit être affichée posée en colonnes (et saisie
+ * chiffre par chiffre) plutôt qu'en ligne. +/− multi-chiffres, ou ×
+ * dès que le palier la marque posée (meta.posed — absent pour ×10/×100/×1000,
+ * qui restent une règle mentale, pas une technique posée).
+ * @param {'+'|'−'|'×'|'÷'} operator
+ * @param {number[]} operands
+ * @param {Object} meta
+ * @returns {boolean}
+ */
+export function computePosed(operator, operands, meta) {
+  if (operator === '+' || operator === '−') {
+    return Math.max(...operands) >= 10;
+  }
+  if (operator === '×') {
+    return meta?.posed === true;
+  }
+  return false;
+}
+
 /** Facteur de temps par niveau, aligné sur le ×3 historique des tables (équité points/minute entre modes). */
 export const LEVEL_TIME_FACTOR = { adulte: 1, enfant: 3 };
 
@@ -303,7 +346,9 @@ export function makeGenericGenerator(modeId, allTiers, operator) {
             answer,
             difficulty: tier.difficulty,
             timeAllowedSec: tier.timeSec * timeFactor,
-            meta: { tier: tier.id, ...meta }
+            meta: { tier: tier.id, ...meta },
+            posed: computePosed(operator, operands, meta),
+            stages: computeStages(operator, answer, meta)
           };
         }, antiRepeat);
       },

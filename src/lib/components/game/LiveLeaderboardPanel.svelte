@@ -1,4 +1,5 @@
 <script>
+  import { browser } from '$app/environment';
   import Leaderboard from '$lib/components/Leaderboard.svelte';
 
   // Props
@@ -29,7 +30,7 @@
     }
   }
 
-  $: loadScores(mode, level, duration);
+  $: if (browser) loadScores(mode, level, duration);
 </script>
 
 <Leaderboard {isLoading} {mode} {level} {duration} leaderboard={scores} />

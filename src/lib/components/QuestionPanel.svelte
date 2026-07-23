@@ -1,5 +1,5 @@
 <!-- src/lib/components/QuestionPanel.svelte -->
-<!-- Généralise MobileGame : question générique (posée en colonnes pour +/− multi-chiffres) -->
+<!-- Généralise MobileGame : question générique (posée en colonnes pour +/−/× multi-chiffres) -->
 <script>
   import { tick } from 'svelte';
   import NumericKeypad from './NumericKeypad.svelte';
@@ -8,6 +8,8 @@
   // Props
   export let question = null;
   export let userAnswer = '';
+  export let stageIndex = 0;
+  export let digitIndex = 0;
   export let feedback = null; // null | 'correct' | 'incorrect' | 'timeout'
   export let questionTimer = 0;
   export let timeAllowed = 0;
@@ -18,16 +20,23 @@
 
   let inputEl;
 
-  // Présentation posée en colonnes (technique opératoire CE1/CE2)
-  $: isPosed =
-    question &&
-    (question.operator === '+' || question.operator === '−') &&
-    Math.max(...question.operands) >= 10;
+  // Présentation posée en colonnes (technique opératoire CE1/CE2), calculée
+  // côté génération (question.posed — voir computePosed dans generator-utils.js)
+  // pour que l'engine et l'UI s'accordent sur la même mécanique de saisie.
+  $: isPosed = question?.posed === true;
 
-  $: answerWidth = question ? String(question.answer).length : 2;
+  // Repli identique à GameEngine#stages() : une question sans `stages` explicite
+  // (mode non générique, fixture de test) reste posable avec une seule étape.
+  $: stages = question
+    ? (question.stages ?? [
+        { key: 'final', value: question.answer, digits: String(question.answer).length, shift: 0 }
+      ])
+    : [];
 
-  // Refocus au changement de question (desktop, clavier physique)
-  $: if (question?.id && !isMobile) {
+  // Refocus au changement de question ou d'étape (desktop, clavier physique) :
+  // l'input réel reste le même nœud DOM d'une étape à l'autre, mais on
+  // reforce le focus par sécurité (ex: après un clic ailleurs qui l'aurait perdu).
+  $: if (question?.id && stageIndex >= 0 && !isMobile) {
     tick().then(() => inputEl?.focus());
   }
 
@@ -39,6 +48,12 @@
     event.preventDefault();
     onSubmit();
   }
+
+  // Les cases ne sont qu'un reflet visuel de l'input réel (masqué) : cliquer
+  // n'importe où sur la zone posée doit lui rendre le focus.
+  function focusInput() {
+    inputEl?.focus();
+  }
 </script>
 
 <div class="question-panel">
@@ -47,29 +62,67 @@
 
     {#if question}
       {#if isPosed}
-        <div class="posed" class:correct={feedback === 'correct'} class:incorrect={feedback === 'incorrect' || feedback === 'timeout'}>
+        <div
+          class="posed"
+          class:correct={feedback === 'correct'}
+          class:incorrect={feedback === 'incorrect' || feedback === 'timeout'}
+          on:click={focusInput}
+        >
           {#each question.operands as operand, i}
             <div class="posed-row">
-              <span class="posed-operator">{i === question.operands.length - 1 ? question.operator : ''}</span>
+              <span class="posed-operator"
+                >{i === question.operands.length - 1 ? question.operator : ''}</span
+              >
               <span class="posed-operand">{operand}</span>
             </div>
           {/each}
           <div class="posed-line"></div>
-          <form on:submit={handleSubmit} class="posed-row posed-answer-row">
-            <span class="posed-operator"></span>
+
+          {#each stages as stage, i}
+            {@const rowState = i < stageIndex ? 'locked' : i === stageIndex ? 'active' : 'pending'}
+            {#if stages.length > 1 && i === stages.length - 1}
+              <div class="posed-line"></div>
+            {/if}
+            <div class="posed-row stage-row">
+              <span class="posed-operator"></span>
+              <div class="digit-boxes">
+                {#each Array.from({ length: stage.digits }) as _, j}
+                  {@const p = stage.digits - 1 - j}
+                  {@const isLocked = rowState === 'locked' || (rowState === 'active' && p < digitIndex)}
+                  {@const isActive = rowState === 'active' && p === digitIndex}
+                  {@const digit = isLocked
+                    ? String(Math.floor(stage.value / 10 ** p) % 10)
+                    : isActive
+                      ? userAnswer
+                      : ''}
+                  <span
+                    class="digit-box"
+                    class:pending={!isLocked && !isActive}
+                    class:cursor={isActive && feedback !== 'incorrect'}
+                    class:correct={isLocked}
+                    class:incorrect={isActive && feedback === 'incorrect'}
+                  >
+                    {digit}
+                  </span>
+                {/each}
+                {#each Array.from({ length: stage.shift }) as _}
+                  <span class="digit-box spacer"></span>
+                {/each}
+              </div>
+            </div>
+          {/each}
+
+          <form on:submit={handleSubmit} class="stage-input-form">
             <input
               bind:this={inputEl}
               type="text"
-              class="posed-input"
-              style="width: {Math.max(answerWidth + 1, 3)}ch"
+              class="stage-input"
               value={userAnswer}
               on:input={handleInput}
               inputmode={isMobile ? 'none' : 'numeric'}
               readonly={isMobile}
               pattern="[0-9]*"
               autocomplete="off"
-              class:correct={feedback === 'correct'}
-              class:incorrect={feedback === 'incorrect' || feedback === 'timeout'}
               aria-label={_('game.answerPlaceholder')}
             />
           </form>
@@ -204,6 +257,7 @@
     color: var(--primary-dark);
     text-align: right;
     margin-bottom: 15px;
+    cursor: text;
   }
 
   .posed-row {
@@ -229,15 +283,87 @@
     margin: 6px 0;
   }
 
-  .posed-input {
+  .posed.correct .posed-line {
+    border-color: var(--success);
+  }
+
+  .posed.incorrect .posed-line {
+    border-color: var(--secondary);
+  }
+
+  /* Cases de saisie chiffre par chiffre (réponse + produits partiels) */
+  .stage-row {
+    margin: 4px 0;
+  }
+
+  .digit-boxes {
+    display: flex;
+    gap: 4px;
+  }
+
+  .digit-box {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.3em;
+    height: 1.3em;
     font-family: inherit;
-    font-size: inherit;
+    font-size: 0.9em;
     font-weight: bold;
-    text-align: right;
     border: 3px solid var(--primary-light);
     border-radius: var(--border-radius-sm);
-    padding: 2px 6px;
-    box-sizing: content-box;
+    box-sizing: border-box;
+    background: white;
+    cursor: text;
+  }
+
+  .digit-box.pending {
+    border: 3px dashed var(--bg-secondary);
+    background: transparent;
+    cursor: default;
+  }
+
+  .digit-box.cursor {
+    border-color: var(--primary-dark);
+  }
+
+  .digit-box.cursor::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 55%;
+    background: var(--primary-dark);
+    animation: blink 1s step-end infinite;
+  }
+
+  .digit-box.correct {
+    border-color: var(--success);
+    background-color: rgba(67, 215, 135, 0.15);
+  }
+
+  .digit-box.incorrect {
+    border-color: var(--secondary);
+    background-color: rgba(255, 107, 107, 0.15);
+  }
+
+  .digit-box.spacer {
+    border: none;
+    background: transparent;
+  }
+
+  /* Input réel : capte clavier physique / pavé mobile, invisible (les cases
+     ci-dessus en sont le reflet visuel — évite de réinventer la gestion du
+     focus multi-input). Le form n'a pas de position propre : sans autre
+     enfant que cet input absolu, il se réduit naturellement à hauteur 0. */
+  .stage-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    border: 0;
+    opacity: 0;
   }
 
   input.correct {
@@ -248,14 +374,6 @@
   input.incorrect {
     border-color: var(--secondary);
     background-color: rgba(255, 107, 107, 0.1);
-  }
-
-  .posed.correct .posed-line {
-    border-color: var(--success);
-  }
-
-  .posed.incorrect .posed-line {
-    border-color: var(--secondary);
   }
 
   .timeout-answer {
@@ -364,5 +482,10 @@
     0% { transform: scale(1); }
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    50.01%, 100% { opacity: 0; }
   }
 </style>

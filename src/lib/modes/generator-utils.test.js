@@ -11,7 +11,8 @@ import {
   genSubtractionNoBorrow,
   genSubtractionWithBorrow,
   createAntiRepeat,
-  generateNonRepeating
+  generateNonRepeating,
+  computeStages
 } from './generator-utils.js';
 
 describe('digits helpers', () => {
@@ -119,6 +120,30 @@ describe('générateurs contrôlés (500 tirages seedés chacun)', () => {
       expect(answer).toBeGreaterThanOrEqual(0);
       expect(hasBorrow(a, b)).toBe(true);
     }
+  });
+});
+
+describe('computeStages', () => {
+  it('sans partials : une seule étape "final"', () => {
+    expect(computeStages('+', 82, {})).toEqual([{ key: 'final', value: 82, digits: 2, shift: 0 }]);
+    expect(computeStages('×', 168, { tier: 'M4', carry: true })).toEqual([
+      { key: 'final', value: 168, digits: 3, shift: 0 }
+    ]);
+  });
+
+  it('multiplication avec partials : un étage par produit partiel puis la somme', () => {
+    const stages = computeStages('×', 1081, {
+      tier: 'M6',
+      partials: [
+        { value: 161, shift: 0 },
+        { value: 92, shift: 1 }
+      ]
+    });
+    expect(stages).toEqual([
+      { key: 'partial0', value: 161, digits: 3, shift: 0 },
+      { key: 'partial1', value: 92, digits: 2, shift: 1 },
+      { key: 'final', value: 1081, digits: 4, shift: 0 }
+    ]);
   });
 });
 

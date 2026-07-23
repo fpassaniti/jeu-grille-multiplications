@@ -3,22 +3,22 @@
 ## 
 
 ```
-node scripts/extract-item-diff.mjs --base "item-art/raw/robot-unit01/base.jpg" --variant "item-art/raw/robot-unit01/mouffle-rose.jpg" --name mouffle-rose
+node item-art/scripts/extract-item-diff.mjs --base "item-art/raw/robot-unit01/base.jpg" --variant "item-art/raw/robot-unit01/mouffle-rose.jpg" --name mouffle-rose
 # (retouche manuelle simulée sur mouffle-rose_diff_asset_4.png)
-node scripts/compose-item-layer.mjs --regions item-art/extracted/mouffle-rose/mouffle-rose_regions.json --keep 1,4
+node item-art/scripts/compose-item-layer.mjs --regions item-art/extracted/mouffle-rose/mouffle-rose_regions.json --keep 1,4
 ```
 
 ###  Extraction de l'asset via script de diff, puis agrégation pour créer le layer
 
 ```
-node scripts/extract-item-diff.mjs --base "item-art/raw/robot-unit01/base.jpg" --variant "item-art/raw/robot-unit01/casque-aile.jpg" --name casque-aile                                                                
-node scripts/compose-item-layer.mjs --regions item-art/extracted/casque-aile/casque-aile_regions.json --keep 1,2                                                                                                       
+node item-art/scripts/extract-item-diff.mjs --base "item-art/raw/robot-unit01/base.jpg" --variant "item-art/raw/robot-unit01/casque-aile.jpg" --name casque-aile                                                                
+node item-art/scripts/compose-item-layer.mjs --regions item-art/extracted/casque-aile/casque-aile_regions.json --keep 1,2                                                                                                       
 ```
 
 ### Ajout des items en base
 
 ```                                                                                                                                                                                       
-node scripts/add-shop-item.mjs \                                                                                                                                                                                       
+node item-art/scripts/add-shop-item.mjs \                                                                                                                                                                                       
     --code hat_helmet_common \                                                                                                                                                                                           
     --slot hat \                                                                                                                                                                                                         
     --image item-art/extracted/casque-aile/casque-aile_layer.png \                                                                                                                                                       
@@ -30,7 +30,7 @@ node scripts/add-shop-item.mjs \
 → copie du PNG dans static/images/items/, insertion en base (id=1, sort_order=1).                                                                                                                                      
                                                                                                                                                                                                                          
 ```                                                                                                                                                                                             
-node scripts/add-shop-item.mjs \                                                                                                                                                                                       
+node item-art/scripts/add-shop-item.mjs \                                                                                                                                                                                       
     --code body_robot_unit01 \                                                                                                                                                                                           
     --slot body \                                                                                                                                                                                                        
     --image item-art/extracted/casque-aile/casque-aile_base_extracted.png \                                                                                                                                              

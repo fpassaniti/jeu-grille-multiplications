@@ -279,10 +279,12 @@ export default {
   difficulty: {
     chooseTitle: 'Elige tu dificultad:',
     customHint: 'Marca los ejercicios que quieres practicar:',
+    editExercises: 'Ver / modificar los ejercicios',
+    selectAll: 'Marcar todo',
     presets: {
       ce1: '2º Primaria',
       ce2: '3º Primaria',
-      libre: 'Libre'
+      cm1: '4º Primaria'
     },
     tiers: {
       A1: 'Sin llevada, hasta 20',
@@ -301,6 +303,7 @@ export default {
       M3: '2 cifras × 1 cifra, sin llevada',
       M4: '2 cifras × 1 cifra, con llevada',
       M5: '3 cifras × 1 cifra',
+      M6: '2-3 cifras × 2 cifras',
       D1: 'Dividir por 2, 5 o 10',
       D2: 'Dividir por 3, 4 o 6',
       D3: 'Dividir por 7, 8 o 9'

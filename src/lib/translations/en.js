@@ -279,10 +279,12 @@ export default {
   difficulty: {
     chooseTitle: 'Choose your difficulty:',
     customHint: 'Tick the exercises you want to practice:',
+    editExercises: 'View / edit exercises',
+    selectAll: 'Select all',
     presets: {
       ce1: 'Grade 2',
       ce2: 'Grade 3',
-      libre: 'Custom'
+      cm1: 'Grade 4'
     },
     tiers: {
       A1: 'No carrying, up to 20',
@@ -301,6 +303,7 @@ export default {
       M3: '2 digits × 1 digit, no carrying',
       M4: '2 digits × 1 digit, with carrying',
       M5: '3 digits × 1 digit',
+      M6: '2-3 digits × 2 digits',
       D1: 'Divide by 2, 5 or 10',
       D2: 'Divide by 3, 4 or 6',
       D3: 'Divide by 7, 8 or 9'

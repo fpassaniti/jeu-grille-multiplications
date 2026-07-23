@@ -1,9 +1,12 @@
 import { MODES, isKnownMode } from '$lib/modes/index.js';
+import { maxPointsPerQuestion } from '$lib/game/scoring.js';
 
 const VALID_DURATIONS = [2, 3, 5];
 const VALID_LEVELS = ['adulte', 'enfant'];
-// Plausibilité : bien au-delà du maximum théorique (45 pts / ~5 s minimum par question)
-const MAX_POINTS_PER_SECOND = 10;
+// Plausibilité : bien au-delà du maximum théorique, en supposant ~5 s minimum
+// par question — dérivé de maxPointsPerQuestion() pour ne pas dupliquer le
+// plafond de difficulté (évite le drift si le modèle de récompense change).
+const MAX_POINTS_PER_SECOND = Math.ceil(maxPointsPerQuestion() / 5);
 
 /**
  * Normalise et valide le payload de POST /api/scores — accepte l'ancien format

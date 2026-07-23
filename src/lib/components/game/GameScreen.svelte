@@ -16,6 +16,8 @@
   export let questionTimer = 0;
   export let timeAllowed = 0;
   export let userAnswer = '';
+  export let stageIndex = 0;
+  export let digitIndex = 0;
   export let feedback = null;
   export let progress = { solved: 0, total: null, cumulative: 0 };
   export let solvedHistory = [];
@@ -69,6 +71,8 @@
       <QuestionPanel
         {question}
         {userAnswer}
+        {stageIndex}
+        {digitIndex}
         {feedback}
         {questionTimer}
         {timeAllowed}

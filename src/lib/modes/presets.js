@@ -26,10 +26,15 @@ export const PRESETS = [
     }
   },
   {
-    id: 'libre',
-    labelKey: 'difficulty.presets.libre',
-    icon: '🎛️',
-    byMode: null
+    id: 'cm1',
+    labelKey: 'difficulty.presets.cm1',
+    icon: '🌲',
+    byMode: {
+      addition: { tiers: ['A3', 'A4', 'A5', 'A6'] },
+      subtraction: { tiers: ['S3', 'S4', 'S5'] },
+      multiplication: { tiers: ['M2', 'M3', 'M4', 'M5', 'M6'] },
+      division: { tiers: ['D1', 'D2', 'D3'] }
+    }
   }
 ];
 
@@ -52,7 +57,7 @@ export function presetOptionsFor(presetId, modeId) {
  * Détecte le preset correspondant à des options (pour surligner le bouton actif).
  * @param {string} modeId
  * @param {Object} options
- * @returns {'ce1'|'ce2'|'libre'}
+ * @returns {'ce1'|'ce2'|'cm1'|null}
  */
 export function detectPreset(modeId, options) {
   for (const preset of PRESETS) {
@@ -62,7 +67,30 @@ export function detectPreset(modeId, options) {
       return preset.id;
     }
   }
-  return 'libre';
+  return null;
+}
+
+/**
+ * Regroupe les presets d'un mode par jeu de paliers identique (ex. CE2 et CM1
+ * pointent vers les mêmes paliers en soustraction) afin de n'afficher qu'un
+ * seul bouton pour les presets équivalents.
+ * @param {string} modeId
+ * @returns {Array<{ids: string[], options: Object}>}
+ */
+export function groupPresetsForMode(modeId) {
+  const groups = [];
+  for (const preset of PRESETS) {
+    const options = presetOptionsFor(preset.id, modeId);
+    if (!options) continue;
+    const key = JSON.stringify(normalize(options));
+    const existing = groups.find((group) => group.key === key);
+    if (existing) {
+      existing.ids.push(preset.id);
+    } else {
+      groups.push({ key, ids: [preset.id], options });
+    }
+  }
+  return groups.map(({ ids, options }) => ({ ids, options }));
 }
 
 function normalize(options) {

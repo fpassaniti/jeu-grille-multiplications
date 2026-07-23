@@ -1,0 +1,124 @@
+[
+  {
+    "slug": "tshirt-etoile",
+    "code": "outfit_tshirt_star",
+    "slot": "outfit",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 3,
+    "itemDescription": "a simple t-shirt with a yellow star print",
+    "names": { "fr": "T-shirt étoilé", "en": "Star t-shirt", "es": "Camiseta con estrella", "zh": "星星T恤" }
+  },
+  {
+    "slug": "hoodie-neon",
+    "code": "outfit_hoodie_neon",
+    "slot": "outfit",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 8,
+    "itemDescription": "a neon-colored hoodie with a bold zipper",
+    "names": { "fr": "Sweat à capuche néon", "en": "Neon hoodie", "es": "Sudadera neón", "zh": "霓虹连帽衫" }
+  },
+  {
+    "slug": "armure-chevalier",
+    "code": "outfit_knight_armor",
+    "slot": "outfit",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 17,
+    "itemDescription": "a shining knight's armor breastplate with engraved patterns",
+    "names": { "fr": "Armure de chevalier", "en": "Knight armor", "es": "Armadura de caballero", "zh": "骑士铠甲" }
+  },
+  {
+    "slug": "armure-doree",
+    "code": "outfit_golden_armor",
+    "slot": "outfit",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 24,
+    "itemDescription": "an ornate golden armor with fine engravings and a subtle glow",
+    "names": { "fr": "Armure dorée", "en": "Golden armor", "es": "Armadura dorada", "zh": "黄金铠甲" }
+  },
+
+  {
+    "slug": "casquette-rouge",
+    "code": "hat_cap_red",
+    "slot": "hat",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 2,
+    "itemDescription": "a simple red baseball cap",
+    "names": { "fr": "Casquette rouge", "en": "Red cap", "es": "Gorra roja", "zh": "红色棒球帽" }
+  },
+  {
+    "slug": "chapeau-sorcier",
+    "code": "hat_wizard_hat",
+    "slot": "hat",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 12,
+    "itemDescription": "a tall wizard hat with stars and a soft blue glow",
+    "names": { "fr": "Chapeau de sorcier", "en": "Wizard hat", "es": "Sombrero de mago", "zh": "巫师帽" }
+  },
+  {
+    "slug": "casque-dragon",
+    "code": "hat_dragon_helm",
+    "slot": "hat",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 19,
+    "itemDescription": "a dragon-shaped helmet with small horns and gem accents",
+    "names": { "fr": "Casque dragon", "en": "Dragon helm", "es": "Casco de dragón", "zh": "龙形头盔" }
+  },
+  {
+    "slug": "couronne-or",
+    "code": "hat_crown_gold",
+    "slot": "hat",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 26,
+    "itemDescription": "a golden royal crown with jewels and a faint sparkle particle motif",
+    "names": { "fr": "Couronne dorée", "en": "Golden crown", "es": "Corona dorada", "zh": "黄金皇冠" }
+  },
+
+  {
+    "slug": "pinceau-magique",
+    "code": "weapon_paintbrush",
+    "slot": "weapon",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 4,
+    "itemDescription": "a simple paintbrush held in hand, a few paint drops on the tip",
+    "names": { "fr": "Pinceau magique", "en": "Magic paintbrush", "es": "Pincel mágico", "zh": "魔法画笔" }
+  },
+  {
+    "slug": "marteau-jouet",
+    "code": "weapon_hammer_toy",
+    "slot": "weapon",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 9,
+    "itemDescription": "a colorful toy hammer with a slight bounce/squeak look",
+    "names": { "fr": "Marteau jouet", "en": "Toy hammer", "es": "Martillo de juguete", "zh": "玩具锤" }
+  },
+  {
+    "slug": "epee-laser",
+    "code": "weapon_laser_sword",
+    "slot": "weapon",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 20,
+    "itemDescription": "a glowing laser sword shaped like a multiplication sign",
+    "names": { "fr": "Épée laser", "en": "Laser sword", "es": "Espada láser", "zh": "激光剑" }
+  },
+  {
+    "slug": "sceptre-cosmique",
+    "code": "weapon_scepter_mythic",
+    "slot": "weapon",
+    "rarity": "mythic",
+    "price": 45000,
+    "unlockLevel": 30,
+    "itemDescription": "a cosmic scepter with a swirling galaxy orb on top and a rainbow prismatic glow",
+    "names": { "fr": "Sceptre cosmique", "en": "Cosmic scepter", "es": "Cetro cósmico", "zh": "宇宙权杖" }
+  }
+]

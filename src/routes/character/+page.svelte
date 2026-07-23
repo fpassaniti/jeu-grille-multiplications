@@ -83,7 +83,7 @@
     <p class="subtitle">{_('character.subtitle')}</p>
 
     <div class="avatar-ring-wrap">
-      <CharacterAvatar {equipment} size={300} />
+      <CharacterAvatar {equipment} size={500} />
       <div class="ring-icons">
         {#each SLOTS as { slot, icon }}
           <button

@@ -26,7 +26,12 @@ export class GameEngine {
   timeAllowed = $state(0);
   /** @type {import('$lib/modes/types.js').Question|null} */
   question = $state(null);
+  /** Saisie courante : réponse entière (non posé) ou chiffre unique en cours (posé) */
   userAnswer = $state('');
+  /** Index de l'étape en cours dans question.stages (posé multi-lignes : produits partiels puis somme) */
+  stageIndex = $state(0);
+  /** Nombre de chiffres déjà verrouillés dans l'étape active, comptés depuis la droite (unités) */
+  digitIndex = $state(0);
   /** @type {null|'correct'|'incorrect'|'timeout'} */
   feedback = $state(null);
   /** [{operands, operator, answer, points}] — le plus récent en tête, max 10 */
@@ -58,6 +63,8 @@ export class GameEngine {
     this.errorsCount = 0;
     this.solvedHistory = [];
     this.userAnswer = '';
+    this.stageIndex = 0;
+    this.digitIndex = 0;
     this.feedback = null;
     this.poolResetNotice = false;
     this.gameTimer = durationMin * 60;
@@ -75,8 +82,14 @@ export class GameEngine {
   }
 
   /**
-   * Saisie utilisateur. Fix du bug de préfixe V1 (#6) : l'auto-vérification
-   * n'a lieu que quand la longueur saisie atteint celle de la réponse.
+   * Saisie utilisateur. Deux mécaniques selon `question.posed` :
+   * - non posé (tables, ×10/×100/×1000, petites additions…) : réponse entière,
+   *   fix du bug de préfixe V1 (#6) — l'auto-vérification n'a lieu que quand
+   *   la longueur saisie atteint celle de la réponse.
+   * - posé (addition/soustraction/multiplication en colonnes) : chaque frappe
+   *   est un chiffre isolé, vérifié immédiatement contre la position courante
+   *   de l'étape active (unités d'abord, puis vers la gauche — technique
+   *   opératoire de l'école).
    * @param {string} raw
    */
   onAnswerInput(raw) {
@@ -84,22 +97,38 @@ export class GameEngine {
       return;
     }
     const cleaned = String(raw).replace(/[^0-9]/g, '');
-    this.userAnswer = cleaned;
-    if (this.feedback === 'incorrect' && cleaned !== '') {
+
+    if (!this.question.posed) {
+      this.userAnswer = cleaned;
+      if (this.feedback === 'incorrect' && cleaned !== '') {
+        this.feedback = null;
+      }
+      if (cleaned.length >= String(this.question.answer).length) {
+        this.#checkWhole(cleaned);
+      }
+      return;
+    }
+
+    const digitChar = cleaned.slice(-1);
+    this.userAnswer = digitChar;
+    if (this.feedback === 'incorrect' && digitChar !== '') {
       this.feedback = null;
     }
-    if (cleaned.length >= String(this.question.answer).length) {
-      this.#check(cleaned);
+    if (digitChar !== '') {
+      this.#checkDigit(digitChar);
     }
   }
 
-  /** Vérification forcée (Enter / bouton OK). */
+  /** Vérification forcée (Enter / bouton OK) — no-op en mode posé (déjà vérifié à la frappe). */
   submitAnswer() {
     if (this.state !== 'playing' || this.feedback === 'correct' || this.feedback === 'timeout') {
       return;
     }
+    if (this.question.posed) {
+      return;
+    }
     if (this.userAnswer !== '') {
-      this.#check(this.userAnswer);
+      this.#checkWhole(this.userAnswer);
     }
   }
 
@@ -135,25 +164,53 @@ export class GameEngine {
     };
   }
 
-  #check(raw) {
-    if (parseInt(raw, 10) === this.question.answer) {
-      const points = computeScore(this.question, this.questionTimer);
-      this.score += points;
-      this.#generator.markSolved(this.question.id);
-      this.solvedHistory = [
+  /** Étapes de saisie de la question courante (posé multi-lignes ou réponse unique). */
+  #stages() {
+    return (
+      this.question.stages ?? [
         {
-          operands: [...this.question.operands],
-          operator: this.question.operator,
-          answer: this.question.answer,
-          points
-        },
-        ...this.solvedHistory
-      ].slice(0, 10);
-      this.#refreshDerived();
-      this.feedback = 'correct';
-      this.#stopQuestionTimer();
-      this.#after(CORRECT_DELAY_MS, () => this.#nextQuestion());
-    } else {
+          key: 'final',
+          value: this.question.answer,
+          digits: String(this.question.answer).length,
+          shift: 0
+        }
+      ]
+    );
+  }
+
+  /** Question non posée : comparaison à la réponse entière (mécanique historique V1/V2). */
+  #checkWhole(raw) {
+    if (parseInt(raw, 10) === this.question.answer) {
+      this.#markQuestionSolved();
+      return;
+    }
+    this.feedback = 'incorrect';
+    if (!this.#erredThisQuestion) {
+      this.errorsCount += 1;
+      this.#erredThisQuestion = true;
+    }
+    this.#after(INCORRECT_FLASH_MS, () => {
+      if (this.feedback === 'incorrect') {
+        this.feedback = null;
+        this.userAnswer = '';
+      }
+    });
+  }
+
+  /**
+   * Question posée : vérifie un seul chiffre à la position `digitIndex`
+   * (depuis la droite) de l'étape active. Faux → la case reste active, on
+   * retape le même chiffre. Juste → verrouillage définitif (vert) et
+   * avancée immédiate vers la case suivante (à gauche), sans délai — le
+   * délai `CORRECT_DELAY_MS` ne s'applique qu'entre deux lignes ou en fin
+   * de question.
+   */
+  #checkDigit(digitChar) {
+    const stages = this.#stages();
+    const stage = stages[this.stageIndex];
+    const expected = Math.floor(stage.value / 10 ** this.digitIndex) % 10;
+
+    if (parseInt(digitChar, 10) !== expected) {
       this.feedback = 'incorrect';
       if (!this.#erredThisQuestion) {
         this.errorsCount += 1;
@@ -165,7 +222,53 @@ export class GameEngine {
           this.userAnswer = '';
         }
       });
+      return;
     }
+
+    this.userAnswer = '';
+    this.digitIndex += 1;
+
+    if (this.digitIndex < stage.digits) {
+      this.feedback = null;
+      return;
+    }
+
+    // Ligne complète.
+    if (this.stageIndex < stages.length - 1) {
+      // Étape intermédiaire (produit partiel) : flash bref puis ligne suivante,
+      // sans toucher au score ni au minuteur (question toujours en cours).
+      this.feedback = 'correct';
+      this.#after(CORRECT_DELAY_MS, () => {
+        this.stageIndex += 1;
+        this.digitIndex = 0;
+        this.userAnswer = '';
+        this.feedback = null;
+      });
+      return;
+    }
+
+    // Dernière ligne de la dernière étape : scoring et progression historiques.
+    this.#markQuestionSolved();
+  }
+
+  /** Scoring/historique/avance de question — commun aux deux mécaniques. */
+  #markQuestionSolved() {
+    const points = computeScore(this.question, this.questionTimer);
+    this.score += points;
+    this.#generator.markSolved(this.question.id);
+    this.solvedHistory = [
+      {
+        operands: [...this.question.operands],
+        operator: this.question.operator,
+        answer: this.question.answer,
+        points
+      },
+      ...this.solvedHistory
+    ].slice(0, 10);
+    this.#refreshDerived();
+    this.feedback = 'correct';
+    this.#stopQuestionTimer();
+    this.#after(CORRECT_DELAY_MS, () => this.#nextQuestion());
   }
 
   #nextQuestion() {
@@ -184,6 +287,8 @@ export class GameEngine {
     this.timeAllowed = this.question.timeAllowedSec;
     this.questionTimer = this.timeAllowed;
     this.userAnswer = '';
+    this.stageIndex = 0;
+    this.digitIndex = 0;
     this.feedback = null;
     this.#erredThisQuestion = false;
 

@@ -279,10 +279,12 @@ export default {
   difficulty: {
     chooseTitle: '选择难度：',
     customHint: '勾选你想练习的题型：',
+    editExercises: '查看/修改题型',
+    selectAll: '全选',
     presets: {
       ce1: '二年级',
       ce2: '三年级',
-      libre: '自选'
+      cm1: '四年级'
     },
     tiers: {
       A1: '不进位，20以内',
@@ -301,6 +303,7 @@ export default {
       M3: '两位数 × 一位数，不进位',
       M4: '两位数 × 一位数，进位',
       M5: '三位数 × 一位数',
+      M6: '2-3位数 × 两位数',
       D1: '除以2、5或10',
       D2: '除以3、4或6',
       D3: '除以7、8或9'

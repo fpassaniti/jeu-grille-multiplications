@@ -279,10 +279,12 @@ export default {
   difficulty: {
     chooseTitle: 'Choisis ta difficulté :',
     customHint: 'Coche les exercices que tu veux travailler :',
+    editExercises: 'Voir / modifier les exercices',
+    selectAll: 'Tout cocher',
     presets: {
       ce1: 'CE1',
       ce2: 'CE2',
-      libre: 'Libre'
+      cm1: 'CM1'
     },
     tiers: {
       A1: 'Sans retenue, jusqu\'à 20',
@@ -301,6 +303,7 @@ export default {
       M3: '2 chiffres × 1 chiffre, sans retenue',
       M4: '2 chiffres × 1 chiffre, avec retenue',
       M5: '3 chiffres × 1 chiffre',
+      M6: '2-3 chiffres × 2 chiffres',
       D1: 'Diviser par 2, 5 ou 10',
       D2: 'Diviser par 3, 4 ou 6',
       D3: 'Diviser par 7, 8 ou 9'

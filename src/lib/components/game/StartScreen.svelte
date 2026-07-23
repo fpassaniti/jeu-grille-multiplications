@@ -58,7 +58,7 @@
 
   .start-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 3fr 2fr;
     gap: 20px;
     align-items: start;
     text-align: left;

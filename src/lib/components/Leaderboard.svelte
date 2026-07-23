@@ -25,55 +25,58 @@
     {_(modeConfig.labelKey)} ({levelLabel}, {durationLabel})
   </h2>
 
-  {#if isLoading}
-    <div class="loading">
-      <div class="loading-spinner"></div>
-      <span>{_('common.loading')}</span>
-    </div>
-  {:else if leaderboard.length > 0}
-    <div class="leaderboard-table">
-      <table>
-        <thead>
-        <tr>
-          <th></th>
-          <th>{_('leaderboard.nameHeader')}</th>
-          <th>{_('leaderboard.scoreHeader')}</th>
-          {#if showTablesColumn}
-            <th class="hide-mobile">{_('leaderboard.tablesHeader')}</th>
-          {/if}
-          <th class="hide-mobile">{_('leaderboard.dateHeader')}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {#each leaderboard as entry, i}
-          <tr class:top-three={i < 3}>
-            <td class="rank-cell">
-              <span class="rank">{rankEmojis[i] || (i + 1)}</span>
-            </td>
-            <td>{entry.name}</td>
-            <td class="score-cell">{entry.score}</td>
+  <div class="leaderboard-content">
+    {#if isLoading}
+      <div class="loading">
+        <div class="loading-spinner"></div>
+        <span>{_('common.loading')}</span>
+      </div>
+    {:else if leaderboard.length > 0}
+      <div class="leaderboard-table">
+        <table>
+          <thead>
+          <tr>
+            <th class="rank-col"></th>
+            <th>{_('leaderboard.nameHeader')}</th>
+            <th class="score-col">{_('leaderboard.scoreHeader')}</th>
             {#if showTablesColumn}
-              <td class="hide-mobile tables-cell">
-                {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
-                  <span class="tables-all">{_('leaderboard.tablesHeader')} {entry.tables_used.sort((a, b) => a - b).join(', ')}</span>
-                {:else}
-                  <span class="tables-all">{_('leaderboard.allTables')}</span>
-                {/if}
-              </td>
+              <th class="hide-mobile tables-cell">{_('leaderboard.tablesHeader')}</th>
             {/if}
-            <td class="hide-mobile">{formatDate(entry.date)}</td>
+            <th class="hide-mobile date-col">{_('leaderboard.dateHeader')}</th>
           </tr>
-        {/each}
-        </tbody>
-      </table>
-    </div>
-  {:else}
-    <div class="empty-state">
-      <div class="empty-icon">🏅</div>
-      <p>{_('leaderboard.noScores')}</p>
-      <p class="empty-message">{_('leaderboard.beFirst')}</p>
-    </div>
-  {/if}
+          </thead>
+          <tbody>
+          {#each leaderboard as entry, i}
+            <tr class:top-three={i < 3}>
+              <td class="rank-cell">
+                <span class="rank">{rankEmojis[i] || (i + 1)}</span>
+              </td>
+              <td class="name-cell">{entry.name}</td>
+              <td class="score-cell">{entry.score}</td>
+              {#if showTablesColumn}
+                <td class="hide-mobile tables-cell">
+                  {#if entry.tables_used && Array.isArray(entry.tables_used) && entry.tables_used.length > 0}
+                    {@const tablesList = entry.tables_used.sort((a, b) => a - b).join(', ')}
+                    <span class="tables-all" title={tablesList}>{tablesList}</span>
+                  {:else}
+                    <span class="tables-all">{_('leaderboard.allTables')}</span>
+                  {/if}
+                </td>
+              {/if}
+              <td class="hide-mobile date-col">{formatDate(entry.date)}</td>
+            </tr>
+          {/each}
+          </tbody>
+        </table>
+      </div>
+    {:else}
+      <div class="empty-state">
+        <div class="empty-icon">🏅</div>
+        <p>{_('leaderboard.noScores')}</p>
+        <p class="empty-message">{_('leaderboard.beFirst')}</p>
+      </div>
+    {/if}
+  </div>
 </div>
 
 <style>
@@ -86,14 +89,22 @@
     margin-right: 5px;
   }
 
-  .leaderboard-table {
-    overflow-x: auto;
+  .leaderboard-content {
+    min-height: 560px;
     margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .leaderboard-table {
+    flex: 1;
+    overflow-x: auto;
     border-radius: var(--border-radius-md);
   }
 
   table {
     width: 100%;
+    table-layout: fixed;
     border-collapse: collapse;
     background-color: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -101,8 +112,29 @@
     overflow: hidden;
   }
 
+  .rank-col {
+    width: 8%;
+  }
+
+  .score-col {
+    width: 13%;
+  }
+
+  .date-col {
+    width: 20%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .name-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   th, td {
-    padding: 12px 15px;
+    padding: 12px 8px;
     text-align: left;
   }
 
@@ -144,7 +176,7 @@
   }
 
   .loading {
-    margin: 30px 0;
+    flex: 1;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
@@ -162,7 +194,11 @@
   }
 
   .empty-state {
-    padding: 30px 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     color: var(--text-secondary);
   }
@@ -180,7 +216,7 @@
   }
 
   .tables-cell {
-    max-width: 150px;
+    width: 16%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

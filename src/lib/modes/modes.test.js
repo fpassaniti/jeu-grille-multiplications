@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { seededRng } from '../../test/seeded-rng.js';
-import { hasCarry, hasBorrow } from './generator-utils.js';
+import { hasCarry, hasBorrow, computePosed } from './generator-utils.js';
 import addition from './addition.js';
 import subtraction from './subtraction.js';
 import multiplication from './multiplication.js';
@@ -66,7 +66,8 @@ describe('addition — conformité des paliers (SPEC §4.5)', () => {
 
   it('temps enfant ×3 sur les modes génériques (aligné sur les tables)', () => {
     const gen = addition.createGenerator({ tiers: ['A1'] }, 'enfant', seededRng(8));
-    expect(gen.next().timeAllowedSec).toBe(15); // 5 × 3
+    const tier = addition.tiers.find((t) => t.id === 'A1');
+    expect(gen.next().timeAllowedSec).toBe(tier.timeSec * 3);
   });
 
   it('générateur infini : progress.total = null, boardState = null', () => {
@@ -137,6 +138,67 @@ describe('multiplication — conformité des paliers', () => {
       expect(n).toBeLessThanOrEqual(999);
       expect(q.answer).toBe(n * c);
     }));
+
+  it('M3-M5 : posées, une seule étape "final"', () => {
+    for (const tierId of ['M3', 'M4', 'M5']) {
+      forTier(multiplication, tierId, (q) => {
+        expect(q.meta.posed).toBe(true);
+        expect(q.posed).toBe(true);
+        expect(q.stages).toEqual([
+          { key: 'final', value: q.answer, digits: String(q.answer).length, shift: 0 }
+        ]);
+      });
+    }
+  });
+
+  it('M1/M2 : pas posées (règle mentale ×10/×100/×1000)', () => {
+    for (const tierId of ['M1', 'M2']) {
+      forTier(multiplication, tierId, (q) => {
+        expect(q.meta.posed).toBeUndefined();
+        expect(q.posed).toBe(false);
+      });
+    }
+  });
+
+  it('M6 : multiplicateur à 2 chiffres, 2 produits partiels + somme', () =>
+    forTier(multiplication, 'M6', (q) => {
+      const [n, m] = q.operands;
+      expect(n).toBeGreaterThanOrEqual(10);
+      expect(n).toBeLessThanOrEqual(999);
+      expect(m).toBeGreaterThanOrEqual(11);
+      expect(m).toBeLessThanOrEqual(99);
+      expect(m % 10).not.toBe(0); // unités non nulles
+      expect(Math.floor(m / 10)).not.toBe(0); // dizaines non nulles
+      expect(q.meta.posed).toBe(true);
+      expect(q.posed).toBe(true);
+      expect(q.stages).toHaveLength(3);
+      const [p0, p1, sum] = q.stages;
+      expect(p0.value).toBe(n * (m % 10));
+      expect(p1.value).toBe(n * Math.floor(m / 10));
+      expect(p0.shift).toBe(0);
+      expect(p1.shift).toBe(1);
+      expect(sum.key).toBe('final');
+      expect(p0.value + p1.value * 10).toBe(q.answer);
+      expect(q.answer).toBe(n * m);
+    }));
+});
+
+describe('question.posed (computePosed) — cohérence entre modes', () => {
+  it('addition/soustraction : posée dès qu\'un opérande a 2 chiffres ou plus, sinon non', () => {
+    expect(computePosed('+', [38, 45], {})).toBe(true);
+    expect(computePosed('−', [58, 12], {})).toBe(true);
+    expect(computePosed('+', [3, 4], {})).toBe(false);
+  });
+
+  it('multiplication : posée seulement si meta.posed', () => {
+    expect(computePosed('×', [23, 4], { posed: true })).toBe(true);
+    expect(computePosed('×', [23, 10], {})).toBe(false);
+  });
+
+  it('les questions générées reflètent bien computePosed', () => {
+    forTier(addition, 'A3', (q) => expect(q.posed).toBe(true));
+    forTier(subtraction, 'S3', (q) => expect(q.posed).toBe(true));
+  });
 });
 
 describe('division', () => {

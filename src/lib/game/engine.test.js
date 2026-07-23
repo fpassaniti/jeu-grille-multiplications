@@ -199,14 +199,108 @@ describe('GameEngine — pool et résultats', () => {
     expect(engine.results.elapsedSec).toBe(120);
   });
 
-  it('fonctionne aussi avec un mode générique (addition)', () => {
+  it('fonctionne aussi avec un mode générique (addition, non posée)', () => {
+    // A2 sur des petits totaux peut ne pas être posée ; on force un cas non
+    // posé explicitement en dessous, ce test couvre juste le branchement mode générique.
     engine.start({ modeId: 'addition', options: { tiers: ['A1'] }, level: 'adulte', durationMin: 3 });
     expect(engine.board).toBeNull();
     expect(engine.progress.total).toBeNull();
     const q = engine.question;
     expect(q.operator).toBe('+');
-    engine.onAnswerInput(String(q.answer));
+    answerDigitsRightToLeft(engine, q.stages);
     expect(engine.feedback).toBe('correct');
     expect(engine.progress.cumulative).toBe(1);
+  });
+});
+
+/**
+ * Saisit les chiffres d'une question posée dans l'ordre attendu par l'engine :
+ * chaque étage (produit partiel puis somme) de droite (unités) vers la gauche.
+ * N'avance PAS les timers entre les étages — appelant à charge de le faire
+ * (`vi.advanceTimersByTime(CORRECT_DELAY_MS)`) s'il veut poursuivre au-delà.
+ */
+function answerDigitsRightToLeft(engine, stages) {
+  for (const stage of stages) {
+    for (let p = 0; p < stage.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(stage.value / 10 ** p) % 10));
+    }
+  }
+}
+
+describe('GameEngine — validation posée chiffre par chiffre (multiplication à produits partiels, M6)', () => {
+  const M6_CONFIG = {
+    modeId: 'multiplication',
+    options: { tiers: ['M6'] },
+    level: 'adulte',
+    durationMin: 3
+  };
+
+  it('saisie unités → gauche, avance immédiate entre chiffres, délai entre lignes', () => {
+    engine.start(M6_CONFIG);
+    const q = engine.question;
+    expect(q.posed).toBe(true);
+    expect(q.stages).toHaveLength(3);
+    expect(engine.stageIndex).toBe(0);
+    expect(engine.digitIndex).toBe(0);
+
+    const [p0, p1, sum] = q.stages;
+
+    // Étage 0 (1er produit partiel), chiffre des unités
+    engine.onAnswerInput(String(p0.value % 10));
+    expect(engine.digitIndex).toBe(1);
+    expect(engine.stageIndex).toBe(0); // toujours la même ligne, pas de délai requis
+
+    // Chiffres suivants de l'étage 0 (immédiat, sans avancer le temps)
+    for (let p = 1; p < p0.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(p0.value / 10 ** p) % 10));
+    }
+    // Ligne complète : flash correct, puis délai avant la ligne suivante
+    expect(engine.feedback).toBe('correct');
+    expect(engine.stageIndex).toBe(0);
+    vi.advanceTimersByTime(500);
+    expect(engine.stageIndex).toBe(1);
+    expect(engine.digitIndex).toBe(0);
+    expect(engine.feedback).toBeNull();
+    expect(engine.question.id).toBe(q.id); // toujours la même question
+
+    // Étage 1 (2e produit partiel)
+    for (let p = 0; p < p1.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(p1.value / 10 ** p) % 10));
+    }
+    vi.advanceTimersByTime(500);
+    expect(engine.stageIndex).toBe(2);
+
+    // Étage 2 (somme finale) → scoring + question suivante
+    for (let p = 0; p < sum.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(sum.value / 10 ** p) % 10));
+    }
+    expect(engine.feedback).toBe('correct');
+    expect(engine.score).toBeGreaterThan(0);
+    expect(engine.progress.cumulative).toBe(1);
+    expect(engine.solvedHistory[0].answer).toBe(q.answer);
+    vi.advanceTimersByTime(500);
+    expect(engine.question.id).not.toBe(q.id);
+    expect(engine.stageIndex).toBe(0);
+    expect(engine.digitIndex).toBe(0);
+  });
+
+  it('chiffre faux : la case reste active (ne progresse pas), 1 erreur max par question', () => {
+    engine.start(M6_CONFIG);
+    const q = engine.question;
+    const expectedUnits = q.stages[0].value % 10;
+    const wrongDigit = (expectedUnits + 1) % 10;
+
+    engine.onAnswerInput(String(wrongDigit));
+    expect(engine.feedback).toBe('incorrect');
+    expect(engine.errorsCount).toBe(1);
+    expect(engine.digitIndex).toBe(0); // pas d'avancée
+    vi.advanceTimersByTime(600);
+    expect(engine.feedback).toBeNull();
+    expect(engine.userAnswer).toBe('');
+
+    // Le bon chiffre ensuite avance normalement, sans double comptage d'erreur
+    engine.onAnswerInput(String(expectedUnits));
+    expect(engine.digitIndex).toBe(1);
+    expect(engine.errorsCount).toBe(1);
   });
 });

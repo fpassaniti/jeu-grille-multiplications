@@ -9,6 +9,7 @@
   import { loadSettings, saveSettings, optionsFor } from '$lib/game/persistence.js';
   import { getMode } from '$lib/modes/index.js';
   import { saveScore as postScore } from '$lib/services/gameService';
+  import { playNavRequested } from '$lib/stores/playNavStore.js';
 
   let { data } = $props();
 
@@ -122,7 +123,16 @@
     window.location.href = '/';
   }
 
-  onDestroy(() => engine.destroy());
+  // Le clic sur "Jouer" dans le menu alors qu'on est déjà sur /play ne déclenche pas
+  // de navigation (même URL) : on écoute ce signal explicite pour revenir au choix de mode.
+  const unsubscribePlayNav = playNavRequested.subscribe((value) => {
+    if (value > 0) resetGame();
+  });
+
+  onDestroy(() => {
+    engine.destroy();
+    unsubscribePlayNav();
+  });
 </script>
 
 <svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
@@ -161,6 +171,8 @@
       questionTimer={engine.questionTimer}
       timeAllowed={engine.timeAllowed}
       userAnswer={engine.userAnswer}
+      stageIndex={engine.stageIndex}
+      digitIndex={engine.digitIndex}
       feedback={engine.feedback}
       progress={engine.progress}
       solvedHistory={engine.solvedHistory}
