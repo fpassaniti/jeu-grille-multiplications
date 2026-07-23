@@ -18,9 +18,9 @@ describe('scoring unifié (SPEC §4.4)', () => {
     expect(computeScore(q(0.5, 40), 0)).toBeGreaterThan(0);
   });
 
-  it('maximum 75 points par question', () => {
-    expect(maxPointsPerQuestion()).toBe(75);
-    expect(computeScore(q(5.0, 5), 5)).toBe(75);
+  it('maximum 120 points par question', () => {
+    expect(maxPointsPerQuestion()).toBe(120);
+    expect(computeScore(q(8.0, 5), 5)).toBe(120);
   });
 
   it('la vitesse est un ratio : insensible au ×k du temps alloué', () => {

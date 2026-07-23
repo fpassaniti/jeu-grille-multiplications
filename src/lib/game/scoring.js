@@ -6,7 +6,7 @@
 export const BASE_POINTS = 15;
 export const FLOOR_RATIO = 0.25;
 // Max = M6 (multiplication 3×2 chiffres, 10 opérations élémentaires, SPEC §4.5).
-export const MAX_DIFFICULTY = 5.0;
+export const MAX_DIFFICULTY = 8.0;
 
 /**
  * Points d'une bonne réponse.

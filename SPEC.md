@@ -172,9 +172,9 @@ points = Math.round(15 * question.difficulty * (0.25 + 0.75 * timeRemaining / ti
 **Modèle de calibration par opérations élémentaires (décision 2026-07-23, remplace l'objectif « points/minute égal entre modes »)** — `src/lib/game/balance-config.js` :
 
 - Un calcul complexe (ex. multiplication posée 3×2 chiffres = 6 multiplications + 4 additions) doit rapporter **nettement plus** qu'un calcul simple (table = 1 fait mémorisé), y compris en pièces et XP, quitte à rapporter moins de points par minute (l'objectif d'égalité points/minute de la V2 initiale est abandonné : il masquait l'écart d'effort réel entre modes).
-- **Modes posés** (addition, soustraction, multiplication étendue) : chaque palier porte un `operationCount` (nombre d'opérations élémentaires à un chiffre requises par l'algorithme posé, +1 opération-équivalent si retenue/emprunt). `difficulty = OP_DIFFICULTY(0.5) × operationCount` ; `timeSec (adulte) = BASE_SEC(5) + OP_SEC(4) × operationCount`. Exemple M6 (6 mult + 4 add = 10 opérations) : difficulty 5.0, 45 s adulte — soit 10× la difficulté d'une table ou d'un M1 (≥ plancher 6× demandé).
-- **Modes « rappel »** (tables, division) : un seul fait mémorisé (pas un algorithme multi-étapes) → la grille de difficulté psychologique existante (7×7 plus dur que 1×1, diviser par 9 plus dur que par 10) est conservée pour sa forme relative mais **rescalée** dans une plage resserrée `RECALL_DIFFICULTY_RANGE = [0.3, 0.7]` / `RECALL_TIME_RANGE_SEC = [6, 10] s` (adulte) via `rescaleRecall()`, pour ne pas rivaliser avec les modes posés.
-- `MAX_DIFFICULTY = 5.0` (M6) → `maxPointsPerQuestion() = 75` (utilisé par l'anti-triche §5.7, dérivé dynamiquement dans `scoreValidation.js` pour éviter le drift).
+- **Modes posés** (addition, soustraction, multiplication étendue) : chaque palier porte un `operationCount` (nombre d'opérations élémentaires à un chiffre requises par l'algorithme posé, +1 opération-équivalent si retenue/emprunt). `difficulty = OP_DIFFICULTY(0.8) × operationCount` ; `timeSec (adulte) = BASE_SEC(5) + OP_SEC(4) × operationCount`. `OP_DIFFICULTY` est calé sur le plus haut ratio (ancienne difficulté / operationCount) du barème V2 précédent, pour qu'aucun palier existant ne rapporte moins qu'avant — seuls les paliers à fort `operationCount` (M6 en tête) gagnent significativement. Exemple M6 (6 mult + 4 add = 10 opérations) : difficulty 8.0, 45 s adulte — soit 10× la difficulté d'un M1/M2 (≥ plancher 6× demandé).
+- **Modes « rappel »** (tables, division) : un seul fait mémorisé (pas un algorithme multi-étapes) → la grille de difficulté psychologique existante (7×7 plus dur que 1×1, diviser par 9 plus dur que par 10) est conservée pour sa forme relative mais **rescalée** dans une plage resserrée `RECALL_DIFFICULTY_RANGE = [0.3, 0.7]` / `RECALL_TIME_RANGE_SEC = [6, 10] s` (adulte) via `rescaleRecall()`, pour ne pas rivaliser avec les modes posés — seule baisse volontaire du modèle (les tables, notamment 7×7, étaient surévaluées face à M6). Cette plage est indépendante de `OP_DIFFICULTY` et fixée définitivement dès le premier rééquilibrage — les modes posés sont réhaussés en comparaison, tables/division ne sont plus retouchés.
+- `MAX_DIFFICULTY = 8.0` (M6) → `maxPointsPerQuestion() = 120` (utilisé par l'anti-triche §5.7, dérivé dynamiquement dans `scoreValidation.js` pour éviter le drift).
 - Le facteur enfant `LEVEL_TIME_FACTOR = ×3` (`generator-utils.js`) reste global et suffit à satisfaire les bornes demandées avec les nouvelles valeurs de base : tables adulte ≤ 10 s, multiplication complexe (M6) enfant ≥ 1 min (135 s).
 - Testé par `src/lib/game/balance.test.js` (nouvel invariant : `difficulty` proportionnelle à `operationCount`, bornes de temps par niveau, plancher ×6 M6/table).
 
@@ -184,27 +184,27 @@ Difficulté et temps alloué (adulte) dérivés du modèle par opérations élé
 
 | Mode | Palier | Contenu | Opérations | Difficulté | Temps adulte |
 |---|---|---|---|---|---|
-| Addition | A1 | Sans retenue, résultat ≤ 20 | 2 | 1.0 | 13 s |
-| | A2 | Sans retenue, ≤ 100 | 2 | 1.0 | 13 s |
-| | A3 | Avec retenue, ≤ 100 | 2+1 | 1.5 | 17 s |
-| | A4 | Sans retenue, ≤ 1000 | 3 | 1.5 | 17 s |
-| | A5 | Avec retenue, ≤ 1000 | 3+1 | 2.0 | 21 s |
-| | A6 | Avec retenue, ≤ 10 000 (option 3 opérandes) | 6 | 3.0 | 29 s |
-| Soustraction | S1 | Sans emprunt, ≤ 20 (résultat ≥ 0) | 2 | 1.0 | 13 s |
-| | S2 | Sans emprunt, ≤ 100 | 2 | 1.0 | 13 s |
-| | S3 | Avec emprunt, ≤ 100 | 2+1 | 1.5 | 17 s |
-| | S4 | Sans emprunt, ≤ 1000 | 3 | 1.5 | 17 s |
-| | S5 | Avec emprunt, ≤ 1000 | 3+1 | 2.0 | 21 s |
-| Multiplication | M1 | n × 10 (règle mentale) | 1 | 0.5 | 9 s |
-| | M2 | n × 100, n × 1000 (règle mentale) | 1 | 0.5 | 9 s |
-| | M3 | 2 chiffres × 1 chiffre, sans retenue | 2 | 1.0 | 13 s |
-| | M4 | 2 chiffres × 1 chiffre, avec retenue | 2+1 | 1.5 | 17 s |
-| | M5 | 3 chiffres × 1 chiffre | 3+1 | 2.0 | 21 s |
-| | M6 | 2-3 chiffres × 2 chiffres (6 multiplications + 4 additions) | 10 | **5.0** | **45 s** |
+| Addition | A1 | Sans retenue, résultat ≤ 20 | 2 | 1.6 | 13 s |
+| | A2 | Sans retenue, ≤ 100 | 2 | 1.6 | 13 s |
+| | A3 | Avec retenue, ≤ 100 | 2+1 | 2.4 | 17 s |
+| | A4 | Sans retenue, ≤ 1000 | 3 | 2.4 | 17 s |
+| | A5 | Avec retenue, ≤ 1000 | 3+1 | 3.2 | 21 s |
+| | A6 | Avec retenue, ≤ 10 000 (option 3 opérandes) | 6 | 4.8 | 29 s |
+| Soustraction | S1 | Sans emprunt, ≤ 20 (résultat ≥ 0) | 2 | 1.6 | 13 s |
+| | S2 | Sans emprunt, ≤ 100 | 2 | 1.6 | 13 s |
+| | S3 | Avec emprunt, ≤ 100 | 2+1 | 2.4 | 17 s |
+| | S4 | Sans emprunt, ≤ 1000 | 3 | 2.4 | 17 s |
+| | S5 | Avec emprunt, ≤ 1000 | 3+1 | 3.2 | 21 s |
+| Multiplication | M1 | n × 10 (règle mentale) | 1 | 0.8 | 9 s |
+| | M2 | n × 100, n × 1000 (règle mentale) | 1 | 0.8 | 9 s |
+| | M3 | 2 chiffres × 1 chiffre, sans retenue | 2 | 1.6 | 13 s |
+| | M4 | 2 chiffres × 1 chiffre, avec retenue | 2+1 | 2.4 | 17 s |
+| | M5 | 3 chiffres × 1 chiffre | 3+1 | 3.2 | 21 s |
+| | M6 | 2-3 chiffres × 2 chiffres (6 multiplications + 4 additions) | 10 | **8.0** | **45 s** |
 | Division | D1–D3 | Inverse des tables → quotients exacts (rappel, non posé) | 1 (rappel) | 0.30–0.70 | 6–10 s |
 | Tables | — | Matrice 10×10 existante (rappel, non posé) | 1 (rappel) | 0.30–0.70 | 6–10 s |
 
-M6/table (ou M6/M1) = 5.0/0.5 = **10×** — au-delà du plancher ×6 demandé. Enfant = ×3 sur le temps adulte (`LEVEL_TIME_FACTOR`, `generator-utils.js`) : M6 enfant = 135 s (2 min 15), tables enfant ≤ 30 s.
+M6/M1-M2 = 8.0/0.8 = **10×** ; M6/table-la-plus-dure (7×7) = 8.0/0.7 ≈ **11,4×** — au-delà du plancher ×6 demandé. Enfant = ×3 sur le temps adulte (`LEVEL_TIME_FACTOR`, `generator-utils.js`) : M6 enfant = 135 s (2 min 15), tables enfant ≤ 30 s.
 
 Génération chiffre par chiffre pour **contrôler exactement** la retenue/l'emprunt (sans retenue : chaque colonne somme ≤ 9 ; avec : au moins une colonne > 9).
 

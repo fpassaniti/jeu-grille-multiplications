@@ -7,8 +7,14 @@
  * entre modes.
  */
 
-/** Difficulté attribuée par opération élémentaire (multiplication/addition/soustraction à un chiffre). */
-export const OP_DIFFICULTY = 0.5;
+/**
+ * Difficulté attribuée par opération élémentaire (multiplication/addition/
+ * soustraction à un chiffre). Calée sur le plus haut ratio (ancienne
+ * difficulté / operationCount) observé dans le barème V2 précédent — garantit
+ * qu'aucun palier existant ne rapporte moins qu'avant ; seuls les paliers à
+ * fort operationCount (ex. M6) gagnent significativement.
+ */
+export const OP_DIFFICULTY = 0.8;
 
 /** Secondes allouées par opération élémentaire (base adulte). */
 export const OP_SEC = 4;
@@ -19,7 +25,13 @@ export const BASE_SEC = 5;
 /** Opération-équivalent supplémentaire quand le palier implique une retenue/un emprunt. */
 export const CARRY_BONUS_OPS = 1;
 
-/** Plage de difficulté des modes « rappel » (tables, division) : une seule opération de mémorisation. */
+/**
+ * Plage de difficulté des modes « rappel » (tables, division) : une seule
+ * opération de mémorisation. Fixée une fois pour toutes au premier
+ * rééquilibrage — ne pas la retoucher pour « rester cohérente » avec
+ * OP_DIFFICULTY : les deux axes sont indépendants, seuls les modes posés
+ * (addition/soustraction/multiplication) doivent être réhaussés.
+ */
 export const RECALL_DIFFICULTY_RANGE = [0.3, 0.7];
 
 /** Plage de temps (secondes, adulte) des modes « rappel ». */
