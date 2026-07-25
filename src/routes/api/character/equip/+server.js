@@ -17,7 +17,15 @@ export async function POST({ request, cookies }) {
     }
 
     if (itemId === null || itemId === undefined) {
-      await sql`DELETE FROM user_equipment WHERE user_id = ${sessionUser.id} AND slot = ${slot}`;
+      if (slot === 'body') {
+        return json({ error: 'Le corps ne peut pas être déséquipé' }, { status: 400 });
+      }
+      // item_id NULL = déséquipement explicite, prioritaire sur le défaut virtuel (shop.js DEFAULT_SLOTS)
+      await sql`
+        INSERT INTO user_equipment (user_id, slot, item_id)
+        VALUES (${sessionUser.id}, ${slot}, NULL)
+        ON CONFLICT (user_id, slot) DO UPDATE SET item_id = NULL
+      `;
     } else {
       const parsedItemId = parseInt(itemId, 10);
       const rows = await sql`

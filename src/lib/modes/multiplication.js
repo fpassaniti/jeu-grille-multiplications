@@ -109,7 +109,7 @@ export default {
   id: 'multiplication',
   enabled: true,
   labelKey: 'modes.multiplication',
-  icon: '✳️',
+  icon: '✖️',
   boardType: 'generic',
   tiers: TIERS,
   defaultOptions: { tiers: ['M1'] },

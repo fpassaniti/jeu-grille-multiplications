@@ -284,6 +284,43 @@ describe('GameEngine — validation posée chiffre par chiffre (multiplication �
     expect(engine.digitIndex).toBe(0);
   });
 
+  it('scoring par chiffre : le score augmente déjà avant la fin de la question', () => {
+    engine.start(M6_CONFIG);
+    const q = engine.question;
+    const [p0] = q.stages;
+    expect(engine.score).toBe(0);
+
+    engine.onAnswerInput(String(p0.value % 10));
+    // Un chiffre juste = un calcul crédité immédiatement, avant la fin de l'étage.
+    expect(engine.score).toBeGreaterThan(0);
+  });
+
+  it('coupure du minuteur en plein milieu d\'une question posée : le score déjà gagné est conservé', () => {
+    engine.start(M6_CONFIG);
+    const q = engine.question;
+    const [p0, p1] = q.stages;
+
+    // Les deux produits partiels sont tapés en entier, la somme finale non commencée.
+    for (let p = 0; p < p0.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(p0.value / 10 ** p) % 10));
+    }
+    vi.advanceTimersByTime(500);
+    for (let p = 0; p < p1.digits; p++) {
+      engine.onAnswerInput(String(Math.floor(p1.value / 10 ** p) % 10));
+    }
+    vi.advanceTimersByTime(500);
+    expect(engine.stageIndex).toBe(2); // dernière étape (somme) pas encore commencée
+
+    const scoreBeforeInterruption = engine.score;
+    expect(scoreBeforeInterruption).toBeGreaterThan(0);
+
+    // Le minuteur de partie coupe la partie avant que la somme finale soit tapée.
+    engine.end();
+    expect(engine.state).toBe('finished');
+    expect(engine.score).toBe(scoreBeforeInterruption); // rien perdu des chiffres déjà validés
+    expect(engine.progress.cumulative).toBe(0); // la question elle-même n'est pas comptée résolue
+  });
+
   it('chiffre faux : la case reste active (ne progresse pas), 1 erreur max par question', () => {
     engine.start(M6_CONFIG);
     const q = engine.question;

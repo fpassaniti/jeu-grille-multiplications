@@ -85,8 +85,12 @@ function buildPrompt(item) {
   if (!rarityNote) throw new Error(`rareté inconnue '${item.rarity}' pour ${item.code} (attendu : ${Object.keys(RARITY_NOTES).join(', ')})`);
   return (
     `Edit the attached reference image: add a ${item.itemDescription} to the '${item.slot}' equipment slot, ` +
-    `${item.slot == 'weapon' ? 'close the hand around the handle of the weapon,' : ''} ` +
-    `${item.slot == 'weapon' ? 'keep this new element on the side, not covering the rest of the body,' : ''} ` +
+    `${item.slot == 'aura' ? 'aura should be around the robot with no detail in front of the robot, ' : ''} ` +
+    `${item.slot == 'back' ? 'the item must be in the back of the robot, so barely visible, no detail must appears in front of the robot, ' : ''} ` +
+    `${item.slot == 'pet' ? 'pets should be positionning in the lower right corner, and should be on the side, on the floor of the robot, ' : ''} ` +
+    `${item.slot == 'weapon' ? 'close the hand around the handle of the weapon, ' : ''} ` +
+    `${item.slot == 'weapon' ? 'keep this new element on the side, not covering the rest of the body, ' : ''} ` +
+    `${item.slot == 'hat' ? 'it doesn\'t matter if the item is partly out of the frame, prioritize the good positioning so do not hesitate to cut the new part, ' : ''} ` +
     `styled for ${item.rarity} rarity (${rarityNote}). Keep everything else in the image exactly unchanged — ` +
     'same character, same pose, same camera framing, same proportions, same style, ' +
     'same background. Only the described addition should differ from the reference.'

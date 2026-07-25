@@ -1,15 +1,5 @@
 [
   {
-    "slug": "tshirt-etoile",
-    "code": "outfit_tshirt_star",
-    "slot": "outfit",
-    "rarity": "common",
-    "price": 150,
-    "unlockLevel": 3,
-    "itemDescription": "a simple t-shirt with a yellow star print",
-    "names": { "fr": "T-shirt étoilé", "en": "Star t-shirt", "es": "Camiseta con estrella", "zh": "星星T恤" }
-  },
-  {
     "slug": "hoodie-neon",
     "code": "outfit_hoodie_neon",
     "slot": "outfit",
@@ -39,7 +29,6 @@
     "itemDescription": "an ornate golden armor with fine engravings and a subtle glow",
     "names": { "fr": "Armure dorée", "en": "Golden armor", "es": "Armadura dorada", "zh": "黄金铠甲" }
   },
-
   {
     "slug": "casquette-rouge",
     "code": "hat_cap_red",
@@ -92,16 +81,6 @@
     "names": { "fr": "Pinceau magique", "en": "Magic paintbrush", "es": "Pincel mágico", "zh": "魔法画笔" }
   },
   {
-    "slug": "marteau-jouet",
-    "code": "weapon_hammer_toy",
-    "slot": "weapon",
-    "rarity": "uncommon",
-    "price": 350,
-    "unlockLevel": 9,
-    "itemDescription": "a colorful toy hammer with a slight bounce/squeak look",
-    "names": { "fr": "Marteau jouet", "en": "Toy hammer", "es": "Martillo de juguete", "zh": "玩具锤" }
-  },
-  {
     "slug": "epee-laser",
     "code": "weapon_laser_sword",
     "slot": "weapon",
@@ -120,5 +99,247 @@
     "unlockLevel": 30,
     "itemDescription": "a cosmic scepter with a swirling galaxy orb on top and a rainbow prismatic glow",
     "names": { "fr": "Sceptre cosmique", "en": "Cosmic scepter", "es": "Cetro cósmico", "zh": "宇宙权杖" }
+  },
+  {
+    "slug": "arme-baton",
+    "code": "weapon_staff",
+    "slot": "weapon",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 1,
+    "itemDescription": "a simple wooden magic staff with a small carved tip",
+    "names": { "fr": "Bâton", "en": "Staff", "es": "Bastón", "zh": "法杖" }
+  },
+  {
+    "slug": "arme-orbe",
+    "code": "weapon_orb",
+    "slot": "weapon",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 13,
+    "itemDescription": "a mystic floating orb glowing with swirling inner light, held in hand",
+    "names": { "fr": "Orbe", "en": "Orb", "es": "Orbe", "zh": "法球" }
+  },
+  {
+    "slug": "arme-trident",
+    "code": "weapon_trident",
+    "slot": "weapon",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 20,
+    "itemDescription": "a powerful three-pronged trident with an ocean-god style engraved shaft",
+    "names": { "fr": "Trident", "en": "Trident", "es": "Tridente", "zh": "三叉戟" }
+  },
+  {
+    "slug": "decor-jardin",
+    "code": "background_garden",
+    "slot": "background",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 3,
+    "itemDescription": "a lush green garden backdrop with flowers and a small hedge",
+    "names": { "fr": "Jardin fleuri", "en": "Blooming garden", "es": "Jardín florido", "zh": "花园背景" }
+  },
+  {
+    "slug": "decor-planete-mars",
+    "code": "background_mars",
+    "slot": "background",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 13,
+    "itemDescription": "a red rocky Mars planet surface backdrop with a dusty orange sky and distant craters",
+    "names": { "fr": "Planète Mars", "en": "Mars planet", "es": "Planeta Marte", "zh": "火星背景" }
+  },
+  {
+    "slug": "decor-enfer",
+    "code": "background_hell",
+    "slot": "background",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 19,
+    "itemDescription": "a fiery hellish backdrop with dark volcanic rocks, lava cracks and an ominous red glow",
+    "names": { "fr": "Enfer", "en": "Inferno", "es": "Infierno", "zh": "地狱背景" }
+  },
+  {
+    "slug": "decor-paradis",
+    "code": "background_heaven",
+    "slot": "background",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 26,
+    "itemDescription": "a majestic heavenly backdrop with soft clouds, golden light rays and a serene blue sky",
+    "names": { "fr": "Paradis", "en": "Heaven", "es": "Paraíso", "zh": "天堂背景" }
+  },
+  {
+    "slug": "aura-super-sayan",
+    "code": "aura_super_saiyan",
+    "slot": "aura",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 25,
+    "itemDescription": "a blazing golden energy aura with electric sparks and flame-like flickers around the wearer",
+    "names": { "fr": "Aura super sayan", "en": "Super Saiyan aura", "es": "Aura supersaiyan", "zh": "超级赛亚人光环" }
+  },
+
+  {
+    "slug": "dos-cape",
+    "code": "back_cape",
+    "slot": "back",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 8,
+    "itemDescription": "a simple flowing cape draped over the shoulders",
+    "names": { "fr": "Cape", "en": "Cape", "es": "Capa", "zh": "斗篷" }
+  },
+  {
+    "slug": "dos-bosse",
+    "code": "back_hump",
+    "slot": "back",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 12,
+    "itemDescription": "a small quirky hunchback bump on the back with a rough bumpy texture",
+    "names": { "fr": "Bosse", "en": "Hump", "es": "Joroba", "zh": "驼背" }
+  },
+  {
+    "slug": "tenue-short-etoile",
+    "code": "outfit_starry_shorts",
+    "slot": "outfit",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 7,
+    "itemDescription": "a pair of starry patterned shorts with a bold colorful star print",
+    "names": { "fr": "Short étoilé", "en": "Starry shorts", "es": "Short estrellado", "zh": "星星短裤" }
+  },
+
+  {
+    "slug": "chapeau-cornes",
+    "code": "hat_horns",
+    "slot": "hat",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 9,
+    "itemDescription": "a pair of small curved devil horns on the head",
+    "names": { "fr": "Cornes", "en": "Horns", "es": "Cuernos", "zh": "恶魔角" }
+  },
+  {
+    "slug": "coiffure-super-sayan-2",
+    "code": "hat_hair_ssj2",
+    "slot": "hat",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 19,
+    "itemDescription": "voluminous spiky golden Super Saiyan 2 hairstyle crackling with electric sparks",
+    "names": { "fr": "Coiffure Super Sayan 2", "en": "Super Saiyan 2 hairstyle", "es": "Peinado Super Saiyan 2", "zh": "超级赛亚人2发型" }
+  },
+  {
+    "slug": "coiffure-super-sayan-3",
+    "code": "hat_hair_ssj3",
+    "slot": "hat",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 23,
+    "itemDescription": "long flowing golden Super Saiyan 3 hairstyle with no eyebrows and a fierce glow",
+    "names": { "fr": "Coiffure Super Sayan 3", "en": "Super Saiyan 3 hairstyle", "es": "Peinado Super Saiyan 3", "zh": "超级赛亚人3发型" }
+  },
+  {
+    "slug": "coiffure-super-sayan-blue",
+    "code": "hat_hair_ssj_blue",
+    "slot": "hat",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 27,
+    "itemDescription": "sleek Super Saiyan Blue hairstyle with a radiant sapphire-blue glow and fine gold accents",
+    "names": { "fr": "Coiffure Super Sayan Blue", "en": "Super Saiyan Blue hairstyle", "es": "Peinado Super Saiyan Blue", "zh": "超级赛亚人蓝发型" }
+  },
+  {
+    "slug": "coiffure-super-sayan-divin",
+    "code": "hat_hair_ssj_god",
+    "slot": "hat",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 28,
+    "itemDescription": "divine crimson-red Super Saiyan God hairstyle radiating a warm sacred glow",
+    "names": { "fr": "Coiffure Super Sayan Divin", "en": "Super Saiyan God hairstyle", "es": "Peinado Super Saiyan Divino", "zh": "超级赛亚人神之发型" }
+  },
+  {
+    "slug": "coiffure-super-sayan-transcendental",
+    "code": "hat_hair_ssj_transcendent",
+    "slot": "hat",
+    "rarity": "mythic",
+    "price": 45000,
+    "unlockLevel": 30,
+    "itemDescription": "an otherworldly transcendent hairstyle radiating a shifting prismatic rainbow aura, the ultimate power form",
+    "names": { "fr": "Coiffure Super Sayan Transcendantal", "en": "Transcendental Super Saiyan hairstyle", "es": "Peinado Super Saiyan Trascendental", "zh": "超级赛亚人超越之姿发型" }
+  },
+  {
+    "slug": "familier-chouette",
+    "code": "pet_owl",
+    "slot": "pet",
+    "rarity": "uncommon",
+    "price": 350,
+    "unlockLevel": 10,
+    "itemDescription": "a small wide-eyed owl companion perched and watching",
+    "names": { "fr": "Chouette", "en": "Owl", "es": "Búho", "zh": "猫头鹰伙伴" }
+  },
+  {
+    "slug": "familier-aigle",
+    "code": "pet_eagle",
+    "slot": "pet",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 15,
+    "itemDescription": "a majestic eagle companion with spread wings and sharp eyes",
+    "names": { "fr": "Aigle", "en": "Eagle", "es": "Águila", "zh": "老鹰伙伴" }
+  },
+  {
+    "slug": "familier-dragonneau",
+    "code": "pet_baby_dragon",
+    "slot": "pet",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 21,
+    "itemDescription": "a small cute baby dragon companion, sitting with tiny wings",
+    "names": { "fr": "Dragonneau", "en": "Baby dragon", "es": "Dragón bebé", "zh": "小龙伙伴" }
+  },
+  {
+    "slug": "corps-plastique-articule",
+    "code": "body_plastic_articulated",
+    "slot": "body",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 14,
+    "itemDescription": "a segmented light-gray plastic body variant with visible articulated joint hardware at the shoulders, hips and knees",
+    "names": { "fr": "Corps plastique articulé", "en": "Articulated plastic body", "es": "Cuerpo de plástico articulado", "zh": "关节塑料身体" }
+  },
+  {
+    "slug": "corps-metal-squelette",
+    "code": "body_metal_skeleton",
+    "slot": "body",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 19,
+    "itemDescription": "a bare dark-metal skeletal body variant with an exposed strut-and-rod endoskeleton frame",
+    "names": { "fr": "Corps squelette métallique", "en": "Metal skeleton body", "es": "Cuerpo esqueleto metálico", "zh": "金属骨架身体" }
+  },
+  {
+    "slug": "corps-metal-blinde",
+    "code": "body_metal_armored",
+    "slot": "body",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 26,
+    "itemDescription": "a heavily armored steel body variant with thick bolted plating and a massive muscular silhouette",
+    "names": { "fr": "Corps métal blindé", "en": "Armored metal body", "es": "Cuerpo de metal blindado", "zh": "装甲金属身体" }
+  },
+  {
+    "slug": "corps-metal-furtif",
+    "code": "body_metal_sleek",
+    "slot": "body",
+    "rarity": "mythic",
+    "price": 45000,
+    "unlockLevel": 30,
+    "itemDescription": "a sleek streamlined matte gunmetal body variant with smooth polished plating and an elegant slender silhouette",
+    "names": { "fr": "Corps métal furtif", "en": "Sleek metal body", "es": "Cuerpo de metal sigiloso", "zh": "流线型金属身体" }
   }
 ]

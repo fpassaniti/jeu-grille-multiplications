@@ -4,6 +4,7 @@ import { tableDifficulty, tableTime } from '$lib/modes/tables.js';
 import division from '$lib/modes/division.js';
 import multiplication from '$lib/modes/multiplication.js';
 import { OP_DIFFICULTY, RECALL_DIFFICULTY_RANGE } from './balance-config.js';
+import { computeScore, computeDigitScore } from './scoring.js';
 
 /**
  * Équilibrage entre modes (SPEC §4.4) : la récompense (et donc l'XP/les
@@ -53,6 +54,25 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
     const m1 = multiplication.tiers.find((t) => t.id === 'M1');
     expect(m6.difficulty / m1.difficulty).toBeGreaterThanOrEqual(6);
     expect(m6.difficulty / tableDifficulty(1, 1)).toBeGreaterThanOrEqual(6);
+  });
+
+  describe('scoring réel par calcul élémentaire (posé, révision "un calcul = un score")', () => {
+    // M3-M6/A*/S* sont toujours posées (opérande ≥ 10 forcé par les générateurs) :
+    // leur score réel n'est plus `tier.difficulty` mais la somme des
+    // `computeDigitScore` sur tous les chiffres tapés — cf. `scoring.js`.
+    it('M6 (pire cas, rng → 1) rapporte, chiffre par chiffre, ≥ 6× un calcul de table (7×7)', () => {
+      const gen = multiplication.createGenerator({ tiers: ['M6'] }, 'adulte', () => 0.999999);
+      const q = gen.next();
+      const totalDigits = q.stages.reduce((sum, stage) => sum + stage.digits, 0);
+      const m6Max = totalDigits * computeDigitScore(q.timeAllowedSec, q.timeAllowedSec);
+
+      const tableMax = computeScore(
+        { difficulty: tableDifficulty(7, 7), timeAllowedSec: tableTime(7, 7, 'adulte') },
+        tableTime(7, 7, 'adulte')
+      );
+
+      expect(m6Max / tableMax).toBeGreaterThanOrEqual(6);
+    });
   });
 
   describe('timer : bornes explicites par niveau (SPEC §4.4)', () => {

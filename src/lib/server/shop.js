@@ -64,7 +64,7 @@ export async function getEquipment(userId) {
   const equipped = await sql`
     SELECT ue.slot, i.id AS item_id, i.code, i.asset_url
     FROM user_equipment ue
-    JOIN items i ON i.id = ue.item_id
+    LEFT JOIN items i ON i.id = ue.item_id
     WHERE ue.user_id = ${userId}
   `;
   const defaults = await sql`
@@ -81,9 +81,28 @@ export async function getEquipment(userId) {
     }
   }
   for (const row of equipped) {
-    bySlot[row.slot] = { itemId: row.item_id, code: row.code, assetUrl: row.asset_url };
+    // item_id NULL = déséquipement explicite, prioritaire sur le défaut virtuel
+    bySlot[row.slot] = row.item_id
+      ? { itemId: row.item_id, code: row.code, assetUrl: row.asset_url }
+      : null;
   }
   return bySlot;
+}
+
+/**
+ * Catalogue complet brut, sans prix/niveau/possession — réservé à la cabine
+ * d'essayage admin qui ignore ces contraintes.
+ */
+export async function getAllItems() {
+  const items = await sql`SELECT * FROM items ORDER BY slot, sort_order`;
+  return items.map((item) => ({
+    id: item.id,
+    code: item.code,
+    slot: item.slot,
+    rarity: item.rarity,
+    assetUrl: item.asset_url,
+    name: item.name
+  }));
 }
 
 export { EQUIPMENT_SLOTS };

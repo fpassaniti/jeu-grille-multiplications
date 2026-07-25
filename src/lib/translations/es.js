@@ -223,6 +223,15 @@ export default {
     goToShop: 'Ir a la tienda'
   },
 
+  admin: {
+    fittingRoom: {
+      navLabel: 'Probador',
+      title: 'Probador',
+      subtitle: 'Prueba todos los artículos de la tienda, sin límite de nivel ni de precio.',
+      reset: 'Reiniciar'
+    }
+  },
+
   chest: {
     open: 'Abrir mi cofre',
     tapToOpen: '¡Toca el cofre para abrirlo!',

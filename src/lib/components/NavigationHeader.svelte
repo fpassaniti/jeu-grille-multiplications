@@ -76,6 +76,11 @@
             <li>
               <a href="/shop" class="nav-link button">{_('common.shop')}</a>
             </li>
+            {#if user.username === 'Fred'}
+              <li>
+                <a href="/admin/fitting-room" class="nav-link button">{_('admin.fittingRoom.navLabel')}</a>
+              </li>
+            {/if}
           {/if}
         </ul>
       </nav>
@@ -151,6 +156,13 @@
               <span class="nav-icon">📚</span> {_('common.collection')}
             </a>
           </li>
+          {#if user.username === 'Fred'}
+            <li>
+              <a href="/admin/fitting-room" class="mobile-nav-link" on:click={closeMobileMenu}>
+                <span class="nav-icon">🪞</span> {_('admin.fittingRoom.navLabel')}
+              </a>
+            </li>
+          {/if}
         {/if}
         <!-- Language Picker in mobile menu -->
         <li class="mobile-language-item">

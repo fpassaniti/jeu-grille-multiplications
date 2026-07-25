@@ -13,9 +13,6 @@ vi.mock('@neondatabase/serverless', () => ({
     if (query.includes('INSERT INTO user_equipment')) {
       return mockDb.insertRows;
     }
-    if (query.includes('DELETE FROM user_equipment')) {
-      return [];
-    }
     if (query.includes('FROM user_equipment')) {
       return []; // équipement déjà résolu : rien d'équipé
     }
@@ -73,10 +70,16 @@ describe('POST /api/character/equip', () => {
     });
   });
 
-  it('itemId null → déséquipe (DELETE)', async () => {
+  it('itemId null → déséquipe (upsert item_id NULL)', async () => {
     mockRequest.json.mockResolvedValue({ slot: 'hat', itemId: null });
     const response = await POST({ request: mockRequest, cookies: mockCookies });
     expect(response.status).toBe(200);
     expect(response.body.equipment.hat).toBeNull();
+  });
+
+  it('400 si on tente de déséquiper le slot body', async () => {
+    mockRequest.json.mockResolvedValue({ slot: 'body', itemId: null });
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(400);
   });
 });

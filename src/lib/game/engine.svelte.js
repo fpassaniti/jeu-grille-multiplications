@@ -7,7 +7,7 @@
  * Aucun $effect ici : instanciable et testable hors composant (Vitest node).
  */
 import { getMode } from '$lib/modes/index.js';
-import { computeScore } from './scoring.js';
+import { computeScore, computeDigitScore } from './scoring.js';
 
 const CORRECT_DELAY_MS = 500;
 const INCORRECT_FLASH_MS = 600;
@@ -49,6 +49,8 @@ export class GameEngine {
   #questionInterval = null;
   #timeouts = new Set();
   #erredThisQuestion = false;
+  /** Somme des points déjà crédités chiffre par chiffre pour la question posée en cours. */
+  #digitPointsAccumulated = 0;
 
   /**
    * @param {{modeId: string, options: Object, level: 'adulte'|'enfant', durationMin: number}} config
@@ -227,6 +229,7 @@ export class GameEngine {
 
     this.userAnswer = '';
     this.digitIndex += 1;
+    this.#awardDigitPoints();
 
     if (this.digitIndex < stage.digits) {
       this.feedback = null;
@@ -235,8 +238,9 @@ export class GameEngine {
 
     // Ligne complète.
     if (this.stageIndex < stages.length - 1) {
-      // Étape intermédiaire (produit partiel) : flash bref puis ligne suivante,
-      // sans toucher au score ni au minuteur (question toujours en cours).
+      // Étape intermédiaire (produit partiel) : flash bref puis ligne suivante ;
+      // le minuteur de question continue (question toujours en cours) — le
+      // score, lui, est déjà crédité chiffre par chiffre (#awardDigitPoints).
       this.feedback = 'correct';
       this.#after(CORRECT_DELAY_MS, () => {
         this.stageIndex += 1;
@@ -251,10 +255,30 @@ export class GameEngine {
     this.#markQuestionSolved();
   }
 
+  /**
+   * Un chiffre juste = un calcul élémentaire : crédité immédiatement, autant
+   * qu'un calcul de tables (`computeDigitScore`) — le score d'une question
+   * posée s'accumule donc chiffre après chiffre plutôt qu'en un seul bloc à
+   * la fin, pour qu'une coupure de minuteur en plein milieu du calcul ne
+   * fasse perdre que les chiffres pas encore tapés.
+   */
+  #awardDigitPoints() {
+    const points = computeDigitScore(this.questionTimer, this.question.timeAllowedSec);
+    this.score += points;
+    this.#digitPointsAccumulated += points;
+    this.#refreshDerived();
+  }
+
   /** Scoring/historique/avance de question — commun aux deux mécaniques. */
   #markQuestionSolved() {
-    const points = computeScore(this.question, this.questionTimer);
-    this.score += points;
+    // Posé : déjà crédité chiffre par chiffre (#awardDigitPoints) — on réutilise
+    // le total accumulé pour l'historique, sans re-créditer le score.
+    const points = this.question.posed
+      ? this.#digitPointsAccumulated
+      : computeScore(this.question, this.questionTimer);
+    if (!this.question.posed) {
+      this.score += points;
+    }
     this.#generator.markSolved(this.question.id);
     this.solvedHistory = [
       {
@@ -291,6 +315,7 @@ export class GameEngine {
     this.digitIndex = 0;
     this.feedback = null;
     this.#erredThisQuestion = false;
+    this.#digitPointsAccumulated = 0;
 
     this.#stopQuestionTimer();
     this.#questionInterval = setInterval(() => {

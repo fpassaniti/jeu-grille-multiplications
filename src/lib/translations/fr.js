@@ -223,6 +223,15 @@ export default {
     goToShop: 'Aller à la boutique'
   },
 
+  admin: {
+    fittingRoom: {
+      navLabel: 'Cabine d\'essayage',
+      title: 'Cabine d\'essayage',
+      subtitle: 'Essaie tous les équipements de la boutique, sans limite de niveau ni de prix.',
+      reset: 'Réinitialiser'
+    }
+  },
+
   chest: {
     open: 'Ouvrir mon coffre',
     tapToOpen: 'Tape sur le coffre pour l\'ouvrir !',

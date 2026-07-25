@@ -223,6 +223,15 @@ export default {
     goToShop: '前往商店'
   },
 
+  admin: {
+    fittingRoom: {
+      navLabel: '试衣间',
+      title: '试衣间',
+      subtitle: '试穿商店里的所有装备，不受等级或价格限制。',
+      reset: '重置'
+    }
+  },
+
   chest: {
     open: '打开我的宝箱',
     tapToOpen: '点击宝箱打开它！',

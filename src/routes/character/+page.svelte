@@ -14,20 +14,9 @@
     { slot: 'hat', icon: '🎩' },
     { slot: 'pet', icon: '🐾' }
   ];
-  // aura/back/hat/pet n'ont pas d'équipement de départ : "Aucun" reste une option valide
-  const OPTIONAL_SLOTS = ['aura', 'back', 'hat', 'pet'];
-
-  // Position de chaque icône autour de l'avatar (anneau), cf. maquette validée
-  const RING_POSITION = {
-    aura: 'top-left',
-    hat: 'top-right',
-    back: 'mid-left',
-    weapon: 'mid-right',
-    background: 'lowmid-left',
-    pet: 'lowmid-right',
-    body: 'bottom-left',
-    outfit: 'bottom-right'
-  };
+  // body est le seul slot obligatoire (sans lui, plus de personnage) :
+  // tous les autres slots acceptent "Aucun" comme choix valide
+  const REQUIRED_SLOT = 'body';
 
   let equipment = data.equipment;
   let activeSlot = null;
@@ -41,7 +30,7 @@
     return data.shop.items.filter((item) => item.slot === slot && item.owned);
   }
 
-  function selectRingSlot(slot) {
+  function selectSlot(slot) {
     activeSlot = activeSlot === slot ? null : slot;
   }
 
@@ -82,19 +71,24 @@
     <h1>{_('character.title')}</h1>
     <p class="subtitle">{_('character.subtitle')}</p>
 
-    <div class="avatar-ring-wrap">
-      <CharacterAvatar {equipment} size={500} />
-      <div class="ring-icons">
+    <div class="character-panel">
+      <div class="avatar-box">
+        <CharacterAvatar {equipment} size={280} />
+      </div>
+      <div class="slots-grid">
         {#each SLOTS as { slot, icon }}
           <button
-            class="ring-icon pos-{RING_POSITION[slot]}"
+            class="slot-square"
             class:active={activeSlot === slot}
-            class:has-equip={!!equipment[slot]}
             aria-label={_(`shop.slots.${slot}`)}
             title={_(`shop.slots.${slot}`)}
-            on:click={() => selectRingSlot(slot)}
+            on:click={() => selectSlot(slot)}
           >
-            {icon}
+            {#if equipment[slot]}
+              <img src={equipment[slot].assetUrl} alt={_(`shop.slots.${slot}`)} />
+            {:else}
+              <span class="slot-icon-empty">{icon}</span>
+            {/if}
           </button>
         {/each}
       </div>
@@ -106,7 +100,7 @@
     <div class="slot-section card">
       <h2>{activeIcon} {_(`shop.slots.${activeSlot}`)}</h2>
       <div class="items-row">
-        {#if OPTIONAL_SLOTS.includes(activeSlot)}
+        {#if activeSlot !== REQUIRED_SLOT}
           <button
             class="equip-card none-card"
             class:active={!equipment[activeSlot]}
@@ -131,7 +125,7 @@
             {/if}
           </button>
         {:else}
-          {#if !OPTIONAL_SLOTS.includes(activeSlot)}
+          {#if activeSlot === REQUIRED_SLOT}
             <p class="empty-hint">{_('character.empty')}</p>
           {/if}
         {/each}
@@ -169,73 +163,54 @@
     color: var(--text-secondary);
   }
 
-  .avatar-ring-wrap {
-    position: relative;
-    width: 420px;
-    height: 420px;
-    margin: 20px auto 0;
-  }
-
-  .avatar-ring-wrap :global(.character-avatar) {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-  }
-
-  .ring-icons {
-    position: absolute;
-    inset: 0;
-  }
-
-  .ring-icon {
-    position: absolute;
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
+  .character-panel {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.6rem;
+    gap: 30px;
+    margin: 20px auto 0;
+  }
+
+  .avatar-box :global(.character-avatar) {
+    border-radius: var(--border-radius-md);
+  }
+
+  .slots-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .slot-square {
+    width: 70px;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: var(--bg-secondary);
     border: 3px solid transparent;
+    border-radius: var(--border-radius-md);
     cursor: pointer;
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .ring-icon.active {
+  .slot-square img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+  }
+
+  .slot-icon-empty {
+    font-size: 1.8rem;
+    opacity: 0.4;
+  }
+
+  .slot-square.active {
     border-color: var(--primary);
     background-color: var(--bg-primary);
-    transform: translate(-50%, -50%) scale(1.15);
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
-
-  .ring-icon.has-equip::after {
-    content: '';
-    display: block;
-    position: absolute;
-    top: -2px;
-    right: -2px;
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background-color: var(--success-dark);
-    border: 2px solid white;
-  }
-
-  /* Rangée haute (resserrée vers le centre) */
-  .pos-top-left { top: 8%; left: 32%; }
-  .pos-top-right { top: 8%; left: 68%; }
-  /* Rangée médiane haute (plaquée sur les bords) */
-  .pos-mid-left { top: 32%; left: 8%; }
-  .pos-mid-right { top: 32%; left: 92%; }
-  /* Rangée médiane basse (plaquée sur les bords) */
-  .pos-lowmid-left { top: 68%; left: 8%; }
-  .pos-lowmid-right { top: 68%; left: 92%; }
-  /* Rangée basse (resserrée vers le centre) */
-  .pos-bottom-left { top: 92%; left: 32%; }
-  .pos-bottom-right { top: 92%; left: 68%; }
 
   .slot-section {
     padding: 20px;
@@ -306,41 +281,18 @@
   }
 
   @media (max-width: 767px) {
-    .avatar-ring-wrap {
-      width: auto;
-      height: auto;
-      position: static;
-      display: flex;
+    .character-panel {
       flex-direction: column;
-      align-items: center;
     }
 
-    .avatar-ring-wrap :global(.character-avatar) {
-      position: relative;
-      top: auto;
-      left: auto;
-      transform: none;
-      margin-bottom: 16px;
-    }
-
-    .ring-icons {
-      position: static;
-      display: grid;
+    .slots-grid {
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
       width: 100%;
     }
 
-    .ring-icon {
-      position: static;
-      transform: none;
+    .slot-square {
       width: 100%;
       height: 56px;
-      border-radius: var(--border-radius-md);
-    }
-
-    .ring-icon.active {
-      transform: scale(1.05);
     }
   }
 </style>

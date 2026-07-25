@@ -223,6 +223,15 @@ export default {
     goToShop: 'Go to the shop'
   },
 
+  admin: {
+    fittingRoom: {
+      navLabel: 'Fitting Room',
+      title: 'Fitting Room',
+      subtitle: 'Try on every shop item, with no level or price limit.',
+      reset: 'Reset'
+    }
+  },
+
   chest: {
     open: 'Open my chest',
     tapToOpen: 'Tap the chest to open it!',
