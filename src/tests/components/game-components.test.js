@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { tick } from 'svelte';
 import { render, fireEvent } from '@testing-library/svelte';
 import GameBoard from '../../lib/components/GameBoard.svelte';
 import QuestionPanel from '../../lib/components/QuestionPanel.svelte';
@@ -94,7 +95,6 @@ describe('Composant QuestionPanel', () => {
     questionTimer: 10,
     timeAllowed: 20,
     solvedHistory: [],
-    isMobile: false,
     onInput: vi.fn(),
     onSubmit: vi.fn()
   };
@@ -141,7 +141,7 @@ describe('Composant QuestionPanel', () => {
       stages: [{ key: 'final', value: 83, digits: 2, shift: 0 }]
     };
     const { container } = render(QuestionPanel, {
-      props: { ...baseProps, question, isMobile: false }
+      props: { ...baseProps, question }
     });
     const input = container.querySelector('.stage-input');
     expect(input).not.toBeNull();
@@ -165,7 +165,7 @@ describe('Composant QuestionPanel', () => {
       stages: [{ key: 'final', value: 83, digits: 2, shift: 0 }]
     };
     const { container } = render(QuestionPanel, {
-      props: { ...baseProps, question, isMobile: false, onInput }
+      props: { ...baseProps, question, onInput }
     });
     const input = container.querySelector('.stage-input');
     await fireEvent.input(input, { target: { value: '8' } });
@@ -231,32 +231,30 @@ describe('Composant QuestionPanel', () => {
     expect(rows[2].querySelectorAll('.digit-box.pending').length).toBe(4);
   });
 
-  it('présentation inline pour une table (tables mobile)', () => {
+  it('présentation inline pour une table', () => {
     const { container } = render(QuestionPanel, {
-      props: { ...baseProps, question: tablesQuestion(6, 7), isMobile: true }
+      props: { ...baseProps, question: tablesQuestion(6, 7) }
     });
     expect(container.querySelector('.question-inline')).not.toBeNull();
     expect(container.querySelector('.question-inline').textContent).toContain('6 × 7');
     expect(container.querySelector('.posed')).toBeNull();
   });
 
-  it('affiche le pavé numérique sur mobile uniquement', () => {
+  it('utilise le clavier numérique natif (inputmode), pas de pavé personnalisé', () => {
     const question = tablesQuestion();
-    const mobile = render(QuestionPanel, { props: { ...baseProps, question, isMobile: true } });
-    expect(mobile.container.querySelector('.keypad')).not.toBeNull();
-    const desktop = render(QuestionPanel, { props: { ...baseProps, question, isMobile: false } });
-    expect(desktop.container.querySelector('.keypad')).toBeNull();
+    const { container } = render(QuestionPanel, { props: { ...baseProps, question } });
+    const input = container.querySelector('input');
+    expect(input.getAttribute('inputmode')).toBe('numeric');
+    expect(input.hasAttribute('readonly')).toBe(false);
+    expect(container.querySelector('.keypad')).toBeNull();
   });
 
-  it('le pavé numérique concatène les chiffres via onInput', async () => {
-    const onInput = vi.fn();
-    const { container } = render(QuestionPanel, {
-      props: { ...baseProps, question: tablesQuestion(), userAnswer: '2', isMobile: true, onInput }
-    });
-    const buttons = [...container.querySelectorAll('.keypad .key')];
-    const five = buttons.find((b) => b.textContent.trim() === '5');
-    await fireEvent.pointerDown(five);
-    expect(onInput).toHaveBeenCalledWith('25');
+  it('redonne le focus à l’input à chaque nouvelle question (bug régression : focus perdu en mode responsive)', async () => {
+    const question = tablesQuestion(3, 4);
+    const { container } = render(QuestionPanel, { props: { ...baseProps, question } });
+    const input = container.querySelector('input');
+    await tick();
+    expect(document.activeElement).toBe(input);
   });
 
   it('affiche l’historique des réponses justes avec les points', () => {

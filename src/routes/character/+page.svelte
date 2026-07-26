@@ -77,19 +77,22 @@
       </div>
       <div class="slots-grid">
         {#each SLOTS as { slot, icon }}
-          <button
-            class="slot-square"
-            class:active={activeSlot === slot}
-            aria-label={_(`shop.slots.${slot}`)}
-            title={_(`shop.slots.${slot}`)}
-            on:click={() => selectSlot(slot)}
-          >
-            {#if equipment[slot]}
-              <img src={equipment[slot].assetUrl} alt={_(`shop.slots.${slot}`)} />
-            {:else}
-              <span class="slot-icon-empty">{icon}</span>
-            {/if}
-          </button>
+          <div class="slot-item">
+            <button
+              class="slot-square"
+              class:active={activeSlot === slot}
+              aria-label={_(`shop.slots.${slot}`)}
+              title={_(`shop.slots.${slot}`)}
+              on:click={() => selectSlot(slot)}
+            >
+              {#if equipment[slot]}
+                <img src={equipment[slot].assetUrl} alt={_(`shop.slots.${slot}`)} />
+              {:else}
+                <span class="slot-icon-empty">{icon}</span>
+              {/if}
+            </button>
+            <span class="slot-label">{_(`shop.slots.${slot}`)}</span>
+          </div>
         {/each}
       </div>
     </div>
@@ -97,8 +100,22 @@
 
   {#if activeSlot}
     {@const activeIcon = SLOTS.find((s) => s.slot === activeSlot)?.icon}
+    <button
+      class="sheet-backdrop"
+      aria-label={_('common.close')}
+      on:click={() => (activeSlot = null)}
+    ></button>
     <div class="slot-section card">
-      <h2>{activeIcon} {_(`shop.slots.${activeSlot}`)}</h2>
+      <div class="slot-section-header">
+        <h2>{activeIcon} {_(`shop.slots.${activeSlot}`)}</h2>
+        <button
+          class="sheet-close"
+          aria-label={_('common.close')}
+          on:click={() => (activeSlot = null)}
+        >
+          ✕
+        </button>
+      </div>
       <div class="items-row">
         {#if activeSlot !== REQUIRED_SLOT}
           <button
@@ -165,10 +182,16 @@
 
   .character-panel {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 30px;
     margin: 20px auto 0;
+    width: 100%;
+  }
+
+  .avatar-box {
+    flex-shrink: 0;
   }
 
   .avatar-box :global(.character-avatar) {
@@ -176,9 +199,19 @@
   }
 
   .slots-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 12px;
+    max-width: 328px;
+  }
+
+  .slot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 70px;
   }
 
   .slot-square {
@@ -212,14 +245,48 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
   }
 
+  .slot-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    text-align: center;
+    line-height: 1.15;
+    max-width: 100%;
+    overflow-wrap: break-word;
+  }
+
   .slot-section {
     padding: 20px;
     margin-bottom: 15px;
   }
 
+  .slot-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
   .slot-section h2 {
     color: var(--primary-dark);
     margin-bottom: 12px;
+  }
+
+  .sheet-close {
+    display: none;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-secondary);
+    border-radius: 50%;
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .sheet-backdrop {
+    display: none;
   }
 
   .items-row {
@@ -285,14 +352,33 @@
       flex-direction: column;
     }
 
-    .slots-grid {
-      grid-template-columns: repeat(4, 1fr);
+    .sheet-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
       width: 100%;
+      height: 100%;
+      border: none;
+      padding: 0;
+      background-color: rgba(0, 0, 0, 0.45);
+      z-index: 40;
     }
 
-    .slot-square {
-      width: 100%;
-      height: 56px;
+    .slot-section {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 70vh;
+      overflow-y: auto;
+      margin: 0;
+      border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.25);
+      z-index: 50;
+    }
+
+    .sheet-close {
+      display: flex;
     }
   }
 </style>

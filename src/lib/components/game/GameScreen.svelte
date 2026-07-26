@@ -77,7 +77,6 @@
         {questionTimer}
         {timeAllowed}
         {solvedHistory}
-        {isMobile}
         {onInput}
         {onSubmit}
       />

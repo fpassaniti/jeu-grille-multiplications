@@ -2,7 +2,6 @@
 <!-- Généralise MobileGame : question générique (posée en colonnes pour +/−/× multi-chiffres) -->
 <script>
   import { tick } from 'svelte';
-  import NumericKeypad from './NumericKeypad.svelte';
   import { _ } from '$lib/utils/i18n';
 
   // Props
@@ -14,7 +13,6 @@
   export let questionTimer = 0;
   export let timeAllowed = 0;
   export let solvedHistory = [];
-  export let isMobile = false;
   export let onInput = () => {};
   export let onSubmit = () => {};
 
@@ -33,10 +31,12 @@
       ])
     : [];
 
-  // Refocus au changement de question ou d'étape (desktop, clavier physique) :
-  // l'input réel reste le même nœud DOM d'une étape à l'autre, mais on
-  // reforce le focus par sécurité (ex: après un clic ailleurs qui l'aurait perdu).
-  $: if (question?.id && stageIndex >= 0 && !isMobile) {
+  // Refocus au changement de question ou d'étape : l'input réel reste le même
+  // nœud DOM d'une étape à l'autre, mais on reforce le focus par sécurité
+  // (ex: après un clic ailleurs qui l'aurait perdu). Le clavier natif (inputmode
+  // numeric) rend ce comportement pertinent aussi bien au clavier physique
+  // qu'au clavier virtuel mobile.
+  $: if (question?.id && stageIndex >= 0) {
     tick().then(() => inputEl?.focus());
   }
 
@@ -119,8 +119,7 @@
               class="stage-input"
               value={userAnswer}
               on:input={handleInput}
-              inputmode={isMobile ? 'none' : 'numeric'}
-              readonly={isMobile}
+              inputmode="numeric"
               pattern="[0-9]*"
               autocomplete="off"
               aria-label={_('game.answerPlaceholder')}
@@ -137,8 +136,7 @@
             type="text"
             value={userAnswer}
             on:input={handleInput}
-            inputmode={isMobile ? 'none' : 'numeric'}
-            readonly={isMobile}
+            inputmode="numeric"
             pattern="[0-9]*"
             autocomplete="off"
             class:correct={feedback === 'correct'}
@@ -160,19 +158,9 @@
       </div>
     {/if}
 
-    {#if isMobile}
-      <div class="keypad-wrapper">
-        <NumericKeypad
-          onDigit={(d) => onInput(userAnswer + d)}
-          onErase={() => onInput(userAnswer.slice(0, -1))}
-          onValidate={onSubmit}
-        />
-      </div>
-    {:else}
-      <button class="validate-button" on:click={onSubmit}>
-        {_('game.validate')}
-      </button>
-    {/if}
+    <button class="validate-button" on:click={onSubmit}>
+      {_('game.validate')}
+    </button>
   </div>
 
   <div class="solved-info card">
@@ -395,10 +383,6 @@
     height: 100%;
     background-color: var(--secondary);
     transition: width 0.1s linear;
-  }
-
-  .keypad-wrapper {
-    margin-top: 18px;
   }
 
   .validate-button {

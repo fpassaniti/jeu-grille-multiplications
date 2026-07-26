@@ -150,6 +150,7 @@
   </div>
 
   {#if pendingItem}
+    <button class="sheet-backdrop" aria-label={_('common.close')} on:click={cancelBuy}></button>
     <div class="confirm-panel card">
       <p class="confirm-text">
         {_('shop.confirmBuy', { price: pendingItem.finalPrice })}
@@ -321,6 +322,10 @@
     text-align: center;
     margin-bottom: 20px;
     background-color: var(--bg-secondary);
+  }
+
+  .sheet-backdrop {
+    display: none;
   }
 
   .confirm-text {
@@ -505,6 +510,42 @@
     .shop-header {
       flex-direction: column;
       text-align: center;
+    }
+
+    .sheet-backdrop {
+      display: block;
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      padding: 0;
+      background-color: rgba(0, 0, 0, 0.45);
+      z-index: 40;
+    }
+
+    .confirm-panel {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      max-height: 70vh;
+      overflow-y: auto;
+      margin: 0;
+      border-radius: var(--border-radius-md) var(--border-radius-md) 0 0;
+      box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.25);
+      z-index: 50;
+    }
+
+    .potions-grid {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .potion-card {
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
     }
   }
 </style>
