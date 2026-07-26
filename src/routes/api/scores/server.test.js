@@ -302,6 +302,66 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body.rewards.chests.perfect).toBe(true);
   });
 
+  it('devrait ignorer une partie à 0 point (aucun calcul résolu) : ni enregistrée, ni récompensée', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 0,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'tables',
+      questionsSolved: 0
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      success: true,
+      counted: false,
+      message: 'Partie non comptabilisée : aucun calcul résolu',
+      gameData: null,
+      gameMode: 'tables',
+      xpEarned: 0,
+      progressUpdate: null,
+      rewards: null
+    });
+    // Ni requête anti-replay, ni appel à add_game_rewards.
+    expect(mockDb.replayCalls).toHaveLength(0);
+    expect(mockDb.rewardsCalls).toHaveLength(0);
+  });
+
+  it('devrait transmettre completed=false à add_game_rewards pour une fin anticipée ("Terminer la partie")', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 40,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'tables',
+      questionsSolved: 3,
+      completed: false
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(mockDb.rewardsCalls).toHaveLength(1);
+    expect(mockDb.rewardsCalls[0][3]).toBe(false);
+  });
+
+  it('devrait transmettre completed=true par défaut (fin naturelle / anciens clients)', async () => {
+    mockRequest.json.mockResolvedValue({
+      score: 400,
+      duration: 3,
+      level: 'adulte',
+      gameMode: 'tables',
+      questionsSolved: 20
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(mockDb.rewardsCalls).toHaveLength(1);
+    expect(mockDb.rewardsCalls[0][3]).toBe(true);
+  });
+
   it('devrait accepter un score avec plus de cellules résolues que possible (plusieurs grilles remplies)', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Excellent',

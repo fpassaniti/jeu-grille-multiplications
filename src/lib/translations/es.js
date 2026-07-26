@@ -380,6 +380,7 @@ export default {
     reachedLevel: 'Has alcanzado el nivel...',
     viewNewLevel: 'Ver mi nuevo nivel',
     scoreSaved: '¡Puntuación guardada con éxito!',
+    gameNotCounted: 'Partida no contabilizada: ningún cálculo resuelto.',
     xpEarned: 'Has ganado {xp} puntos de experiencia.',
     newGame: 'Nueva partida',
     backToHome: 'Volver al inicio',

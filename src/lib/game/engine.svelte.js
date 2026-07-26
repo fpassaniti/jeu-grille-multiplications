@@ -41,6 +41,8 @@ export class GameEngine {
   /** @type {import('$lib/modes/types.js').BoardState|null} */
   board = $state(null);
   poolResetNotice = $state(false);
+  /** false si la partie a été écourtée via « Terminer la partie » plutôt que le minuteur. */
+  completed = $state(true);
 
   // ---- privé, non réactif ----
   #generator = null;
@@ -63,6 +65,7 @@ export class GameEngine {
 
     this.score = 0;
     this.errorsCount = 0;
+    this.completed = false;
     this.solvedHistory = [];
     this.userAnswer = '';
     this.stageIndex = 0;
@@ -134,9 +137,10 @@ export class GameEngine {
     }
   }
 
-  end() {
+  end({ manual = false } = {}) {
     this.#clearTimers();
     if (this.state === 'playing') {
+      this.completed = !manual;
       this.state = 'finished';
     }
   }
@@ -162,7 +166,8 @@ export class GameEngine {
       score: this.score,
       questionsSolved: this.progress.cumulative,
       questionsTotal: this.progress.total,
-      errorsCount: this.errorsCount
+      errorsCount: this.errorsCount,
+      completed: this.completed
     };
   }
 

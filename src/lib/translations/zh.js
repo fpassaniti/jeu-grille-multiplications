@@ -380,6 +380,7 @@ export default {
     reachedLevel: '你已达到等级...',
     viewNewLevel: '查看我的新等级',
     scoreSaved: '分数成功保存！',
+    gameNotCounted: '本局未计入：未完成任何计算。',
     xpEarned: '你获得了{xp}点经验值。',
     newGame: '新游戏',
     backToHome: '返回首页',

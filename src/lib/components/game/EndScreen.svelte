@@ -135,6 +135,12 @@
         <p class="adventure-info">{_('play.savingScore')}</p>
       {/if}
     </div>
+  {:else if gameResults?.counted === false}
+    <div class="save-score card-inset">
+      <div class="score-saved-message">
+        <span class="emoji">ℹ️</span> {_('play.gameNotCounted')}
+      </div>
+    </div>
   {:else if gameResults}
     <div class="save-score card-inset saved">
       <div class="score-saved-message">

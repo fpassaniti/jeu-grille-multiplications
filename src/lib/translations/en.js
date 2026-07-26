@@ -380,6 +380,7 @@ export default {
     reachedLevel: 'You\'ve reached level...',
     viewNewLevel: 'View my new level',
     scoreSaved: 'Score saved successfully!',
+    gameNotCounted: 'Game not counted: no calculation solved.',
     xpEarned: 'You earned {xp} experience points.',
     newGame: 'New game',
     backToHome: 'Back to home',

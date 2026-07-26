@@ -72,6 +72,9 @@ export function normalizePayload(body) {
   const questionsTotal = body.questionsTotal ?? body.totalPossibleCells ?? null;
   const errorsCount =
     Number.isInteger(body.errorsCount) && body.errorsCount >= 0 ? body.errorsCount : null;
+  // Anciens clients (PWA en cache) sans ce champ : on suppose une fin naturelle,
+  // comportement historique (bonus toujours accordés).
+  const completed = body.completed !== false;
 
   return {
     value: {
@@ -83,7 +86,8 @@ export function normalizePayload(body) {
       questionsSolved,
       questionsTotal,
       errorsCount,
-      elapsedSec
+      elapsedSec,
+      completed
     }
   };
 }

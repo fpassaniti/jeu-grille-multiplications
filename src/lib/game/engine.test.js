@@ -51,6 +51,25 @@ describe('GameEngine — cycle de vie', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
+  it('fin naturelle (minuteur écoulé) → results.completed = true', () => {
+    engine.start(TABLES_CONFIG);
+    vi.advanceTimersByTime(3 * 60 * 1000);
+    expect(engine.results.completed).toBe(true);
+  });
+
+  it('end() sans argument → completed = true (fin naturelle)', () => {
+    engine.start(TABLES_CONFIG);
+    engine.end();
+    expect(engine.results.completed).toBe(true);
+  });
+
+  it('end({ manual: true }) (bouton "Terminer la partie") → completed = false', () => {
+    engine.start(TABLES_CONFIG);
+    engine.end({ manual: true });
+    expect(engine.state).toBe('finished');
+    expect(engine.results.completed).toBe(false);
+  });
+
   it('restart : start est idempotent (pas de timers orphelins)', () => {
     engine.start(TABLES_CONFIG);
     vi.advanceTimersByTime(5000);

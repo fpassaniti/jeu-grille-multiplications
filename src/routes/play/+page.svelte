@@ -84,6 +84,7 @@
       questionsTotal: results.questionsTotal,
       errorsCount: results.errorsCount,
       elapsedSec: results.elapsedSec,
+      completed: results.completed,
       solvedCells: results.questionsSolved,
       totalPossibleCells: results.questionsTotal,
       selectedTables
@@ -183,7 +184,7 @@
       {windowHeight}
       onInput={(raw) => engine.onAnswerInput(raw)}
       onSubmit={() => engine.submitAnswer()}
-      onEnd={() => engine.end()}
+      onEnd={() => engine.end({ manual: true })}
     />
   {:else if engine.state === 'finished'}
     <EndScreen

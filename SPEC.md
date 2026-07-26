@@ -268,14 +268,18 @@ i18n : nouvelles clés `modes.*`, `difficulty.*` (tiers libellés), `game.valida
 
 **Conversion** : `pieces_base = GREATEST(10, FLOOR(score / 10))` → 20–200 🪙/partie (score typique 200–2000), moyenne ~80. Nombres petits et lisibles, visuellement distincts de l'XP.
 
-**Bonus (serveur uniquement)** :
+**Partie à 0 point non comptabilisée** : une partie où `score = 0` (aucun calcul résolu) n'est ni enregistrée (`game_sessions`/`scores`) ni récompensée — sinon démarrer une partie et cliquer aussitôt sur « Terminer la partie » en boucle rapporterait le plancher de `pieces_base` sans effort (`/api/scores`, court-circuit avant tout accès base).
+
+**Bonus (serveur uniquement, `add_game_rewards`, `p_completed`)** — `pieces_base` reste crédité pour toute partie à score > 0, mais les bonus ci-dessous exigent une partie allée à son terme naturel (minuteur écoulé) : ils ne sont **jamais** accordés en cas de fin anticipée via « Terminer la partie » (`p_completed = false`), pour qu'écourter une partie ne serve jamais à collecter un bonus forfaitaire sans jouer réellement :
 
 | Bonus | Montant | Condition |
 |---|---|---|
-| Première partie du jour | +50 🪙 | `DATE(last_played_at) < CURRENT_DATE` |
-| Streak actif | +5 × streak_days (plafond +50) | streak ≥ 2 jours |
-| Partie parfaite | +25 🪙 | 0 erreur ET ≥ 10 réponses |
-| Week-end | ×2 sur la base | samedi/dimanche |
+| Première partie du jour | +50 🪙 | `DATE(last_played_at) < CURRENT_DATE`, partie complétée |
+| Streak actif | +5 × streak_days (plafond +50) | streak ≥ 2 jours, **une seule fois par jour** (première partie complétée du jour), partie complétée |
+| Partie parfaite | +25 🪙 | 0 erreur ET ≥ 10 réponses, partie complétée |
+| Week-end | ×2 sur la base | samedi/dimanche, partie complétée |
+
+Le bonus de streak était auparavant recrédité à chaque partie du jour (pas seulement la première) — corrigé par `db/migrations/007_reward_completion_gate.sql` suite à un excès de pièces observé chez les joueurs à streak actif enchaînant plusieurs parties/jour.
 
 Revenu d'un joueur régulier (2-3 parties/jour) : **~300–400 🪙/jour** (avec coffre quotidien).
 

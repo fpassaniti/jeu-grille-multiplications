@@ -22,7 +22,8 @@ export async function POST({ request, cookies }) {
       questionsSolved,
       questionsTotal,
       errorsCount,
-      elapsedSec
+      elapsedSec,
+      completed
     } = normalized.value;
 
     // Le jeu est réservé aux comptes connectés : plus de partie invitée.
@@ -32,6 +33,22 @@ export async function POST({ request, cookies }) {
     }
     const userId = sessionUser.id;
     const userDisplayName = sessionUser.displayName || sessionUser.username;
+
+    // Partie à 0 point (aucun calcul résolu) : ni enregistrée, ni récompensée —
+    // sinon un joueur peut démarrer une partie et cliquer sur « Terminer la
+    // partie » en boucle pour engranger le plancher de pièces sans jamais jouer.
+    if (score === 0) {
+      return json({
+        success: true,
+        counted: false,
+        message: 'Partie non comptabilisée : aucun calcul résolu',
+        gameData: null,
+        gameMode,
+        xpEarned: 0,
+        progressUpdate: null,
+        rewards: null
+      });
+    }
 
     // Anti-replay (#7) : basé sur le temps RÉELLEMENT joué (elapsedSec), pas la
     // durée nominale — une partie terminée tôt ("Finir la partie") ne doit pas
@@ -75,7 +92,7 @@ export async function POST({ request, cookies }) {
     let progressUpdate = null;
     let rewards = null;
     const rewardsData = await sql`
-      SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect})
+      SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect}, ${completed})
     `;
     if (rewardsData && rewardsData.length > 0) {
       const r = rewardsData[0];
@@ -114,6 +131,7 @@ export async function POST({ request, cookies }) {
 
     return json({
       success: true,
+      counted: true,
       message: 'Score enregistré avec succès',
       gameData: gameData && gameData[0] ? gameData[0] : null,
       gameMode,
