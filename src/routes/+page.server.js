@@ -1,6 +1,12 @@
 import { sql } from '$lib/server/db';
 import { getEquipment } from '$lib/server/shop.js';
 import { getChestAvailability } from '$lib/server/chests.js';
+import {
+  getPlayedDays,
+  getEarliestPlayedMonth,
+  projectMilestoneDates,
+  getParisToday
+} from '$lib/server/streakCalendar.js';
 
 export async function load({ locals }) {
   if (!locals.user) {
@@ -61,18 +67,20 @@ export async function load({ locals }) {
       LIMIT 5
     `;
 
-    // Jours joués sur les 7 derniers jours (calendrier streak, SPEC §5.6)
-    const playedDaysResult = await sql`
-      SELECT DISTINCT (date AT TIME ZONE 'Europe/Paris')::date AS d
-      FROM game_sessions
-      WHERE user_id = ${locals.user.id} AND date > NOW() - INTERVAL '7 days'
-    `;
-    const playedDays = (playedDaysResult ?? []).map((r) => new Date(r.d).toISOString().slice(0, 10));
+    // Calendrier de streak (mois courant, navigation vers les autres mois via l'API)
+    const todayISO = getParisToday();
+    const currentMonth = todayISO.slice(0, 7);
+    const playedDays = await getPlayedDays(locals.user.id, currentMonth);
+    const earliestMonth = await getEarliestPlayedMonth(locals.user.id);
 
-    // Prochain palier de streak (3/7/14/30) → coffre à gagner
-    const STREAK_MILESTONES = [3, 7, 14, 30];
+    // Prochain palier de streak (3/7/14/30/60) non encore réclamé → coffre à gagner
     const streakDays = progressData.streak_days ?? 0;
-    const nextStreakMilestone = STREAK_MILESTONES.find((m) => m > streakDays) ?? null;
+    const milestoneProjections = projectMilestoneDates({
+      streakDays,
+      lastStreakReward: progressData.last_streak_reward ?? 0,
+      today: todayISO
+    });
+    const nextStreakMilestone = milestoneProjections[0]?.milestone ?? null;
 
     const equipment = await getEquipment(locals.user.id);
     const chests = await getChestAvailability(locals.user.id);
@@ -89,7 +97,10 @@ export async function load({ locals }) {
       },
       recentGames: recentGames && recentGames.length > 0 ? recentGames : [],
       playedDays,
+      currentMonth,
+      earliestMonth,
       nextStreakMilestone,
+      milestoneProjections,
       equipment,
       chests
     };
@@ -101,7 +112,10 @@ export async function load({ locals }) {
       userProgress: null,
       recentGames: [],
       playedDays: [],
+      currentMonth: getParisToday().slice(0, 7),
+      earliestMonth: null,
       nextStreakMilestone: null,
+      milestoneProjections: [],
       equipment: null,
       chests: null
     };

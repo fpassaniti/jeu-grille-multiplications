@@ -4,6 +4,7 @@
   import CharacterAvatar from '$lib/components/character/CharacterAvatar.svelte';
   import LevelBadge from '$lib/components/LevelBadge.svelte';
   import ChestModal from '$lib/components/chest/ChestModal.svelte';
+  import StreakCalendar from '$lib/components/streak/StreakCalendar.svelte';
   import { listEnabledModes } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
@@ -14,16 +15,6 @@
 
   // Bannière week-end : affichage seul, le calcul réel (bonus ×2) est serveur
   const isWeekend = [0, 6].includes(new Date().getDay());
-
-  const RARITY_LABEL = { 3: 'commun', 7: 'rare', 14: 'épique', 30: 'légendaire' };
-
-  // 7 derniers jours (aujourd'hui inclus), Europe/Paris
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (6 - i));
-    return d.toISOString().slice(0, 10);
-  });
-  $: playedSet = new Set(data.playedDays ?? []);
 
   let chests = data.chests ?? {};
   let dailyOpen = false;
@@ -156,24 +147,14 @@
           {/if}
         </div>
 
-        <div class="streak-card card">
-          <h2>{_('streak.days', { count: data.userProgress?.streak_days || 0 })}</h2>
-          <div class="week-calendar">
-            {#each weekDays as day}
-              <div class="day-cell" class:played={playedSet.has(day)}>
-                {playedSet.has(day) ? '✅' : '⬜'}
-              </div>
-            {/each}
-          </div>
-          {#if data.nextStreakMilestone}
-            <p class="next-milestone">
-              {_('streak.nextMilestone', {
-                days: data.nextStreakMilestone - (data.userProgress?.streak_days || 0),
-                reward: RARITY_LABEL[data.nextStreakMilestone]
-              })}
-            </p>
-          {/if}
-        </div>
+        <StreakCalendar
+          streakDays={data.userProgress?.streak_days || 0}
+          initialMonth={data.currentMonth}
+          initialPlayedDays={data.playedDays}
+          earliestMonth={data.earliestMonth}
+          milestoneProjections={data.milestoneProjections}
+          nextStreakMilestone={data.nextStreakMilestone}
+        />
 
         <div class="recent-games card">
           <h2>{_('dashboard.recentGames')}</h2>
@@ -738,35 +719,6 @@
     0% { transform: scale(1); }
     50% { transform: scale(1.03); }
     100% { transform: scale(1); }
-  }
-
-  .streak-card {
-    padding: 20px;
-  }
-
-  .streak-card h2 {
-    margin-bottom: 15px;
-    color: var(--primary-dark);
-    text-align: center;
-  }
-
-  .week-calendar {
-    display: flex;
-    justify-content: center;
-    gap: 6px;
-    font-size: 1.5rem;
-  }
-
-  .day-cell {
-    width: 32px;
-    text-align: center;
-  }
-
-  .next-milestone {
-    text-align: center;
-    margin-top: 12px;
-    font-size: 0.9rem;
-    color: var(--text-secondary);
   }
 
   .recent-games {

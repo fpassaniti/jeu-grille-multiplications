@@ -47,6 +47,8 @@ vi.mock('@neondatabase/serverless', () => {
           return [];
         } else if (query.includes('DISTINCT') && query.includes('game_sessions')) {
           return [{ d: new Date().toISOString().slice(0, 10) }];
+        } else if (query.includes('MIN(date)')) {
+          return [{ d: new Date().toISOString().slice(0, 7) }];
         } else if (query.includes('FROM game_sessions')) {
           return [
             {
@@ -103,6 +105,17 @@ describe('Home Page Server (fusion avec le dashboard)', () => {
     expect(result.userProgress.currentLevel).toHaveProperty('title', 'Mathématicien Amateur');
     expect(result.userProgress).toHaveProperty('nextLevel');
     expect(result.userProgress.nextLevel).toHaveProperty('title', 'Expert en Multiplication');
+  });
+
+  it('charge le calendrier de série (mois courant, plancher de navigation, projections de palier)', async () => {
+    const result = await load({ locals: mockLocals });
+
+    expect(result).toHaveProperty('currentMonth');
+    expect(result.currentMonth).toMatch(/^\d{4}-\d{2}$/);
+    expect(Array.isArray(result.playedDays)).toBe(true);
+    expect(result).toHaveProperty('earliestMonth');
+    expect(result.earliestMonth).toMatch(/^\d{4}-\d{2}$/);
+    expect(Array.isArray(result.milestoneProjections)).toBe(true);
   });
 
   it('charge les parties récentes', async () => {

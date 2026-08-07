@@ -1,6 +1,5 @@
 import { sql } from '$lib/server/db';
-
-const STREAK_MILESTONES = [3, 7, 14, 30];
+import { STREAK_MILESTONES } from '$lib/server/streakCalendar.js';
 
 /**
  * Disponibilité des coffres pour un utilisateur (SPEC §5.5).
