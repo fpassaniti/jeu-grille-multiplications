@@ -20,12 +20,17 @@ export async function getShopData(userId) {
     ORDER BY i.sort_order
   `;
 
-  const progress = await sql`SELECT coins, level FROM user_progress WHERE user_id = ${userId}`;
-  const { coins = 0, level = 1 } = progress?.[0] ?? {};
+  const progress = await sql`
+    SELECT coins, level, active_booster, streak_freezes FROM user_progress WHERE user_id = ${userId}
+  `;
+  const { coins = 0, level = 1, active_booster: activeBooster = null, streak_freezes: streakFreezes = 0 } =
+    progress?.[0] ?? {};
 
   return {
     coins,
     level,
+    activeBooster,
+    streakFreezes,
     items: items.map((item) => ({
       id: item.id,
       code: item.code,

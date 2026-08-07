@@ -25,6 +25,11 @@
   let items = data.shop.items;
   let level = data.shop.level;
   let equipment = data.equipment;
+  let activeBooster = data.shop.activeBooster;
+  let streakFreezes = data.shop.streakFreezes;
+
+  $: boosterGamesLeft = activeBooster?.games_left ?? 0;
+  $: freezeCapReached = streakFreezes >= 2;
 
   let activeSlot = 'body';
   let activeRarity = null; // null = toutes les raretés
@@ -103,6 +108,11 @@
         throw new Error(result.error || 'Erreur');
       }
       coins = result.coinsBalance;
+      if (kind === 'freeze') {
+        streakFreezes += 1;
+      } else {
+        activeBooster = { multiplier: 2, games_left: 3 };
+      }
     } catch (e) {
       consumableError = e.message;
     } finally {
@@ -200,24 +210,32 @@
   <div class="potions-section card">
     <h2>{_('shop.potions')}</h2>
     {#if consumableError}
-      <p class="confirm-error">⚠️ {consumableError}</p>
+      <p class="confirm-error">⚠️ {_(`shop.${consumableError}`) ?? consumableError}</p>
     {/if}
     <div class="potions-grid">
       <div class="potion-card">
         <span class="potion-icon">🛡️</span>
         <h3>{_('shop.freezeName')}</h3>
         <p>{_('shop.freezeDesc')}</p>
-        <button on:click={() => buyConsumable('freeze')} disabled={freezePending || coins < 300}>
-          {freezePending ? _('common.loading') : '300 🪙'}
-        </button>
+        {#if freezeCapReached}
+          <span class="potion-status">{_('shop.freeze_cap_reached')}</span>
+        {:else}
+          <button on:click={() => buyConsumable('freeze')} disabled={freezePending || coins < 300}>
+            {freezePending ? _('common.loading') : '300 🪙'}
+          </button>
+        {/if}
       </div>
       <div class="potion-card">
         <span class="potion-icon">⚡</span>
         <h3>{_('shop.boosterName')}</h3>
         <p>{_('shop.boosterDesc')}</p>
-        <button on:click={() => buyConsumable('booster')} disabled={boosterPending || coins < 400}>
-          {boosterPending ? _('common.loading') : '400 🪙'}
-        </button>
+        {#if boosterGamesLeft > 0}
+          <span class="potion-status">{_('shop.boosterActive')} ({boosterGamesLeft})</span>
+        {:else}
+          <button on:click={() => buyConsumable('booster')} disabled={boosterPending || coins < 400}>
+            {boosterPending ? _('common.loading') : '400 🪙'}
+          </button>
+        {/if}
       </div>
     </div>
   </div>
@@ -467,6 +485,13 @@
 
   .potion-icon {
     font-size: 2rem;
+  }
+
+  .potion-status {
+    display: inline-block;
+    font-size: 0.85rem;
+    color: var(--primary-dark);
+    font-weight: bold;
   }
 
   .shop-footer {
