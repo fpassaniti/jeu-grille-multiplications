@@ -30,6 +30,10 @@
     return data.shop.items.filter((item) => item.slot === slot && item.owned);
   }
 
+  function rarityFor(slot) {
+    return data.shop.items.find((i) => i.id === equipment[slot]?.itemId)?.rarity ?? 'common';
+  }
+
   function selectSlot(slot) {
     activeSlot = activeSlot === slot ? null : slot;
   }
@@ -81,15 +85,13 @@
             <button
               class="slot-square"
               class:active={activeSlot === slot}
+              class:equipped={!!equipment[slot]}
+              style:--slot-rarity-color={equipment[slot] ? `var(--rarity-${rarityFor(slot)})` : null}
               aria-label={_(`shop.slots.${slot}`)}
               title={_(`shop.slots.${slot}`)}
               on:click={() => selectSlot(slot)}
             >
-              {#if equipment[slot]}
-                <img src={equipment[slot].assetUrl} alt={_(`shop.slots.${slot}`)} />
-              {:else}
-                <span class="slot-icon-empty">{icon}</span>
-              {/if}
+              <span class="slot-icon-empty">{icon}</span>
             </button>
             <span class="slot-label">{_(`shop.slots.${slot}`)}</span>
           </div>
@@ -227,16 +229,12 @@
     box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
   }
 
-  .slot-square img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    padding: 6px;
-  }
-
   .slot-icon-empty {
     font-size: 1.8rem;
-    opacity: 0.4;
+  }
+
+  .slot-square.equipped {
+    border-color: var(--slot-rarity-color, var(--rarity-common));
   }
 
   .slot-square.active {

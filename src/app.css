@@ -29,9 +29,11 @@
   --box-shadow-hover: 0 8px 20px rgba(0, 0, 0, 0.15);
   --box-shadow-active: 0 4px 10px rgba(0, 0, 0, 0.2);
   --rarity-common: #b0bec5;
+  --rarity-uncommon: #66bb6a;
   --rarity-rare: #42a5f5;
   --rarity-epic: #ab47bc;
   --rarity-legendary: #ffca28;
+  --rarity-mythic: #ec407a;
 }
 
 body {
