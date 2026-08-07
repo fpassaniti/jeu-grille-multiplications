@@ -217,7 +217,7 @@
   .weekday-row,
   .month-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
+    grid-template-columns: repeat(7, minmax(0, 1fr));
     gap: 4px;
   }
 
@@ -286,5 +286,11 @@
     margin-top: 12px;
     font-size: 0.9rem;
     color: var(--text-secondary);
+  }
+
+  @media (max-width: 480px) {
+    .day-cell {
+      aspect-ratio: 5 / 6;
+    }
   }
 </style>
