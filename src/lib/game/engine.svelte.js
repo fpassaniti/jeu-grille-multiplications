@@ -268,7 +268,11 @@ export class GameEngine {
    * fasse perdre que les chiffres pas encore tapés.
    */
   #awardDigitPoints() {
-    const points = computeDigitScore(this.questionTimer, this.question.timeAllowedSec);
+    const points = computeDigitScore(
+      this.questionTimer,
+      this.question.timeAllowedSec,
+      this.question.digitWeight
+    );
     this.score += points;
     this.#digitPointsAccumulated += points;
     this.#refreshDerived();

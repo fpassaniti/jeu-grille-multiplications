@@ -243,8 +243,6 @@ export default {
     welcomeTitle: 'Bienvenue dans la nouvelle aventure !',
     welcomeText: 'Voici un cadeau pour fêter les nouveautés de MultyFun.',
     youWon: 'Tu as gagné {coins} 🪙 !',
-    newItem: 'Nouvel objet débloqué !',
-    duplicate: 'Tu l\'as déjà ! +{refund} 🪙',
     comeBackTomorrow: 'Reviens demain pour un nouveau coffre !',
     alreadyOpened: 'Déjà ouvert aujourd\'hui'
   },

@@ -1,6 +1,6 @@
 <script>
   import CoinCounter from '$lib/components/CoinCounter.svelte';
-  import { _, getLanguage } from '$lib/utils/i18n';
+  import { _ } from '$lib/utils/i18n';
 
   // Props
   export let chestType = 'daily'; // daily|streak|levelup|perfect|welcome
@@ -8,12 +8,6 @@
   export let onClose = () => {};
 
   const CHEST_ICONS = { daily: '🎁', streak: '🔥', levelup: '⬆️', perfect: '💯', welcome: '👋' };
-  const RARITY_COLORS = {
-    common: 'var(--rarity-common)',
-    rare: 'var(--rarity-rare)',
-    epic: 'var(--rarity-epic)',
-    legendary: 'var(--rarity-legendary)'
-  };
   const CONFETTI = ['🎉', '✨', '🪙', '⭐'];
 
   let opened = false;
@@ -43,10 +37,6 @@
     }
   }
 
-  function itemName(item) {
-    return item?.name?.[getLanguage()] ?? item?.name?.fr ?? '';
-  }
-
   function handleKeydown(e) {
     if (e.key === 'Escape' && opened) onClose();
   }
@@ -65,10 +55,7 @@
         <p class="chest-error">⚠️ {error}</p>
       {/if}
     {:else}
-      <div
-        class="chest-reveal"
-        style="--halo-color: {RARITY_COLORS[result.item?.rarity] ?? 'var(--accent)'}"
-      >
+      <div class="chest-reveal">
         <div class="confetti-layer">
           {#each Array(16) as _unused, i}
             <span class="confetti" style="--i: {i}">{CONFETTI[i % CONFETTI.length]}</span>
@@ -76,18 +63,6 @@
         </div>
 
         <p class="reveal-coins"><CoinCounter value={result.coins} /></p>
-
-        {#if result.item}
-          <div class="item-reveal">
-            <img src={result.item.assetUrl} alt={itemName(result.item)} />
-            <p class="item-reveal-name">{itemName(result.item)}</p>
-            {#if result.duplicate}
-              <p class="duplicate-note">{_('chest.duplicate', { refund: result.refund })}</p>
-            {:else}
-              <p class="new-item-note">{_('chest.newItem')}</p>
-            {/if}
-          </div>
-        {/if}
 
         <button class="close-button" on:click={onClose}>{_('common.close')}</button>
       </div>
@@ -148,34 +123,6 @@
   .reveal-coins {
     font-size: 2rem;
     margin: 10px 0;
-  }
-
-  .item-reveal {
-    margin-top: 15px;
-    padding: 15px;
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 0 30px var(--halo-color);
-  }
-
-  .item-reveal img {
-    width: 100px;
-    height: 100px;
-    object-fit: contain;
-  }
-
-  .item-reveal-name {
-    font-weight: bold;
-    margin-top: 8px;
-  }
-
-  .duplicate-note {
-    color: var(--success-dark);
-    font-weight: bold;
-  }
-
-  .new-item-note {
-    color: var(--accent-dark);
-    font-weight: bold;
   }
 
   .close-button {

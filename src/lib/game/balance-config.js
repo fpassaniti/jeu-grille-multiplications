@@ -16,6 +16,28 @@
  */
 export const OP_DIFFICULTY = 0.8;
 
+/**
+ * Facteur d'étalonnage global du score des modes posés (addition/
+ * soustraction/multiplication), appliqué en plus de la proportionnalité par
+ * chiffre (`digitWeight`, `generator-utils.js`) — destiné à ramener l'ordre
+ * de grandeur du score de session à celui des modes « rappel » (tables/
+ * division), très supérieur en jeu réel d'après un retour terrain (~800-1800
+ * pts/partie en tables). Valeur neutre (1) tant que le facteur réel n'est pas
+ * mesuré : une simulation moteur (GameEngine + fake timers, vitesse de
+ * réflexion/frappe identique dans tous les modes) a montré que la seule
+ * proportionnalité par chiffre fait déjà remonter le score/seconde des modes
+ * posés AU-DESSUS de celui des tables — ce qui contredit le retour terrain et
+ * indique que l'écart réel vient d'une vitesse de résolution différente entre
+ * rappel (instantané) et calcul posé (retenues = temps de réflexion par
+ * chiffre, pas seulement de frappe), un paramètre qui ne se déduit pas d'une
+ * simulation. NE PAS relever cette constante sans un score réel mesuré en jeu
+ * (score de fin de partie, pas les pièces) pour tables ET addition/
+ * soustraction à durée identique — calculer alors
+ * `scoreTables / scoreAddition` (à `digitWeight` de proportionnalité
+ * constant) pour obtenir la valeur cible.
+ */
+export const POSED_SCORE_CALIBRATION = 1;
+
 /** Secondes allouées par opération élémentaire (base adulte). */
 export const OP_SEC = 4;
 

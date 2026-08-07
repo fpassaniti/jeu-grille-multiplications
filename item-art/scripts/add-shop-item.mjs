@@ -21,8 +21,7 @@
  *     --rarity <common|uncommon|rare|epic|legendary|mythic|none> \
  *     --unlock-level <entier> \
  *     --name-fr "..." --name-en "..." --name-es "..." --name-zh "..." \
- *     [--purchasable true|false]  (défaut true)
- *     [--default]                  (marque is_default=true)
+ *     [--default]                  (marque is_default=true, gratuit et non achetable)
  *     [--dry-run]
  */
 import 'dotenv/config';
@@ -60,7 +59,7 @@ function usageAndExit(message) {
   console.error(
     'Usage: node scripts/add-shop-item.mjs --code <code> --slot <slot> --image <chemin.png> --price <N> ' +
       '--rarity <common|uncommon|rare|epic|legendary|mythic|none> --unlock-level <N> ' +
-      '--name-fr "..." --name-en "..." --name-es "..." --name-zh "..." [--purchasable true|false] [--default] [--dry-run]'
+      '--name-fr "..." --name-en "..." --name-es "..." --name-zh "..." [--default] [--dry-run]'
   );
   process.exit(1);
 }
@@ -98,8 +97,6 @@ function validate(args) {
     usageAndExit(`--unlock-level doit être un entier >= 1 (reçu '${args['unlock-level']}')`);
   }
 
-  const purchasable = isDefault ? false : args.purchasable !== 'false';
-
   return {
     code: args.code,
     slot: args.slot,
@@ -108,7 +105,6 @@ function validate(args) {
     rarity: rarityInput === 'none' ? null : rarityInput,
     unlockLevel,
     names: { fr: args['name-fr'], en: args['name-en'], es: args['name-es'], zh: args['name-zh'] },
-    purchasable,
     isDefault
   };
 }
@@ -127,7 +123,6 @@ async function main() {
   console.log(`  rarity          ${item.rarity ?? '(aucune — item par défaut)'}`);
   console.log(`  price           ${item.price}`);
   console.log(`  unlock_level    ${item.unlockLevel}`);
-  console.log(`  is_purchasable  ${item.purchasable}`);
   console.log(`  is_default      ${item.isDefault}`);
   console.log(`  names           ${JSON.stringify(item.names)}`);
   console.log(`  image           ${item.imagePath} -> ${destPath}`);
@@ -149,9 +144,9 @@ async function main() {
   let inserted;
   try {
     inserted = await sql`
-      INSERT INTO items (code, slot, rarity, price, asset_url, name, unlock_level, is_purchasable, is_default, sort_order)
+      INSERT INTO items (code, slot, rarity, price, asset_url, name, unlock_level, is_default, sort_order)
       SELECT ${item.code}, ${item.slot}, ${item.rarity}, ${item.price}, ${assetUrl}, ${JSON.stringify(item.names)}::jsonb,
-             ${item.unlockLevel}, ${item.purchasable}, ${item.isDefault}, COALESCE(MAX(sort_order), 0) + 1
+             ${item.unlockLevel}, ${item.isDefault}, COALESCE(MAX(sort_order), 0) + 1
       FROM items
       RETURNING id, sort_order
     `;

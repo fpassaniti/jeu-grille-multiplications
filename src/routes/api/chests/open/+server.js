@@ -24,24 +24,10 @@ export async function POST({ request, cookies }) {
       return json({ error: result.error }, { status: result.error === 'not_available' ? 409 : 400 });
     }
 
-    let item = null;
-    if (result.item_id) {
-      const itemRows = await sql`
-        SELECT code, slot, rarity, name, asset_url FROM items WHERE id = ${result.item_id}
-      `;
-      if (itemRows && itemRows.length > 0) {
-        const i = itemRows[0];
-        item = { id: result.item_id, code: i.code, slot: i.slot, rarity: i.rarity, name: i.name, assetUrl: i.asset_url };
-      }
-    }
-
     return json({
       success: true,
       chestType: type,
       coins: result.coins,
-      item,
-      duplicate: result.duplicate ?? false,
-      refund: result.refund ?? 0,
       coinsBalance: result.balance,
       milestone: result.milestone ?? null,
       level: result.level ?? null

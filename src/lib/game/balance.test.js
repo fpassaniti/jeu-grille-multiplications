@@ -3,6 +3,8 @@ import { getMode } from '$lib/modes/index.js';
 import { tableDifficulty, tableTime } from '$lib/modes/tables.js';
 import division from '$lib/modes/division.js';
 import multiplication from '$lib/modes/multiplication.js';
+import addition from '$lib/modes/addition.js';
+import subtraction from '$lib/modes/subtraction.js';
 import { OP_DIFFICULTY, RECALL_DIFFICULTY_RANGE } from './balance-config.js';
 import { computeScore, computeDigitScore } from './scoring.js';
 
@@ -64,7 +66,7 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
       const gen = multiplication.createGenerator({ tiers: ['M6'] }, 'adulte', () => 0.999999);
       const q = gen.next();
       const totalDigits = q.stages.reduce((sum, stage) => sum + stage.digits, 0);
-      const m6Max = totalDigits * computeDigitScore(q.timeAllowedSec, q.timeAllowedSec);
+      const m6Max = totalDigits * computeDigitScore(q.timeAllowedSec, q.timeAllowedSec, q.digitWeight);
 
       const tableMax = computeScore(
         { difficulty: tableDifficulty(7, 7), timeAllowedSec: tableTime(7, 7, 'adulte') },
@@ -72,6 +74,27 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
       );
 
       expect(m6Max / tableMax).toBeGreaterThanOrEqual(6);
+    });
+  });
+
+  describe('digitWeight (poids par chiffre des questions posées) proportionnel à la difficulté réelle', () => {
+    it('un palier avec retenue/emprunt vaut strictement plus par chiffre que sans, à taille égale', () => {
+      const rng = () => 0.5;
+      const withCarry = addition
+        .createGenerator({ tiers: ['A3'] }, 'adulte', rng)
+        .next();
+      const noCarry = addition
+        .createGenerator({ tiers: ['A2'] }, 'adulte', rng)
+        .next();
+      expect(withCarry.digitWeight).toBeGreaterThan(noCarry.digitWeight);
+
+      const sWithBorrow = subtraction
+        .createGenerator({ tiers: ['S3'] }, 'adulte', rng)
+        .next();
+      const sNoBorrow = subtraction
+        .createGenerator({ tiers: ['S2'] }, 'adulte', rng)
+        .next();
+      expect(sWithBorrow.digitWeight).toBeGreaterThan(sNoBorrow.digitWeight);
     });
   });
 

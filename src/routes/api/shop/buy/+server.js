@@ -5,7 +5,6 @@ import { getSessionUser } from '$lib/server/auth';
 const ERROR_STATUS = {
   item_not_found: 404,
   unknown_consumable: 404,
-  not_purchasable: 403,
   level_locked: 403,
   already_owned: 409,
   already_active: 409,

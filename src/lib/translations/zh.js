@@ -243,8 +243,6 @@ export default {
     welcomeTitle: '欢迎来到全新冒险！',
     welcomeText: '这是庆祝 MultyFun 新功能的礼物。',
     youWon: '你获得了 {coins} 🪙！',
-    newItem: '解锁了新物品！',
-    duplicate: '你已经拥有了！+{refund} 🪙',
     comeBackTomorrow: '明天再来开新的宝箱吧！',
     alreadyOpened: '今天已经打开过了'
   },

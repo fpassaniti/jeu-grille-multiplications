@@ -12,7 +12,7 @@ const DEFAULT_SLOTS = ['body', 'outfit', 'weapon'];
 export async function getShopData(userId) {
   const items = await sql`
     WITH offers AS (
-      SELECT id FROM items WHERE is_purchasable
+      SELECT id FROM items WHERE NOT is_default
       ORDER BY md5(((NOW() AT TIME ZONE 'Europe/Paris')::date)::text || code) LIMIT 3
     )
     SELECT
@@ -44,7 +44,6 @@ export async function getShopData(userId) {
       assetUrl: item.asset_url,
       name: item.name,
       unlockLevel: item.unlock_level,
-      isPurchasable: item.is_purchasable,
       isDefault: item.is_default,
       owned: item.owned,
       equipped: item.equipped

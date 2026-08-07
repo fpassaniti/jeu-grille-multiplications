@@ -315,7 +315,7 @@ Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 35
 
 - **Assets** : PNG 512×512 transparents, **tous dessinés sur le même canvas** (corps centré, chaque item positionné à sa place) → composition = simples `<img>` empilées en `position:absolute; inset:0`, aucun offset en code.
 - **Composant** `src/lib/components/character/CharacterAvatar.svelte` (prop `equipment`, `size`). Affiché : `/character` (300 px), dashboard (150 px), header (mini 40 px).
-- **Lien avec les niveaux** : `unlock_level` sur certains items (« Reviens au niveau 10 pour l'acheter ! » → double motivation) ; ~6 items `is_purchasable = false` exclusifs aux coffres de level-up (niveaux 5/10/15/20/25/30).
+- **Lien avec les niveaux** : `unlock_level` sur certains items (« Reviens au niveau 10 pour l'acheter ! » → double motivation). Depuis la décision « coffres = pièces uniquement » (§5.5), tous les items sont acquis par achat boutique — aucun n'est réservé à un tirage de coffre.
 
 #### 5.3.1 Unification avec l'ancien avatar de niveau (décision 2026-07-20)
 
@@ -332,18 +332,17 @@ Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 35
 
 ### 5.5 Coffres au trésor
 
+**Décision (coffres = pièces uniquement)** : les coffres ne distribuent plus jamais d'objet, seulement des pièces. Motif : les tirages gratuits permettaient de s'équiper trop vite et trop largement, sans jamais passer par la boutique — désormais, obtenir un item est **toujours** un choix d'achat délibéré.
+
 | Type | Déclencheur | Contenu |
 |---|---|---|
-| 🎁 Quotidien | 1 clic/jour (dashboard + accueil) | 30–80 🪙 ; 15 % item commun, 5 % peu commun (le tirage rare du lancement est retiré : un catalogue ~8x plus gros rendrait un rare gratuit quotidien trop généreux) |
-| 🔥 Streak | Paliers 3 / 7 / 14 / 30 / **60 jours (nouveau, extension 350 items)** | commun garanti / peu commun + 100 🪙 / rare + 150 🪙 / épique + 300 🪙 / légendaire + 500 🪙 |
-| ⬆️ Level-up | Chaque montée de niveau | `100 + 20×niveau` 🪙 + item exclusif à chaque **niveau pair** (2 à 30, 15 exclusifs au total — remplace les seuls nv 5/10/15/20/25/30 du lancement) |
-| 💯 Perfect | Partie parfaite (max 1/jour) | 25–75 🪙, 8 % item commun, 2 % peu commun (taux global d'item inchangé, 10 %) |
-| 👋 Bienvenue | Premier login post-V2 | pièces + item commun garanti |
+| 🎁 Quotidien | 1 clic/jour (dashboard + accueil) | 30–80 🪙 |
+| 🔥 Streak | Paliers 3 / 7 / 14 / 30 / 60 jours | pièces (bonus +100 🪙 au palier 7, +500 🪙 au palier 60) |
+| ⬆️ Level-up | Chaque montée de niveau | `100 + 20×niveau` 🪙 |
+| 💯 Perfect | Partie parfaite (max 1/jour) | 25–75 🪙 |
+| 👋 Bienvenue | Premier login post-V2 | 100 🪙 |
 
-**Mythique n'est jamais tiré d'un coffre** (ni quotidien, ni streak, ni perfect) — uniquement obtenu par achat boutique ou via 2 des 15 exclusifs de level-up (niveaux 28 et 30). Un effort quotidien à faible coût (streak) ne doit pas à lui seul ouvrir l'accès à la rareté la plus prestigieuse ; seul le double verrou prix + niveau protège vraiment `mythic`.
-
-- **Doublons** : convertis en pièces (50 % du prix) avec message positif (« Tu l'as déjà ! +250 🪙 »).
-- **`ChestModal.svelte`** : coffre qui tremble (CSS), tap pour ouvrir, confettis emoji, halo couleur de rareté.
+- **`ChestModal.svelte`** : coffre qui tremble (CSS), tap pour ouvrir, confettis emoji.
 - Tirage exclusivement serveur dans `/api/chests/open`.
 
 ### 5.6 Streaks quotidiens et boosters
@@ -373,7 +372,6 @@ CREATE TABLE items (
   asset_url VARCHAR(255) NOT NULL,
   name JSONB NOT NULL,                        -- {"fr":"Couronne dorée","en":...}
   unlock_level INTEGER NOT NULL DEFAULT 1,
-  is_purchasable BOOLEAN NOT NULL DEFAULT true,
   is_default BOOLEAN NOT NULL DEFAULT false,
   sort_order INTEGER NOT NULL DEFAULT 0
 );
@@ -431,7 +429,7 @@ CREATE TABLE chest_openings (
 | `POST /api/shop/buy` | `{itemId}` → `buy_item()` |
 | `POST /api/character/equip` | `{slot, itemId\|null}` (UPSERT `user_equipment`, vérifie possession) |
 | `GET /api/chests` | Coffres disponibles (quotidien ? palier streak dû ? bienvenue ?) |
-| `POST /api/chests/open` | Tirage serveur, écrit `chest_openings` + transactions + inventaire, gère pity/doublons |
+| `POST /api/chests/open` | Crédit serveur en pièces uniquement, écrit `chest_openings` + transactions |
 | Route `/shop` | Boutique |
 | Route `/character` | Équipement du personnage |
 

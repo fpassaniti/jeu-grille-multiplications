@@ -51,7 +51,6 @@ describe('POST /api/shop/buy', () => {
 
   it.each([
     ['item_not_found', 404],
-    ['not_purchasable', 403],
     ['level_locked', 403],
     ['already_owned', 409],
     ['insufficient_coins', 402]

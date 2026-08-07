@@ -193,7 +193,7 @@
           <span class="owned-badge">✅ {_('shop.owned')}</span>
         {:else if item.unlockLevel > level}
           <span class="locked-badge">🔒 {_('shop.levelLocked', { level: item.unlockLevel })}</span>
-        {:else if item.isPurchasable}
+        {:else}
           <span class="price-tag">
             {#if item.isDailyOffer}
               <span class="price-original">{item.price} 🪙</span>

@@ -9,6 +9,7 @@ import {
   MAX_DIFFICULTY,
   MAX_POSED_DIGITS
 } from './scoring.js';
+import { operationDifficulty, POSED_SCORE_CALIBRATION } from './balance-config.js';
 
 function q(difficulty, timeAllowedSec) {
   return { difficulty, timeAllowedSec };
@@ -27,9 +28,10 @@ describe('scoring unifié (SPEC §4.4)', () => {
     expect(computeScore(q(0.5, 40), 0)).toBeGreaterThan(0);
   });
 
-  it('maxPointsPerQuestion : pire cas posé (somme des chiffres de M6) l\'emporte sur le pire cas non posé', () => {
+  it('maxPointsPerQuestion : pire cas posé (M6, avec calibration) l\'emporte sur le pire cas non posé', () => {
     const nonPosedMax = Math.round(BASE_POINTS * MAX_DIFFICULTY);
-    const posedMax = Math.round(BASE_POINTS * DIGIT_DIFFICULTY) * MAX_POSED_DIGITS;
+    const posedMax =
+      Math.round(BASE_POINTS * operationDifficulty(10) * POSED_SCORE_CALIBRATION) + MAX_POSED_DIGITS;
     expect(posedMax).toBeGreaterThan(nonPosedMax);
     expect(maxPointsPerQuestion()).toBe(posedMax);
   });

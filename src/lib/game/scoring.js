@@ -15,6 +15,8 @@
  * division, M1/M2 « règle mentale ») via `GameEngine#checkWhole`.
  */
 
+import { operationDifficulty, POSED_SCORE_CALIBRATION } from './balance-config.js';
+
 export const BASE_POINTS = 15;
 export const FLOOR_RATIO = 0.25;
 // Plus haute difficulté parmi les paliers NON posés (M1/M2, seuls paliers
@@ -24,9 +26,16 @@ export const FLOOR_RATIO = 0.25;
 export const MAX_DIFFICULTY = 0.8;
 
 /**
- * Poids d'« un calcul élémentaire » pour les questions posées, scorées
- * chiffre par chiffre — milieu de `RECALL_DIFFICULTY_RANGE` ([0.3, 0.7]) : un
- * chiffre verrouillé vaut donc, en moyenne, autant qu'un calcul de tables.
+ * Poids par défaut d'« un calcul élémentaire » pour `computeDigitScore` —
+ * milieu de `RECALL_DIFFICULTY_RANGE` ([0.3, 0.7]). N'est plus le poids
+ * réellement utilisé pour les questions posées (addition/soustraction/
+ * multiplication) : celles-ci passent désormais un `digitWeight` propre à la
+ * question (`question.digitWeight`, calculé dans
+ * `src/lib/modes/generator-utils.js` = `tier.difficulty / totalDigits ×
+ * POSED_SCORE_CALIBRATION`, proportionnel à la difficulté réelle du palier
+ * plutôt qu'une constante identique pour tous). Conservé comme valeur par
+ * défaut du paramètre `digitWeight` (rétrocompatibilité des appels/tests
+ * sans poids explicite).
  */
 export const DIGIT_DIFFICULTY = 0.5;
 
@@ -54,25 +63,30 @@ export function computeScore(question, timeRemainingSec) {
 
 /**
  * Points d'un chiffre correct verrouillé sur une question posée — même
- * formule que `computeScore`, avec une difficulté fixe (`DIGIT_DIFFICULTY`)
- * représentant « un calcul », au lieu de la difficulté globale de la question.
+ * formule que `computeScore`, avec le poids propre à la question
+ * (`question.digitWeight`, proportionnel à la difficulté du palier) au lieu
+ * de la difficulté globale de la question.
  * @param {number} timeRemainingSec
  * @param {number} timeAllowedSec
+ * @param {number} [digitWeight]
  * @returns {number}
  */
-export function computeDigitScore(timeRemainingSec, timeAllowedSec) {
+export function computeDigitScore(timeRemainingSec, timeAllowedSec, digitWeight = DIGIT_DIFFICULTY) {
   const ratio = Math.max(0, Math.min(1, timeRemainingSec / timeAllowedSec));
-  return Math.round(BASE_POINTS * DIGIT_DIFFICULTY * (FLOOR_RATIO + (1 - FLOOR_RATIO) * ratio));
+  return Math.round(BASE_POINTS * digitWeight * (FLOOR_RATIO + (1 - FLOOR_RATIO) * ratio));
 }
 
 /**
  * Maximum théorique par question (utilisé par l'anti-triche serveur) : le
  * plus haut entre le pire cas non posé (une question, `computeScore`) et le
- * pire cas posé (somme des `computeDigitScore` sur tous les chiffres de M6).
+ * pire cas posé (M6, le palier le plus dur — `operationDifficulty(10)`,
+ * marge d'arrondi de `MAX_POSED_DIGITS` points pour l'arrondi indépendant de
+ * chaque chiffre). À revérifier si un palier plus exigeant que M6 est ajouté.
  * @returns {number}
  */
 export function maxPointsPerQuestion() {
   const nonPosedMax = Math.round(BASE_POINTS * MAX_DIFFICULTY);
-  const posedMax = Math.round(BASE_POINTS * DIGIT_DIFFICULTY) * MAX_POSED_DIGITS;
+  const posedMax =
+    Math.round(BASE_POINTS * operationDifficulty(10) * POSED_SCORE_CALIBRATION) + MAX_POSED_DIGITS;
   return Math.max(nonPosedMax, posedMax);
 }

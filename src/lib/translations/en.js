@@ -243,8 +243,6 @@ export default {
     welcomeTitle: 'Welcome to the new adventure!',
     welcomeText: 'Here is a gift to celebrate the new MultyFun features.',
     youWon: 'You won {coins} 🪙!',
-    newItem: 'New item unlocked!',
-    duplicate: 'You already have it! +{refund} 🪙',
     comeBackTomorrow: 'Come back tomorrow for a new chest!',
     alreadyOpened: 'Already opened today'
   },
