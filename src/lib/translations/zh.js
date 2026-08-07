@@ -168,7 +168,6 @@ export default {
   shop: {
     title: '商店',
     subtitle: '装扮你的冒险家！',
-    dailyOffers: '今日特惠',
     owned: '已拥有',
     buy: '购买',
     confirmTitle: '确认购买',

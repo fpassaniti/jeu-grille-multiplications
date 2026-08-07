@@ -5,25 +5,18 @@ const EQUIPMENT_SLOTS = ['background', 'aura', 'back', 'body', 'outfit', 'weapon
 const DEFAULT_SLOTS = ['body', 'outfit', 'weapon'];
 
 /**
- * Catalogue complet joint à l'inventaire/l'équipement de l'utilisateur et aux
- * offres du jour (décote -20%, sélection déterministe par date, SPEC §5.4).
+ * Catalogue complet joint à l'inventaire/l'équipement de l'utilisateur.
  * @param {string} userId
  */
 export async function getShopData(userId) {
   const items = await sql`
-    WITH offers AS (
-      SELECT id FROM items WHERE NOT is_default
-      ORDER BY md5(((NOW() AT TIME ZONE 'Europe/Paris')::date)::text || code) LIMIT 3
-    )
     SELECT
       i.*,
       (ui.item_id IS NOT NULL OR i.is_default) AS owned,
-      (ue.item_id IS NOT NULL) AS equipped,
-      (o.id IS NOT NULL) AS is_daily_offer
+      (ue.item_id IS NOT NULL) AS equipped
     FROM items i
     LEFT JOIN user_inventory ui ON ui.item_id = i.id AND ui.user_id = ${userId}
     LEFT JOIN user_equipment ue ON ue.item_id = i.id AND ue.user_id = ${userId}
-    LEFT JOIN offers o ON o.id = i.id
     ORDER BY i.sort_order
   `;
 
@@ -39,8 +32,6 @@ export async function getShopData(userId) {
       slot: item.slot,
       rarity: item.rarity,
       price: item.price,
-      finalPrice: item.is_daily_offer ? Math.floor(item.price * 0.8) : item.price,
-      isDailyOffer: item.is_daily_offer,
       assetUrl: item.asset_url,
       name: item.name,
       unlockLevel: item.unlock_level,

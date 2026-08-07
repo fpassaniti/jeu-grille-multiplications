@@ -168,7 +168,6 @@ export default {
   shop: {
     title: 'Shop',
     subtitle: 'Customize your adventurer!',
-    dailyOffers: "Today's offers",
     owned: 'Owned',
     buy: 'Buy',
     confirmTitle: 'Confirm purchase',

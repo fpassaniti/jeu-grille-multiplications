@@ -328,7 +328,7 @@ Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 35
 - Onglets par slot (🎩 👕 ⚔️ 🐾 🌈 ✨ 🦸), cartes style « 3D » existant, fond de couleur de rareté (gris/bleu/violet/or), badge « ✅ Possédé ».
 - **Prévisualisation avant achat** : tap sur un item → le personnage l'essaie en haut de page.
 - Confirmation en 2 taps (« Acheter pour 350 🪙 ? Il te restera 120 🪙 »).
-- « ⭐ Offres du jour » : 3 items à −20 %, sélection **déterministe sans cron** (`ORDER BY md5(CURRENT_DATE::text || item.code) LIMIT 3`).
+- **Pas de remise/promotion** : les prix sont fixes (décision produit, retire l'ancienne mécanique d'« offre du jour » à −20%).
 
 ### 5.5 Coffres au trésor
 

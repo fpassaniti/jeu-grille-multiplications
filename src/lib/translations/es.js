@@ -168,7 +168,6 @@ export default {
   shop: {
     title: 'Tienda',
     subtitle: '¡Personaliza a tu aventurero!',
-    dailyOffers: 'Ofertas del día',
     owned: 'Poseído',
     buy: 'Comprar',
     confirmTitle: 'Confirmar compra',

@@ -153,11 +153,11 @@
     <button class="sheet-backdrop" aria-label={_('common.close')} on:click={cancelBuy}></button>
     <div class="confirm-panel card">
       <p class="confirm-text">
-        {_('shop.confirmBuy', { price: pendingItem.finalPrice })}
+        {_('shop.confirmBuy', { price: pendingItem.price })}
       </p>
-      {#if coins >= pendingItem.finalPrice}
+      {#if coins >= pendingItem.price}
         <p class="confirm-remaining">
-          {_('shop.confirmRemaining', { remaining: coins - pendingItem.finalPrice })}
+          {_('shop.confirmRemaining', { remaining: coins - pendingItem.price })}
         </p>
       {:else}
         <p class="confirm-remaining confirm-remaining--insufficient">
@@ -168,7 +168,7 @@
         <p class="confirm-error">⚠️ {_(`shop.${buyError}`) ?? buyError}</p>
       {/if}
       <div class="confirm-buttons">
-        <button class="confirm-button" on:click={confirmBuy} disabled={isBuying || coins < pendingItem.finalPrice}>
+        <button class="confirm-button" on:click={confirmBuy} disabled={isBuying || coins < pendingItem.price}>
           {isBuying ? _('common.loading') : _('shop.confirm')}
         </button>
         <button class="cancel-button" on:click={cancelBuy} disabled={isBuying}>{_('shop.cancel')}</button>
@@ -184,9 +184,6 @@
         class:locked={!item.owned && item.unlockLevel > level}
         on:click={() => selectItem(item)}
       >
-        {#if item.isDailyOffer && !item.owned}
-          <span class="offer-badge">⭐ -20%</span>
-        {/if}
         <img class="item-thumb" src={item.assetUrl} alt={itemName(item)} />
         <span class="item-name">{itemName(item)}</span>
         {#if item.owned}
@@ -194,12 +191,7 @@
         {:else if item.unlockLevel > level}
           <span class="locked-badge">🔒 {_('shop.levelLocked', { level: item.unlockLevel })}</span>
         {:else}
-          <span class="price-tag">
-            {#if item.isDailyOffer}
-              <span class="price-original">{item.price} 🪙</span>
-            {/if}
-            {item.finalPrice} 🪙
-          </span>
+          <span class="price-tag">{item.price} 🪙</span>
         {/if}
       </button>
     {/each}
@@ -433,15 +425,6 @@
     text-align: center;
   }
 
-  .offer-badge {
-    align-self: flex-start;
-    background-color: var(--accent);
-    color: white;
-    font-size: 0.7rem;
-    padding: 2px 6px;
-    border-radius: 8px;
-  }
-
   .owned-badge {
     font-size: 0.75rem;
     color: var(--success-dark);
@@ -456,13 +439,6 @@
   .price-tag {
     font-weight: bold;
     color: #ff8f00;
-  }
-
-  .price-original {
-    text-decoration: line-through;
-    color: var(--text-light);
-    font-weight: normal;
-    margin-right: 4px;
   }
 
   .potions-section {
