@@ -147,14 +147,16 @@
           {/if}
         </div>
 
-        <StreakCalendar
-          streakDays={data.userProgress?.streak_days || 0}
-          initialMonth={data.currentMonth}
-          initialPlayedDays={data.playedDays}
-          earliestMonth={data.earliestMonth}
-          milestoneProjections={data.milestoneProjections}
-          nextStreakMilestone={data.nextStreakMilestone}
-        />
+        <div class="dashboard-calendar">
+          <StreakCalendar
+            streakDays={data.userProgress?.streak_days || 0}
+            initialMonth={data.currentMonth}
+            initialPlayedDays={data.playedDays}
+            earliestMonth={data.earliestMonth}
+            milestoneProjections={data.milestoneProjections}
+            nextStreakMilestone={data.nextStreakMilestone}
+          />
+        </div>
 
         <div class="recent-games card">
           <h2>{_('dashboard.recentGames')}</h2>
@@ -495,8 +497,34 @@
 
   .dashboard-content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr;
     gap: 20px;
+  }
+
+  @media (min-width: 1025px) {
+    .dashboard-content {
+      grid-template-columns: 2fr 1fr;
+      grid-template-areas:
+        "main chest"
+        "main calendar"
+        "history history";
+    }
+
+    .dashboard-main {
+      grid-area: main;
+    }
+
+    .daily-chest-card {
+      grid-area: chest;
+    }
+
+    .dashboard-calendar {
+      grid-area: calendar;
+    }
+
+    .recent-games {
+      grid-area: history;
+    }
   }
 
   .dashboard-main {
@@ -791,10 +819,6 @@
   @media (max-width: 767px) {
     .mode-showcase-card, .feature-card {
       width: 100%;
-    }
-
-    .dashboard-content {
-      grid-template-columns: 1fr;
     }
 
     .level-card {
