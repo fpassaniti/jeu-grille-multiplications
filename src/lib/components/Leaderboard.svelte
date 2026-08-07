@@ -136,6 +136,7 @@
   th, td {
     padding: 12px 8px;
     text-align: left;
+    box-sizing: border-box;
   }
 
   th {
@@ -235,6 +236,14 @@
 
     th, td {
       padding: 10px;
+    }
+
+    .rank-col {
+      width: 15%;
+    }
+
+    .score-col {
+      width: 25%;
     }
   }
 </style>

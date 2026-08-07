@@ -10,9 +10,9 @@ export default defineConfig({
       scope: '/',
       base: '/',
       manifest: {
-        name: 'Multy - Jeu de Multiplication',
+        name: 'Multy - Jeu de calculs pour petits et grands',
         short_name: 'Multy',
-        description: 'Un jeu éducatif amusant pour maîtriser les tables de multiplication',
+        description: 'Un jeu éducatif amusant pour maîtriser les calculs pour petits et grands',
         theme_color: '#5B21B6',
         background_color: '#FFFFFF',
         display: 'standalone',
