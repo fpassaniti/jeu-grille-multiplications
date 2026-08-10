@@ -99,8 +99,6 @@ function buildAccessoryPrompt(item) {
     `Edit the attached reference image: add a ${item.itemDescription} to the '${item.slot}' equipment slot, ` +
     `${item.slot == 'aura' ? 'aura should be around the robot with no detail in front of the robot, ' : ''} ` +
     `${item.slot == 'back' ? 'the item must be in the back of the robot, so barely visible, no detail must appears in front of the robot, ' : ''} ` +
-    // Le slot 'back' est partagé avec dos-bosse (pas une cape) : l'ancrage aux épaules est conditionné sur le slug, pas sur le slot.
-    `${item.slug == 'dos-cape' ? "the cape must hang from shoulder height — its collar/clasp resting on top of the shoulders — and fall down the back to around ankle level, " : ''} ` +
     `${item.slot == 'pet' ? 'pets should be positionning in the lower right corner, and should be on the side, on the floor of the robot, ' : ''} ` +
     `${item.slot == 'weapon' ? 'close the hand around the handle of the weapon, ' : ''} ` +
     `${item.slot == 'weapon' ? 'keep this new element on the side, not covering the rest of the body, ' : ''} ` +
