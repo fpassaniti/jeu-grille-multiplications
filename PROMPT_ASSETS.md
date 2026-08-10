@@ -14,7 +14,7 @@
 
 Une version précédente de ce document mettait en doute la fiabilité de cette approche (crainte d'un désalignement pixel entre générations séparées) et recommandait de générer chaque item seul puis de le positionner via `offset_x`/`offset_y`/`scale` stockés en base. **Testé et infirmé** (`item-art/`, 2026-07-22) : en éditant itérativement une seule image de référence avec Nano Banana (fond chroma-key, un ajout à la fois — voir `item-art/raw/robot-unit01/`) plutôt qu'en générant chaque item indépendamment, le cadrage reste parfaitement stable d'une édition à l'autre. La crainte initiale s'appliquait à un mode de génération plus faible (générations indépendantes sans référence partagée), pas à l'édition itérative.
 
-**Approche retenue : calque plein cadre.** Chaque item exporté (`scripts/extract-item-diff.mjs`) garde le cadrage exact et la résolution native de l'image dont il est extrait — transparent partout sauf la zone de l'accessoire. `CharacterAvatar.svelte` continue d'empiler de simples `<img>` sans aucun offset en code (§5.3 inchangé), et **aucune colonne `offset_x`/`offset_y`/`scale` n'est ajoutée** au schéma `items`.
+**Approche retenue : calque plein cadre.** Chaque item exporté (`scripts/extract-item-diff.mjs`) garde le cadrage exact et la résolution native de l'image dont il est extrait — transparent partout sauf la zone de l'accessoire (exception : le slot `background`, plein cadre **opaque**, voir §5.1 — rien à préserver derrière puisqu'il est toujours au z-index le plus bas). `CharacterAvatar.svelte` continue d'empiler de simples `<img>` sans aucun offset en code (§5.3 inchangé), et **aucune colonne `offset_x`/`offset_y`/`scale` n'est ajoutée** au schéma `items`.
 
 **Contrepartie assumée** : tous les accessoires produits par ce pipeline sont verrouillés à un seul personnage de base (le robot de `item-art/raw/robot-unit01/`) — un accessoire ne peut pas être réutilisé tel quel sur un autre corps, puisque leur cadrage/silhouette diffère. Décision : rester sur ce seul corps canonique tant qu'un autre corps n'a pas lui-même besoin de vrai art. Si ce besoin apparaît, ce choix (calque plein cadre vs `offset_x/y/scale`) devra être revu — probablement en régénérant un jeu d'accessoires par corps plutôt qu'en réintroduisant un système d'offset, `object-fit: contain` rendant déjà les deux approches équivalentes visuellement une fois qu'un asset est correctement cadré.
 
@@ -67,11 +67,35 @@ Une version précédente de ce document mettait en doute la fiabilité de cette 
 | `aura` | Étincelles | Épique | "a ring of sparkling light particles around the wearer" |
 | `body` | Blob bleu | Commun | "a simple round blue blob body variant" |
 
+### Fragments de prompt spécifiques par slot (`item-art/scripts/generate-item-art.mjs`, `buildAccessoryPrompt`)
+
+Le gabarit générique ci-dessus est complété par des fragments ajoutés selon le slot (ou, pour la cape, selon le slug — le slot `back` est partagé avec `dos-bosse`, qui n'est pas une cape) :
+
+| Slot / slug | Fragment ajouté |
+|---|---|
+| `aura` | l'aura doit entourer le robot, sans détail devant lui |
+| `back` | l'item doit être dans le dos, à peine visible, aucun détail devant le robot |
+| `dos-cape` (slug) | la cape doit tomber depuis la hauteur des épaules (col/attache posé sur les épaules) jusqu'aux chevilles environ — utile dès qu'une autre corpulence de robot existera |
+| `pet` | positionné en bas à droite, sur le côté, au sol |
+| `weapon` | main refermée sur la poignée, élément gardé sur le côté, ne couvrant pas le reste du corps |
+| `hat` | peut dépasser du cadre, la position prime sur le fait de couper l'item |
+
+## 5.1 Cas particulier — slot `background` (pas de soustraction)
+
+Le principe de soustraction (§6 étapes 3-5) suppose qu'une petite zone localisée change entre l'image de base et la variante — vrai pour un accessoire porté, faux pour un décor : le but même d'un item `background` est de repeindre tout le cadre, donc la diff ne capture pas un « ajout » mais toute la scène (observé en pratique sur `decor-jardin` : une région quasi plein cadre plus un éclat isolé entre les jambes du robot, là où le fond perce un trou de la silhouette).
+
+Pour ce slot, `generate-item-art.mjs` (`buildBackgroundPrompt`) :
+- envoie toujours la même image de référence canonique, mais uniquement pour que l'IA cale la perspective caméra et la ligne de sol sur la position des pieds du robot dans la référence — rien de plus ;
+- demande explicitement l'absence du robot/de tout personnage (et de son ombre au sol) dans le résultat, ainsi que le remplacement total du fond vert chroma-key par une scène opaque plein cadre ;
+- demande explicitement l'absence de cadre/bordure/vignette décoratifs (les notes de rareté légendaire/mythique parlent de « liseré doré »/« liseré prismatique », qui pourraient sinon être lues comme une bordure autour de l'image plutôt qu'un motif dans la scène).
+
+Une fois l'image validée par l'humain (même boucle de confirmation que les accessoires), le script saute entièrement les étapes 3 à 5 du §6 : il écrit directement `<slug>_layer.png` via `sharp` (`png({ compressionLevel: 9, effort: 10 })` — la compression PNG par défaut de `compose-item-layer.mjs` produit un fichier ~4× plus lourd sur une scène entièrement peinte, le bruit JPEG source compressant mal), avec un contrôle de dimensions contre l'image de base (recadrage `fit: 'cover'` en cas d'écart) puisque le garde-fou équivalent d'`extract-item-diff.mjs` ne s'applique plus ici.
+
 ## 6. Process (un item à la fois)
 
 1. Générer/valider `item-art/raw/robot-unit01/base.jpg` (fond vert) — image de référence unique, réutilisée pour toutes les éditions (§2 : un seul personnage canonique pour l'instant).
 2. Éditer itérativement cette image avec Nano Banana, **un ajout à la fois** — sauver chaque édition sous `item-art/raw/robot-unit01/<slug>.jpg`.
-3. Extraire : `node scripts/extract-item-diff.mjs --base item-art/raw/robot-unit01/base.jpg --variant item-art/raw/robot-unit01/<slug>.jpg --name <slug>` — écrit les crops `diff_asset_N.png` et un manifeste `<slug>_regions.json` dans `item-art/extracted/<slug>/`. Ce script s'arrête là, il ne construit jamais lui-même le calque final.
+3. Extraire (sauf slot `background`, voir §5.1) : `node scripts/extract-item-diff.mjs --base item-art/raw/robot-unit01/base.jpg --variant item-art/raw/robot-unit01/<slug>.jpg --name <slug>` — écrit les crops `diff_asset_N.png` et un manifeste `<slug>_regions.json` dans `item-art/extracted/<slug>/`. Ce script s'arrête là, il ne construit jamais lui-même le calque final.
 4. Revue humaine des crops : vrai ajout vs bruit JPEG. **Si un bout de robot non voulu est réellement connecté** à l'ajout (silhouettes qui se touchent, ex. une mitaine collée à l'armure de jambe voisine — aucun seuillage ne peut alors les séparer), ouvrir le `_diff_asset_N.png` concerné dans un éditeur d'image et effacer directement les pixels en trop, avant de passer à l'étape suivante.
 5. Composer : `node scripts/compose-item-layer.mjs --regions item-art/extracted/<slug>/<slug>_regions.json --keep <indices>` — recolle les crops (retouchés ou non) à leur position d'origine, produit `<slug>_layer.png`.
 6. Ajouter au catalogue : `node scripts/add-shop-item.mjs --code <code> --slot <slot> --image item-art/extracted/<slug>/<slug>_layer.png --price <N> --rarity <rareté> --unlock-level <N> --name-fr "..." --name-en "..." --name-es "..." --name-zh "..."` — copie l'image dans `static/images/items/{code}.png` et insère directement la ligne en base (pas de migration à appliquer à part). `--dry-run` pour vérifier avant d'écrire.

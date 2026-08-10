@@ -11,6 +11,11 @@
  *   4. scripts/compose-item-layer.mjs -> <slug>_layer.png
  *   5. scripts/add-shop-item.mjs -> copie + insertion en base
  *
+ * Exception pour le slot 'background' : un décor change tout le cadre par
+ * définition, il n'y a donc rien de localisé à soustraire par diff — les
+ * étapes 2 et 4 sont sautées, l'image validée est normalisée directement en
+ * <slug>_layer.png (voir PROMPT_ASSETS.md §5.1).
+ *
  * Ne duplique aucune logique des 3 scripts existants : il les invoque tels
  * quels (mêmes commandes que PROMPT_ASSETS.md §6 / example_cmd_item-art.md).
  *
@@ -27,6 +32,7 @@
  *     [--dry-run]   (passthrough vers add-shop-item.mjs)
  */
 import 'dotenv/config';
+import sharp from 'sharp';
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
@@ -80,13 +86,21 @@ function loadPlan(planPath) {
   return JSON.parse(readFileSync(planPath, 'utf8'));
 }
 
-function buildPrompt(item) {
+function rarityNoteFor(item) {
   const rarityNote = RARITY_NOTES[item.rarity];
   if (!rarityNote) throw new Error(`rareté inconnue '${item.rarity}' pour ${item.code} (attendu : ${Object.keys(RARITY_NOTES).join(', ')})`);
+  return rarityNote;
+}
+
+/** Prompt pour un accessoire porté sur le robot (tous les slots sauf 'background') : édition guidée par diff (PROMPT_ASSETS.md §5/§6). */
+function buildAccessoryPrompt(item) {
+  const rarityNote = rarityNoteFor(item);
   return (
     `Edit the attached reference image: add a ${item.itemDescription} to the '${item.slot}' equipment slot, ` +
     `${item.slot == 'aura' ? 'aura should be around the robot with no detail in front of the robot, ' : ''} ` +
     `${item.slot == 'back' ? 'the item must be in the back of the robot, so barely visible, no detail must appears in front of the robot, ' : ''} ` +
+    // Le slot 'back' est partagé avec dos-bosse (pas une cape) : l'ancrage aux épaules est conditionné sur le slug, pas sur le slot.
+    `${item.slug == 'dos-cape' ? "the cape must hang from shoulder height — its collar/clasp resting on top of the shoulders — and fall down the back to around ankle level, " : ''} ` +
     `${item.slot == 'pet' ? 'pets should be positionning in the lower right corner, and should be on the side, on the floor of the robot, ' : ''} ` +
     `${item.slot == 'weapon' ? 'close the hand around the handle of the weapon, ' : ''} ` +
     `${item.slot == 'weapon' ? 'keep this new element on the side, not covering the rest of the body, ' : ''} ` +
@@ -97,18 +111,56 @@ function buildPrompt(item) {
   );
 }
 
-/** Appelle l'API Gemini (generateContent) en édition guidée par image, retourne {mimeType, data (base64)}. */
+/**
+ * Prompt pour un décor (slot 'background') : pas d'édition par diff — la
+ * référence ne sert qu'à caler la ligne de sol (pieds du robot) et la
+ * perspective caméra ; le robot ne doit pas apparaître dans le résultat
+ * (voir PROMPT_ASSETS.md §5.1).
+ */
+// Convention du corps canonique (item-art/raw/robot-unit01/base.jpg, PROMPT_ASSETS.md §4) :
+// caméra frontale plate (quasi aucune distorsion de perspective), robot centré horizontalement,
+// pieds posés à environ 90% de la hauteur du cadre depuis le haut. Utilisé comme description
+// numérique de la ligne de sol/perspective puisqu'on ne peut plus envoyer l'image en référence.
+const CANONICAL_FLOOR_LINE = 'about 90% down from the top of the square frame (roughly a 10% margin of floor below it)';
+const CANONICAL_CAMERA = 'flat, mostly frontal camera angle with very little perspective distortion, matching a simple flat cartoon mascot render';
+
+function buildBackgroundPrompt(item) {
+  const rarityNote = rarityNoteFor(item);
+  return (
+    `Generate a full-frame background illustration for a game avatar, no reference image provided: ${item.itemDescription}. ` +
+    `Square 1:1 canvas, ${CANONICAL_CAMERA}. The ground/floor line sits at ${CANONICAL_FLOOR_LINE}. ` +
+    'Flat cartoon illustration style — thick bold black outlines (4-6px), vivid saturated flat colors, ' +
+    'no gradients except simple flat highlights. ' +
+    `Apply a visual richness level for ${item.rarity} rarity (${rarityNote}) to the scene itself (lighting, props, detail density). ` +
+    'Opaque painted scene filling the entire square frame edge to edge — no transparency, no empty margin. ' +
+    'Do not include any robot, character, creature, mascot, or figure of any kind — the scene must be completely ' +
+    'empty of characters, with no character shadow, silhouette, or footprints on the ground. ' +
+    'No border, no frame, no vignette, no text, no logo, no watermark. ' +
+    'Keep the centre of the frame visually calm and uncluttered — a character will be composited on top of it afterwards.'
+  );
+}
+
+function buildPrompt(item) {
+  return item.slot === 'background' ? buildBackgroundPrompt(item) : buildAccessoryPrompt(item);
+}
+
+/**
+ * Appelle l'API Gemini (generateContent), retourne {mimeType, data (base64)}.
+ * `basePath` null/undefined -> génération texte seul (pas d'édition guidée par image) :
+ * utilisé pour le slot 'background', voir PROMPT_ASSETS.md §5.1 (envoyer l'image de
+ * référence du robot fait échouer la consigne « pas de robot dans le résultat » — le
+ * modèle d'édition privilégie fortement la préservation du sujet de l'image fournie,
+ * même avec des négations explicites — constaté en pratique sur decor-jardin).
+ */
 async function callGemini({ model, apiKey, prompt, basePath }) {
-  const imageBytes = readFileSync(basePath);
-  const mimeType = basePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+  const requestParts = [{ text: prompt }];
+  if (basePath) {
+    const imageBytes = readFileSync(basePath);
+    const mimeType = basePath.endsWith('.png') ? 'image/png' : 'image/jpeg';
+    requestParts.push({ inlineData: { mimeType, data: imageBytes.toString('base64') } });
+  }
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-  const body = {
-    contents: [
-      {
-        parts: [{ text: prompt }, { inlineData: { mimeType, data: imageBytes.toString('base64') } }]
-      }
-    ]
-  };
+  const body = { contents: [{ parts: requestParts }] };
 
   const response = await fetch(url, {
     method: 'POST',
@@ -166,11 +218,15 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
   while (needsGeneration) {
     const prompt = buildPrompt(item);
     console.log(`Appel Gemini (${model})...\nPrompt : ${prompt}`);
-    const inlineData = await callGemini({ model, apiKey, prompt, basePath });
+    const referenceImage = item.slot === 'background' ? null : basePath;
+    const inlineData = await callGemini({ model, apiKey, prompt, basePath: referenceImage });
     const ext = extensionForMimeType(inlineData.mimeType);
     variantPath = join(rawDir, `${item.slug}.${ext}`);
     writeFileSync(variantPath, Buffer.from(inlineData.data, 'base64'));
     console.log(`Écrit : ${variantPath}`);
+    if (item.slot === 'background') {
+      console.log('Vérifier : aucun robot/personnage visible, plus aucun vert chroma-key, ligne de sol cohérente.');
+    }
 
     const ok = await confirm(rl, `Ouvrez ${variantPath} pour vérifier le rendu. Continuer avec cette image ?`);
     if (ok) {
@@ -185,39 +241,58 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
   }
 
   const extractedDir = join(ROOT, 'item-art', 'extracted', item.slug);
-  run('node', [
-    'item-art/scripts/extract-item-diff.mjs',
-    '--base',
-    relative(ROOT, basePath),
-    '--variant',
-    relative(ROOT, variantPath),
-    '--name',
-    item.slug
-  ]);
-
-  const manifestPath = join(extractedDir, `${item.slug}_regions.json`);
-  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  console.log(`\nRégions détectées pour ${item.slug} :`);
-  for (const region of manifest.regions) {
-    console.log(`  ${region.index}: ${join(extractedDir, region.file)}`);
-  }
-  console.log('Ouvrez ces fichiers et retouchez-les manuellement si nécessaire avant de continuer.');
-
-  const keep = (await rl.question('Indices à garder pour la fusion (ex: 1,3) : ')).trim();
-  if (!keep) {
-    console.log(`Item ${item.code} passé (aucun indice fourni).`);
-    return;
-  }
-
-  run('node', [
-    'item-art/scripts/compose-item-layer.mjs',
-    '--regions',
-    `item-art/extracted/${item.slug}/${item.slug}_regions.json`,
-    '--keep',
-    keep
-  ]);
-
   const layerImage = `item-art/extracted/${item.slug}/${item.slug}_layer.png`;
+
+  if (item.slot === 'background') {
+    // Pas de soustraction pour un décor (rien de localisé à isoler) : l'image validée
+    // devient directement le calque plein cadre, cf. PROMPT_ASSETS.md §5.1.
+    mkdirSync(extractedDir, { recursive: true });
+
+    const [baseMeta, variantMeta] = await Promise.all([sharp(basePath).metadata(), sharp(variantPath).metadata()]);
+    let pipeline = sharp(variantPath);
+    if (baseMeta.width !== variantMeta.width || baseMeta.height !== variantMeta.height) {
+      console.log(
+        `Attention : dimensions différentes entre base (${baseMeta.width}x${baseMeta.height}) et variante ` +
+          `(${variantMeta.width}x${variantMeta.height}) — recadrage en 'cover' sur les dimensions de base.`
+      );
+      pipeline = pipeline.resize(baseMeta.width, baseMeta.height, { fit: 'cover', position: 'centre' });
+    }
+    await pipeline.png({ compressionLevel: 9, effort: 10 }).toFile(join(ROOT, layerImage));
+    console.log(`Écrit (calque plein cadre, décor direct) : ${layerImage}`);
+  } else {
+    run('node', [
+      'item-art/scripts/extract-item-diff.mjs',
+      '--base',
+      relative(ROOT, basePath),
+      '--variant',
+      relative(ROOT, variantPath),
+      '--name',
+      item.slug
+    ]);
+
+    const manifestPath = join(extractedDir, `${item.slug}_regions.json`);
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    console.log(`\nRégions détectées pour ${item.slug} :`);
+    for (const region of manifest.regions) {
+      console.log(`  ${region.index}: ${join(extractedDir, region.file)}`);
+    }
+    console.log('Ouvrez ces fichiers et retouchez-les manuellement si nécessaire avant de continuer.');
+
+    const keep = (await rl.question('Indices à garder pour la fusion (ex: 1,3) : ')).trim();
+    if (!keep) {
+      console.log(`Item ${item.code} passé (aucun indice fourni).`);
+      return;
+    }
+
+    run('node', [
+      'item-art/scripts/compose-item-layer.mjs',
+      '--regions',
+      `item-art/extracted/${item.slug}/${item.slug}_regions.json`,
+      '--keep',
+      keep
+    ]);
+  }
+
   const addArgs = [
     'item-art/scripts/add-shop-item.mjs',
     '--code',
