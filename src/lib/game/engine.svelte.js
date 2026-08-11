@@ -7,7 +7,7 @@
  * Aucun $effect ici : instanciable et testable hors composant (Vitest node).
  */
 import { getMode } from '$lib/modes/index.js';
-import { computeScore, computeDigitScore } from './scoring.js';
+import { computeScore, computeDigitScore, computeLegacyWholeScore } from './scoring.js';
 
 const CORRECT_DELAY_MS = 500;
 const INCORRECT_FLASH_MS = 600;
@@ -311,9 +311,13 @@ export class GameEngine {
   #markQuestionSolved() {
     // Posé : déjà crédité chiffre par chiffre (#awardDigitPoints) — on réutilise
     // le total accumulé pour l'historique, sans re-créditer le score.
+    // Tables (`legacyWhole`) : formule V1 exacte, décorrélée de `computeScore`
+    // (cf. scoring.js) — comparabilité du classement historique.
     const points = this.question.posed
       ? this.#digitPointsAccumulated
-      : computeScore(this.question, this.questionTimer);
+      : this.question.legacyWhole
+        ? computeLegacyWholeScore(this.questionTimer, this.question.difficulty, this.#config.level)
+        : computeScore(this.question, this.questionTimer);
     if (!this.question.posed) {
       this.score += points;
     }

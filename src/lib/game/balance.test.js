@@ -6,7 +6,7 @@ import multiplication from '$lib/modes/multiplication.js';
 import addition from '$lib/modes/addition.js';
 import subtraction from '$lib/modes/subtraction.js';
 import { OP_DIFFICULTY, RECALL_DIFFICULTY_RANGE } from './balance-config.js';
-import { computeScore, computeDigitScore } from './scoring.js';
+import { computeScore, computeDigitScore, computeLegacyWholeScore } from './scoring.js';
 
 /**
  * Équilibrage entre modes (SPEC §4.4) : la récompense (et donc l'XP/les
@@ -32,13 +32,13 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
     }
   });
 
-  describe('modes « rappel » (tables, division) : variance resserrée autour de OP_DIFFICULTY', () => {
-    it('tables : toutes les cellules dans RECALL_DIFFICULTY_RANGE', () => {
+  describe('modes « rappel » : division reste resserrée autour de OP_DIFFICULTY ; tables reste en formule V1 brute', () => {
+    it('tables : toutes les cellules dans la plage brute historique [0.5, 3.0] (formule V1, pas RECALL_DIFFICULTY_RANGE)', () => {
       for (let row = 1; row <= 10; row++) {
         for (let col = 1; col <= 10; col++) {
           const d = tableDifficulty(row, col);
-          expect(d).toBeGreaterThanOrEqual(RECALL_DIFFICULTY_RANGE[0]);
-          expect(d).toBeLessThanOrEqual(RECALL_DIFFICULTY_RANGE[1]);
+          expect(d).toBeGreaterThanOrEqual(0.5);
+          expect(d).toBeLessThanOrEqual(3.0);
         }
       }
     });
@@ -68,9 +68,10 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
       const totalDigits = q.stages.reduce((sum, stage) => sum + stage.digits, 0);
       const m6Max = totalDigits * computeDigitScore(q.timeAllowedSec, q.timeAllowedSec, q.digitWeight);
 
-      const tableMax = computeScore(
-        { difficulty: tableDifficulty(7, 7), timeAllowedSec: tableTime(7, 7, 'adulte') },
-        tableTime(7, 7, 'adulte')
+      const tableMax = computeLegacyWholeScore(
+        tableTime(7, 7, 'adulte'),
+        tableDifficulty(7, 7),
+        'adulte'
       );
 
       expect(m6Max / tableMax).toBeGreaterThanOrEqual(6);
@@ -99,10 +100,10 @@ describe('équilibrage par opérations élémentaires (abandon du points/minute 
   });
 
   describe('timer : bornes explicites par niveau (SPEC §4.4)', () => {
-    it('tables adulte : 10 s suffisent', () => {
+    it('tables adulte : 15 s suffisent (formule V1 : 5-15 s)', () => {
       for (let row = 1; row <= 10; row++) {
         for (let col = 1; col <= 10; col++) {
-          expect(tableTime(row, col, 'adulte')).toBeLessThanOrEqual(10);
+          expect(tableTime(row, col, 'adulte')).toBeLessThanOrEqual(15);
         }
       }
     });

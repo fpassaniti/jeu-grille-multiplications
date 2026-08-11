@@ -77,10 +77,48 @@ export function computeDigitScore(timeRemainingSec, timeAllowedSec, digitWeight 
 }
 
 /**
+ * Poids/temps bruts (iso-V1) du pic de la grille des tables (cellule 7×7 —
+ * `DIFFICULTY_MATRIX` dans `$lib/modes/tables.js`) et temps max alloué
+ * (cellule 10×10, `tableTime`) — dupliqués ici en constantes plutôt
+ * qu'importés pour éviter un cycle scoring.js ↔ tables.js. À resynchroniser
+ * si la grille ou la formule de temps de `tables.js` changent.
+ */
+const LEGACY_TABLE_MAX_DIFFICULTY = 3.0;
+const LEGACY_TABLE_MAX_TIME_SEC = 15;
+
+/**
+ * Score maximal théorique d'une question tables sous l'ancienne formule
+ * (`computeLegacyWholeScore`) — utilisé par `maxPointsPerQuestion` pour que
+ * l'anti-triche reste correct même si `POSED_SCORE_CALIBRATION`/
+ * `OP_DIFFICULTY` sont réduits plus tard.
+ * @returns {number}
+ */
+function legacyTableMax() {
+  return Math.round(LEGACY_TABLE_MAX_TIME_SEC * LEGACY_TABLE_MAX_DIFFICULTY);
+}
+
+/**
+ * Points d'une bonne réponse en mode tables — formule V1 exacte (SPEC
+ * §4.4 historique), linéaire en temps restant plutôt que ratio + plancher :
+ * ne peut pas être reproduite via `computeScore`. Restaurée pour que le
+ * classement tables (`/api/leaderboard`) reste comparable aux scores déjà
+ * enregistrés en base sous cette formule.
+ * @param {number} timeRemainingSec
+ * @param {number} difficultyMultiplier Difficulté brute de la cellule (`tableDifficulty`, 0.5–3.0).
+ * @param {'adulte'|'enfant'} level
+ * @returns {number}
+ */
+export function computeLegacyWholeScore(timeRemainingSec, difficultyMultiplier, level) {
+  const effective = level === 'enfant' ? difficultyMultiplier * 0.7 + 0.3 : difficultyMultiplier;
+  return Math.round(timeRemainingSec * effective);
+}
+
+/**
  * Maximum théorique par question (utilisé par l'anti-triche serveur) : le
- * plus haut entre le pire cas non posé (une question, `computeScore`) et le
- * pire cas posé (M6, le palier le plus dur — `operationDifficulty(10)`,
- * marge d'arrondi de `MAX_POSED_DIGITS` points pour l'arrondi indépendant de
+ * plus haut entre le pire cas non posé générique (une question,
+ * `computeScore`), le pire cas tables (`computeLegacyWholeScore`) et le pire
+ * cas posé (M6, le palier le plus dur — `operationDifficulty(10)`, marge
+ * d'arrondi de `MAX_POSED_DIGITS` points pour l'arrondi indépendant de
  * chaque chiffre). À revérifier si un palier plus exigeant que M6 est ajouté.
  * @returns {number}
  */
@@ -88,5 +126,5 @@ export function maxPointsPerQuestion() {
   const nonPosedMax = Math.round(BASE_POINTS * MAX_DIFFICULTY);
   const posedMax =
     Math.round(BASE_POINTS * operationDifficulty(10) * POSED_SCORE_CALIBRATION) + MAX_POSED_DIGITS;
-  return Math.max(nonPosedMax, posedMax);
+  return Math.max(nonPosedMax, posedMax, legacyTableMax());
 }

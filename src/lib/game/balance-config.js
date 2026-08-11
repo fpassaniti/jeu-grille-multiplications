@@ -22,21 +22,30 @@ export const OP_DIFFICULTY = 0.8;
  * chiffre (`digitWeight`, `generator-utils.js`) — destiné à ramener l'ordre
  * de grandeur du score de session à celui des modes « rappel » (tables/
  * division), très supérieur en jeu réel d'après un retour terrain (~800-1800
- * pts/partie en tables). Valeur neutre (1) tant que le facteur réel n'est pas
- * mesuré : une simulation moteur (GameEngine + fake timers, vitesse de
- * réflexion/frappe identique dans tous les modes) a montré que la seule
- * proportionnalité par chiffre fait déjà remonter le score/seconde des modes
- * posés AU-DESSUS de celui des tables — ce qui contredit le retour terrain et
- * indique que l'écart réel vient d'une vitesse de résolution différente entre
- * rappel (instantané) et calcul posé (retenues = temps de réflexion par
- * chiffre, pas seulement de frappe), un paramètre qui ne se déduit pas d'une
- * simulation. NE PAS relever cette constante sans un score réel mesuré en jeu
- * (score de fin de partie, pas les pièces) pour tables ET addition/
- * soustraction à durée identique — calculer alors
+ * pts/partie en tables).
+ *
+ * Valeur 2 depuis le retour des tables à leur formule de score V1 exacte
+ * (`computeLegacyWholeScore`, `scoring.js` — cf. `tables.js`), qui a cassé
+ * l'invariant produit « M6 (palier posé le plus dur) rapporte au moins 6×
+ * un calcul de table 7×7 » testé dans `balance.test.js` (ratio tombé à
+ * 3.25 avec la valeur neutre 1). Cette valeur restaure cet invariant avec
+ * une marge — c'est un plancher déterministe (paliers max théoriques), pas
+ * une calibration de score de session réel.
+ *
+ * NE PAS s'appuyer sur une simulation moteur (GameEngine + fake timers,
+ * vitesse de réflexion/frappe identique dans tous les modes) pour affiner
+ * davantage cette valeur au-delà du plancher ci-dessus : une telle
+ * simulation a déjà montré que la seule proportionnalité par chiffre fait
+ * remonter le score/seconde des modes posés AU-DESSUS de celui des tables,
+ * ce qui contredit le retour terrain (écart réel = vitesse de résolution
+ * différente entre rappel instantané et calcul posé avec retenues, un
+ * paramètre qui ne se déduit pas d'une simulation). Pour aller plus loin,
+ * mesurer un score réel de fin de partie (pas les pièces) pour tables ET
+ * addition/soustraction à durée identique, puis calculer
  * `scoreTables / scoreAddition` (à `digitWeight` de proportionnalité
  * constant) pour obtenir la valeur cible.
  */
-export const POSED_SCORE_CALIBRATION = 1;
+export const POSED_SCORE_CALIBRATION = 2;
 
 /** Secondes allouées par opération élémentaire (base adulte). */
 export const OP_SEC = 4;

@@ -233,6 +233,9 @@
   .xp-cell {
     font-weight: bold;
     color: var(--success-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .your-position {
@@ -284,12 +287,29 @@
       display: none;
     }
 
-    th, td {
+    .container {
       padding: 10px;
     }
 
+    .ranking-container {
+      padding: 15px;
+      margin: 20px auto;
+    }
+
+    .card-inset {
+      padding: 10px;
+    }
+
+    th, td {
+      padding: 8px 6px;
+    }
+
     .rank-col {
-      width: 15%;
+      width: 18%;
+    }
+
+    .xp-col, .xp-cell {
+      width: 30%;
     }
   }
 </style>

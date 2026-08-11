@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { seededRng } from '../../test/seeded-rng.js';
 import tables, { DIFFICULTY_MATRIX, tableDifficulty, tableTime } from './tables.js';
 
-describe('matrice de difficulté brute (forme relative iso-V1)', () => {
+describe('matrice de difficulté brute (formule V1)', () => {
   it('valeurs de référence de la grille brute', () => {
     expect(DIFFICULTY_MATRIX).toHaveLength(10);
     DIFFICULTY_MATRIX.forEach((row) => {
@@ -17,28 +17,28 @@ describe('matrice de difficulté brute (forme relative iso-V1)', () => {
   });
 });
 
-describe('tableDifficulty (rescalée en mode « rappel », SPEC §4.4)', () => {
-  it('rescale la grille brute dans RECALL_DIFFICULTY_RANGE = [0.3, 0.7]', () => {
-    expect(tableDifficulty(7, 7)).toBe(0.7); // pic brut 3.0 → borne haute
-    expect(tableDifficulty(1, 1)).toBe(0.3); // brut 0.5 → borne basse
-    expect(tableDifficulty(10, 5)).toBe(0.3);
-    expect(tableDifficulty(2, 8)).toBeCloseTo(0.41, 2);
-    expect(tableDifficulty(3, 3)).toBeGreaterThanOrEqual(0.3);
-    expect(tableDifficulty(3, 3)).toBeLessThanOrEqual(0.7);
+describe('tableDifficulty (formule V1 exacte, aucun rescale)', () => {
+  it('retourne la valeur brute de la grille', () => {
+    expect(tableDifficulty(7, 7)).toBe(3.0); // pic
+    expect(tableDifficulty(1, 1)).toBe(0.5);
+    expect(tableDifficulty(10, 5)).toBe(0.5);
+    expect(tableDifficulty(2, 8)).toBe(1.2);
+    expect(tableDifficulty(6, 8)).toBe(2.5);
+    expect(tableDifficulty(8, 7)).toBe(2.7);
   });
 
-  it('hors limites → valeur intermédiaire (brut 1.0 rescalé)', () => {
-    expect(tableDifficulty(0, 5)).toBeCloseTo(0.38, 2);
-    expect(tableDifficulty(11, 5)).toBeCloseTo(0.38, 2);
+  it('hors limites → valeur par défaut 1.0', () => {
+    expect(tableDifficulty(0, 5)).toBe(1.0);
+    expect(tableDifficulty(11, 5)).toBe(1.0);
   });
 });
 
-describe('tableTime (mode « rappel » : 6–10 s adulte, ×3 enfant)', () => {
+describe('tableTime (formule V1 exacte : 5–15 s adulte, ×3 enfant)', () => {
   it('bornes', () => {
     expect(tableTime(1, 1, 'adulte')).toBe(6);
-    expect(tableTime(10, 10, 'adulte')).toBe(10);
+    expect(tableTime(10, 10, 'adulte')).toBe(15);
     expect(tableTime(1, 1, 'enfant')).toBe(18);
-    expect(tableTime(10, 10, 'enfant')).toBe(30);
+    expect(tableTime(10, 10, 'enfant')).toBe(45);
   });
 });
 
@@ -67,6 +67,11 @@ describe('générateur', () => {
   it('mode adulte : pool de 100 cellules', () => {
     const gen = tables.createGenerator({ selectedTables: [] }, 'adulte', seededRng(1));
     expect(gen.progress()).toEqual({ solved: 0, total: 100, cumulative: 0 });
+  });
+
+  it('question générée : legacyWhole (formule de score V1, pas computeScore)', () => {
+    const gen = tables.createGenerator({ selectedTables: [] }, 'adulte', seededRng(1));
+    expect(gen.next().legacyWhole).toBe(true);
   });
 
   it('mode enfant : cellules dont la ligne OU la colonne est choisie (règle V1)', () => {

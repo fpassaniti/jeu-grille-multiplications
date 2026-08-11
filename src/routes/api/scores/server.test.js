@@ -153,7 +153,7 @@ describe('Endpoint API /api/scores', () => {
   it('devrait rejeter un score trop élevé par rapport aux cellules résolues', async () => {
     mockRequest.json.mockResolvedValue({
       name: 'Joueur Test',
-      score: 10000, // Score trop élevé pour seulement 2 cellules (au-delà du plafond de plausibilité)
+      score: 20000, // Score trop élevé pour seulement 2 cellules (au-delà du plafond de plausibilité)
       duration: 5,
       level: 'adulte',
       solvedCells: 2, // Peu de cellules
