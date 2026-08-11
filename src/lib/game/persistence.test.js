@@ -31,7 +31,6 @@ describe('persistence des réglages', () => {
   it('aller-retour save/load', () => {
     const settings = {
       lastMode: 'addition',
-      level: 'enfant',
       duration: 5,
       optionsByMode: { addition: { tiers: ['A1', 'A2'] } }
     };
@@ -49,14 +48,12 @@ describe('persistence des réglages', () => {
       KEY,
       JSON.stringify({
         lastMode: 'nawak',
-        level: 'expert',
         duration: 42,
         optionsByMode: { addition: { tiers: ['Z9'] }, subtraction: { tiers: ['S1'] } }
       })
     );
     const settings = loadSettings();
     expect(settings.lastMode).toBe('tables');
-    expect(settings.level).toBe('adulte');
     expect(settings.duration).toBe(3);
     expect(settings.optionsByMode).toEqual({ subtraction: { tiers: ['S1'] } });
   });

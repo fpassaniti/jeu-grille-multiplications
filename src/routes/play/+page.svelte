@@ -15,6 +15,7 @@
 
   const engine = new GameEngine();
   let settings = $state(loadSettings());
+  let selectedPotionCodes = $state([]);
 
   // État de sauvegarde de fin de partie
   let scoreSaved = $state(false);
@@ -52,17 +53,33 @@
     saveSettings(settings);
   }
 
+  function derivePotionEffects(codes) {
+    let bonusTimeSec = 0;
+    let graceEnabled = false;
+    for (const code of codes) {
+      const potion = data.potions.find((p) => p.code === code);
+      if (!potion) continue;
+      if (potion.family === 'time_bonus') bonusTimeSec += potion.value;
+      if (potion.family === 'time_grace') graceEnabled = true;
+    }
+    return { bonusTimeSec, graceEnabled };
+  }
+
   function startGame() {
     scoreSaved = false;
     saveAttempted = false;
     saveError = null;
     levelUp = false;
     gameResults = null;
+    const { bonusTimeSec, graceEnabled } = derivePotionEffects(selectedPotionCodes);
     engine.start({
       modeId: settings.lastMode,
       options: currentOptions,
-      level: settings.level,
-      durationMin: settings.duration
+      level: data.playerMode,
+      durationMin: settings.duration,
+      bonusTimeSec,
+      graceEnabled,
+      potionCodes: selectedPotionCodes
     });
   }
 
@@ -85,6 +102,7 @@
       errorsCount: results.errorsCount,
       elapsedSec: results.elapsedSec,
       completed: results.completed,
+      potionCodes: results.potionCodes,
       solvedCells: results.questionsSolved,
       totalPossibleCells: results.questionsTotal,
       selectedTables
@@ -112,10 +130,15 @@
   }
 
   function restartGame() {
+    // Les potions sont à usage unique (stock déjà décrémenté côté serveur) :
+    // une potion utilisée ne doit pas être silencieusement réappliquée côté
+    // client sur un "Rejouer" qui contourne l'écran de sélection.
+    selectedPotionCodes = [];
     startGame();
   }
 
   function resetGame() {
+    selectedPotionCodes = [];
     engine.destroy();
     engine.state = 'notStarted';
   }
@@ -153,19 +176,21 @@
   {#if engine.state === 'notStarted'}
     <StartScreen
       modeId={settings.lastMode}
-      level={settings.level}
+      level={data.playerMode}
       duration={settings.duration}
       options={currentOptions}
+      potions={data.potions}
+      {selectedPotionCodes}
       onModeSelect={(modeId) => updateSettings({ lastMode: modeId })}
-      onLevelSelect={(level) => updateSettings({ level })}
       onDurationSelect={(duration) => updateSettings({ duration })}
       onOptionsChange={(options) => setModeOptions(settings.lastMode, options)}
+      onPotionSelectionChange={(codes) => (selectedPotionCodes = codes)}
       onStart={startGame}
     />
   {:else if engine.state === 'playing'}
     <GameScreen
       modeId={settings.lastMode}
-      level={settings.level}
+      level={data.playerMode}
       score={engine.score}
       gameTimer={engine.gameTimer}
       question={engine.question}

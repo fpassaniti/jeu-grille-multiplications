@@ -1,0 +1,107 @@
+[
+  {
+    "slug": "decor-jardin",
+    "code": "background_garden",
+    "slot": "background",
+    "rarity": "uncommon",
+    "price": 450,
+    "unlockLevel": 7,
+    "itemDescription": "a lush green garden backdrop with flowers and a small hedge",
+    "names": {
+      "fr": "Jardin fleuri",
+      "en": "Blooming garden",
+      "es": "Jardín florido",
+      "zh": "花园背景"
+    }
+  },
+  {
+    "slug": "decor-planete-mars",
+    "code": "background_mars",
+    "slot": "background",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 13,
+    "itemDescription": "a red rocky Mars planet surface backdrop with a dusty orange sky and distant craters",
+    "names": {
+      "fr": "Planète Mars",
+      "en": "Mars planet",
+      "es": "Planeta Marte",
+      "zh": "火星背景"
+    }
+  },
+  {
+    "slug": "parking-supermarche",
+    "code": "background_supermarket_parking",
+    "slot": "background",
+    "rarity": "common",
+    "price": 150,
+    "unlockLevel": 1,
+    "itemDescription": "a grimy supermarket parking lot backdrop with a grocery store storefront, a dumpster with scattered trash, and abandoned shopping carts",
+    "names": {
+      "fr": "Parking de supermarché",
+      "en": "Supermarket parking",
+      "es": "Parking de supermercado",
+      "zh": "超市停车场"
+    }
+  },
+  {
+    "slug": "villa-milliardaire",
+    "code": "background_billionaire_villa",
+    "slot": "background",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 12,
+    "itemDescription": "a luxurious billionaire's villa backdrop with a swimming pool, palm trees and a grand modern mansion facade",
+    "names": {
+      "fr": "Villa de milliardaire",
+      "en": "Billionaire villa",
+      "es": "Villa de millonario",
+      "zh": "亿万富翁别墅"
+    }
+  },
+  {
+    "slug": "aura-de-mouches",
+    "code": "aura_flies_aura",
+    "slot": "aura",
+    "rarity": "rare",
+    "price": 900,
+    "unlockLevel": 12,
+    "itemDescription": "Some small black flies creating an aura of smell not flyong behind, just around the character/robot",
+    "names": {
+      "fr": "Aura de mouches",
+      "en": "Flies Aura",
+      "es": "Aura de Moscas",
+      "zh": "苍蝇光环"
+    }
+  },
+  {
+    "slug": "aura-super-sayan",
+    "code": "aura_super_saiyan",
+    "slot": "aura",
+    "rarity": "legendary",
+    "price": 8000,
+    "unlockLevel": 25,
+    "itemDescription": "a blazing golden energy aura with electric sparks and flame-like flickers around the wearer",
+    "names": {
+      "fr": "Aura super sayan",
+      "en": "Super Saiyan aura",
+      "es": "Aura supersaiyan",
+      "zh": "超级赛亚人光环"
+    }
+  },
+  {
+    "slug": "corps-metal-squelette",
+    "code": "body_metal_skeleton",
+    "slot": "body",
+    "rarity": "epic",
+    "price": 2700,
+    "unlockLevel": 19,
+    "itemDescription": "a bare dark-metal skeletal body variant with an exposed strut-and-rod endoskeleton frame",
+    "names": {
+      "fr": "Corps squelette métallique",
+      "en": "Metal skeleton body",
+      "es": "Cuerpo esqueleto metálico",
+      "zh": "金属骨架身体"
+    }
+  }
+]

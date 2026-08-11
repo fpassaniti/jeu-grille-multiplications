@@ -6,7 +6,7 @@
 
 ## 1. Constat
 
-**Mise à jour 2026-07-22** : le catalogue procédural à 353 items (placeholders SVG générés automatiquement, `scripts/item-catalog.mjs`/`scripts/generate-item-placeholders.mjs`) a été abandonné — la table `items` a été entièrement vidée (`db/migrations/005_items_reset.sql`, voir `SPEC.md` §5.9). Il n'y a plus de placeholder d'aucune sorte : chaque item n'existe en base qu'à partir du moment où son vrai art est produit et ajouté via `scripts/add-shop-item.mjs` (§6). Ce document décrit comment produire cet art, un item à la fois, avec un style cohérent avec les images de niveau existantes (`static/images/levels/level_N.png`).
+**Mise à jour 2026-07-22** : le catalogue procédural à 353 items (placeholders SVG générés automatiquement, `scripts/item-catalog.mjs`/`scripts/generate-item-placeholders.mjs`) a été abandonné — la table `items` a été entièrement vidée (`db/migrations/005_items_reset.sql`, voir `SPEC.md` §5.9). Il n'y a plus de placeholder d'aucune sorte : chaque item n'existe en base qu'à partir du moment où son vrai art est produit et ajouté via `scripts/add-shop-item.mjs` (§6). Ce document décrit comment produire cet art, un item à la fois, avec un style cohérent avec les items déjà en boutique. (Les images de niveau `static/images/levels/level_N.png` qui servaient auparavant de référence de style ont été supprimées le 2026-08-11 : elles n'étaient plus utilisées par l'UI — voir §3 des niveaux dans `SPEC.md`.)
 
 ## 2. Point d'attention technique — pipeline de compositing (tranché 2026-07-22)
 
@@ -16,7 +16,7 @@ Une version précédente de ce document mettait en doute la fiabilité de cette 
 
 **Approche retenue : calque plein cadre.** Chaque item exporté (`scripts/extract-item-diff.mjs`) garde le cadrage exact et la résolution native de l'image dont il est extrait — transparent partout sauf la zone de l'accessoire (exceptions : le slot `background`, plein cadre **opaque**, voir §5.1 — rien à préserver derrière puisqu'il est toujours au z-index le plus bas ; le slot `back`, plein cadre transparent mais généré comme item **autonome**, sans édition ni soustraction, voir §5.2). `CharacterAvatar.svelte` continue d'empiler de simples `<img>` sans aucun offset en code (§5.3 inchangé), et **aucune colonne `offset_x`/`offset_y`/`scale` n'est ajoutée** au schéma `items`.
 
-**Contrepartie assumée** (accessoires diff-extraits par édition, ex. `hat`/`weapon`/`outfit`/`aura`/`pet`/`body`) : ils sont verrouillés à un seul personnage de base (le robot de `item-art/raw/robot-unit01/`) — un accessoire ne peut pas être réutilisé tel quel sur un autre corps, puisque leur cadrage/silhouette diffère. Décision : rester sur ce seul corps canonique tant qu'un autre corps n'a pas lui-même besoin de vrai art. Si ce besoin apparaît, ce choix (calque plein cadre vs `offset_x/y/scale`) devra être revu — probablement en régénérant un jeu d'accessoires par corps plutôt qu'en réintroduisant un système d'offset, `object-fit: contain` rendant déjà les deux approches équivalentes visuellement une fois qu'un asset est correctement cadré. **Le slot `back` échappe volontairement à cette contrepartie** (§5.2) : un item ample (cape, sac à dos) diff-extrait contre ce seul robot ne contiendrait que les pixels réellement rendus dans son ombre — un robot plus maigre laisserait apparaître des trous (zones jamais rendues, pas juste masquées à tort). D'où le choix de le générer en calque autonome complet dès maintenant, plutôt que d'attendre qu'un futur corps révèle le problème.
+**Contrepartie assumée** (accessoires diff-extraits par édition, ex. `hat`/`weapon`/`outfit`/`aura`/`pet`) : ils sont verrouillés à un seul personnage de base (le robot de `item-art/raw/robot-unit01/`) — un accessoire ne peut pas être réutilisé tel quel sur un autre corps, puisque leur cadrage/silhouette diffère. Décision : rester sur ce seul corps canonique tant qu'un autre corps n'a pas lui-même besoin de vrai art. Si ce besoin apparaît, ce choix (calque plein cadre vs `offset_x/y/scale`) devra être revu — probablement en régénérant un jeu d'accessoires par corps plutôt qu'en réintroduisant un système d'offset, `object-fit: contain` rendant déjà les deux approches équivalentes visuellement une fois qu'un asset est correctement cadré. **Le slot `back` échappe volontairement à cette contrepartie** (§5.2) : un item ample (cape, sac à dos) diff-extrait contre ce seul robot ne contiendrait que les pixels réellement rendus dans son ombre — un robot plus maigre laisserait apparaître des trous (zones jamais rendues, pas juste masquées à tort). D'où le choix de le générer en calque autonome complet dès maintenant, plutôt que d'attendre qu'un futur corps révèle le problème.
 
 ## 3. Outil recommandé
 
@@ -31,7 +31,9 @@ Une version précédente de ce document mettait en doute la fiabilité de cette 
 
 À générer **une seule fois**, réutilisé comme image de référence pour toutes les éditions suivantes (garantit la cohérence du style de trait/palette *et* l'alignement, §2 — toutes les éditions ultérieures partent de cette même image, jamais d'une nouvelle génération indépendante) :
 
-> Cute round mascot creature, front-facing, standing pose, centered in frame, flat cartoon illustration style, thick bold black outlines (4-6px), vivid saturated flat colors, no gradients except a simple flat highlight, simple dot eyes with big pupils, friendly smile, chibi proportions (large head, small body), **solid flat green background (chroma-key, not transparent)**, 1024x1024, matches the style of a children's math-learning game mascot, plain bare body only, light violet/blue base tone, no clothing, no accessories.
+> A humanoid robot action figure, front-facing, standing pose, centered in frame, photorealistic 3D-rendered toy/action-figure style, soft studio lighting, natural shadows and ambient occlusion, matte-grey metal-and-plastic materials with visible joints and panel lines, glowing eye visor, normal humanoid proportions (not chibi), **solid flat green background (chroma-key, not transparent)**, 1024x1024, plain bare body only, no clothing, no accessories.
+
+**Note (2026-08) : ce prompt a été recalé sur ce que `base.jpg` montre réellement** — une version antérieure de ce document décrivait une mascotte "flat cartoon" chibi, mais le corps canonique réellement généré et utilisé comme référence est un rendu 3D réaliste façon figurine. Cette description reflète l'existant, elle ne documente plus une intention abandonnée en cours de route.
 
 **Fond vert, pas "transparent"** : demander un fond transparent produit un damier grisé dessiné en dur dans les pixels (pas de vrai canal alpha, vérifié sur les générations JPEG) — un fond vert uni se détoure ensuite de façon fiable par distance de couleur (`scripts/extract-item-diff.mjs`), alors que parser un damier ne l'est pas.
 
@@ -39,7 +41,7 @@ Une version précédente de ce document mettait en doute la fiabilité de cette 
 
 À utiliser en **édition guidée par image sur `item-art/raw/robot-unit01/base.jpg`** (ou l'édition précédente de la même chaîne) — pas une génération indépendante : le personnage, la pose et le cadrage doivent rester identiques, seul l'ajout demandé change (§2 : c'est ce qui garantit l'alignement, testé et validé).
 
-> Edit the attached reference image: add a **{ITEM_DESCRIPTION}** to the **'{SLOT}'** equipment slot, styled for **{RARITY}** rarity ({RARITY_NOTE}). Keep everything else in the image exactly unchanged — same character, same pose, same camera framing, same proportions, same flat cartoon style with thick black outline and vivid flat colors, same background. Only the described addition should differ from the reference.
+> Edit the attached reference image: add a **{ITEM_DESCRIPTION}** to the **'{SLOT}'** equipment slot, styled for **{RARITY}** rarity ({RARITY_NOTE}). Keep everything else in the image exactly unchanged — same character, same pose, same camera framing, same proportions, same photorealistic 3D-rendered toy/action-figure style, same background. Only the described addition should differ from the reference.
 
 ### Notes de rareté (`{RARITY_NOTE}`)
 
@@ -105,6 +107,17 @@ D'où le traitement retenu, même famille que `background` (`buildBackAccessoryP
 - fond vert chroma-key classique (pas de scène plein cadre opaque comme `background` — l'item doit rester transparent autour de lui-même).
 
 Post-génération : pas de diff (rien à comparer à une base), pas de scène à remplir en opaque — un simple **détourage chroma-key mono-image** (nouvelles fonctions locales `sampleCornerKeyColor`/`stripChromaKey` dans `generate-item-art.mjs`, même principe que `sampleKeyColor`/`removeGreenScreen` d'`extract-item-diff.mjs` mais réimplémenté en quelques lignes — ce script exécute `main()` sans garde d'import, ses fonctions ne sont pas réutilisables directement). Écrit directement `<slug>_layer.png`, en sautant les étapes 3 à 5 du §6 comme `background`.
+
+## 5.3 Cas particulier — slot `body` (calque plein cadre, pas de soustraction)
+
+Contrairement à un accessoire, un item `body` n'est jamais superposé à un « corps de base » à l'exécution : `CharacterAvatar.svelte` (`LAYER_ORDER`) et `shop.js::getEquipment()` résolvent le slot `body` comme une seule image qui **remplace entièrement** l'item par défaut — il n'y a rien dessous une fois un item `body` équipé. L'asset doit donc être un rendu **complet** du personnage, jamais une différence par rapport à `base.jpg`.
+
+Or le principe de soustraction (§6 étapes 3-5) masque en transparent tout pixel resté identique entre `base.jpg` et la variante — ce qui arrive nécessairement pour un remplacement de corps, puisque le prompt demande de garder la même pose/caméra/style (yeux, jointures, etc.) : ces zones inchangées seraient effacées, perçant des trous dans le personnage sans rien derrière pour les combler. Même défaut de principe que `background` (§5.1), pour une raison différente (remplacement du personnage entier plutôt que redécor du cadre entier).
+
+Traitement retenu (`buildBodyPrompt`, `processItem`) :
+- l'image de référence `base.jpg` **reste envoyée** (contrairement à `background`/`back`) : on veut garder le même personnage, la même pose, les mêmes proportions et le même cadrage — seul le matériau/la silhouette du corps doit changer ;
+- le prompt décrit un **remplacement** du corps entier, pas un ajout localisé ;
+- pas de diff : la variante validée est directement détourée (fond vert → alpha, mêmes fonctions locales `sampleChromaKeyColor`/`stripChromaKeyBackground` que pour `back`) et écrite en `<slug>_layer.png`, en sautant les étapes 3 à 5 du §6 — calque **transparent** (pas opaque comme `background`, qui lui n'a aucun personnage à préserver autour).
 
 ## 6. Process (un item à la fois)
 

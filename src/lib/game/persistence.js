@@ -13,13 +13,12 @@ const KEY = 'multyfun.gameSettings.v2';
 const LEGACY_KEY = 'selectedMultiplicationTables';
 
 const VALID_DURATIONS = [2, 3, 5];
-const VALID_LEVELS = ['adulte', 'enfant'];
 
 /**
- * @returns {{lastMode: string, level: 'adulte'|'enfant', duration: number, optionsByMode: Object}}
+ * @returns {{lastMode: string, duration: number, optionsByMode: Object}}
  */
 export function defaultSettings() {
-  return { lastMode: 'tables', level: 'adulte', duration: 3, optionsByMode: {} };
+  return { lastMode: 'tables', duration: 3, optionsByMode: {} };
 }
 
 /**
@@ -39,9 +38,6 @@ export function loadSettings() {
     const parsed = JSON.parse(raw);
     if (typeof parsed?.lastMode === 'string' && getMode(parsed.lastMode).id === parsed.lastMode) {
       settings.lastMode = parsed.lastMode;
-    }
-    if (VALID_LEVELS.includes(parsed?.level)) {
-      settings.level = parsed.level;
     }
     if (VALID_DURATIONS.includes(parsed?.duration)) {
       settings.duration = parsed.duration;

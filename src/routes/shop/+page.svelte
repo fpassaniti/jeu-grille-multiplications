@@ -25,11 +25,23 @@
   let items = data.shop.items;
   let level = data.shop.level;
   let equipment = data.equipment;
-  let activeBooster = data.shop.activeBooster;
-  let streakFreezes = data.shop.streakFreezes;
+  let potionsCatalog = data.shop.potions.catalog;
+  let streakFreezeDays = data.shop.potions.streakFreezeDays;
 
-  $: boosterGamesLeft = activeBooster?.games_left ?? 0;
-  $: freezeCapReached = streakFreezes >= 2;
+  const POTION_FAMILIES = ['time_bonus', 'time_grace', 'coin_multiplier', 'streak_freeze'];
+
+  function potionName(potion) {
+    return potion.name[getLanguage()] ?? potion.name.fr;
+  }
+
+  function potionDesc(potion) {
+    return potion.description[getLanguage()] ?? potion.description.fr;
+  }
+
+  $: potionsByFamily = POTION_FAMILIES.map((family) => ({
+    family,
+    potions: potionsCatalog.filter((p) => p.family === family)
+  })).filter((group) => group.potions.length > 0);
 
   let activeSlot = 'body';
   let activeRarity = null; // null = toutes les raretés
@@ -38,9 +50,8 @@
   let isBuying = false;
   let buyError = null;
 
-  let boosterPending = false;
-  let freezePending = false;
-  let consumableError = null;
+  let buyingPotionCode = null;
+  let potionError = null;
 
   // Non possédés d'abord, puis rareté croissante au sein de chaque groupe
   // (le sort_order en base n'est pas strictement croissant par rareté, cf. UX_AUDIT.md)
@@ -93,30 +104,31 @@
     previewItem = null;
   }
 
-  async function buyConsumable(kind) {
-    const setPending = kind === 'freeze' ? (v) => (freezePending = v) : (v) => (boosterPending = v);
-    setPending(true);
-    consumableError = null;
+  async function buyPotion(potion) {
+    buyingPotionCode = potion.code;
+    potionError = null;
     try {
       const response = await fetch('/api/shop/buy', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ consumable: kind })
+        body: JSON.stringify({ potionCode: potion.code })
       });
       const result = await response.json();
       if (!response.ok) {
         throw new Error(result.error || 'Erreur');
       }
       coins = result.coinsBalance;
-      if (kind === 'freeze') {
-        streakFreezes += 1;
+      if (potion.family === 'streak_freeze') {
+        streakFreezeDays += potion.value;
       } else {
-        activeBooster = { multiplier: 2, games_left: 3 };
+        potionsCatalog = potionsCatalog.map((p) =>
+          p.code === potion.code ? { ...p, quantity: p.quantity + 1 } : p
+        );
       }
     } catch (e) {
-      consumableError = e.message;
+      potionError = e.message;
     } finally {
-      setPending(false);
+      buyingPotionCode = null;
     }
   }
 </script>
@@ -209,35 +221,31 @@
 
   <div class="potions-section card">
     <h2>{_('shop.potions')}</h2>
-    {#if consumableError}
-      <p class="confirm-error">⚠️ {_(`shop.${consumableError}`) ?? consumableError}</p>
+    {#if potionError}
+      <p class="confirm-error">⚠️ {_(`shop.${potionError}`) ?? potionError}</p>
     {/if}
-    <div class="potions-grid">
-      <div class="potion-card">
-        <span class="potion-icon">🛡️</span>
-        <h3>{_('shop.freezeName')}</h3>
-        <p>{_('shop.freezeDesc')}</p>
-        {#if freezeCapReached}
-          <span class="potion-status">{_('shop.freeze_cap_reached')}</span>
-        {:else}
-          <button on:click={() => buyConsumable('freeze')} disabled={freezePending || coins < 300}>
-            {freezePending ? _('common.loading') : '300 🪙'}
-          </button>
-        {/if}
+    {#each potionsByFamily as group}
+      <h3 class="potion-family-title">{_(`shop.potionFamilies.${group.family}`)}</h3>
+      <div class="potions-grid">
+        {#each group.potions as potion}
+          <div class="potion-card">
+            <h4>{potionName(potion)}</h4>
+            <p>{potionDesc(potion)}</p>
+            {#if potion.family === 'streak_freeze'}
+              <p class="potion-owned">{_('shop.streakFreezeDays', { days: streakFreezeDays })}</p>
+            {:else if potion.quantity > 0}
+              <p class="potion-owned">{_('shop.owned')} ×{potion.quantity}</p>
+            {/if}
+            <button
+              on:click={() => buyPotion(potion)}
+              disabled={buyingPotionCode === potion.code || coins < potion.price}
+            >
+              {buyingPotionCode === potion.code ? _('common.loading') : `${potion.price} 🪙`}
+            </button>
+          </div>
+        {/each}
       </div>
-      <div class="potion-card">
-        <span class="potion-icon">⚡</span>
-        <h3>{_('shop.boosterName')}</h3>
-        <p>{_('shop.boosterDesc')}</p>
-        {#if boosterGamesLeft > 0}
-          <span class="potion-status">{_('shop.boosterActive')} ({boosterGamesLeft})</span>
-        {:else}
-          <button on:click={() => buyConsumable('booster')} disabled={boosterPending || coins < 400}>
-            {boosterPending ? _('common.loading') : '400 🪙'}
-          </button>
-        {/if}
-      </div>
-    </div>
+    {/each}
   </div>
 
   <div class="shop-footer">
@@ -469,10 +477,18 @@
     color: var(--primary-dark);
   }
 
+  .potion-family-title {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin: 15px 0 10px;
+  }
+
   .potions-grid {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 15px;
-    justify-content: center;
+    margin-bottom: 10px;
   }
 
   .potion-card {
@@ -480,14 +496,9 @@
     border-radius: var(--border-radius-md);
     padding: 15px;
     text-align: center;
-    min-width: 160px;
   }
 
-  .potion-icon {
-    font-size: 2rem;
-  }
-
-  .potion-status {
+  .potion-owned {
     display: inline-block;
     font-size: 0.85rem;
     color: var(--primary-dark);
@@ -538,13 +549,7 @@
       z-index: 50;
     }
 
-    .potions-grid {
-      flex-direction: column;
-      align-items: stretch;
-    }
-
     .potion-card {
-      min-width: 0;
       width: 100%;
       box-sizing: border-box;
     }

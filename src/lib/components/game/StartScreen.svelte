@@ -1,5 +1,6 @@
 <script>
   import GameOptions from './GameOptions.svelte';
+  import PotionPicker from './PotionPicker.svelte';
   import ModeSelector from '$lib/components/ModeSelector.svelte';
   import LiveLeaderboardPanel from './LiveLeaderboardPanel.svelte';
   import { getMode } from '$lib/modes/index.js';
@@ -10,10 +11,12 @@
   export let level = 'adulte';
   export let duration = 3;
   export let options = {};
+  export let potions = [];
+  export let selectedPotionCodes = [];
   export let onModeSelect = () => {};
-  export let onLevelSelect = () => {};
   export let onDurationSelect = () => {};
   export let onOptionsChange = () => {};
+  export let onPotionSelectionChange = () => {};
   export let onStart = () => {};
 
   $: mode = getMode(modeId);
@@ -32,9 +35,14 @@
         {level}
         {duration}
         {options}
-        {onLevelSelect}
         {onDurationSelect}
         {onOptionsChange}
+      />
+
+      <PotionPicker
+        {potions}
+        selectedCodes={selectedPotionCodes}
+        onSelectionChange={onPotionSelectionChange}
       />
 
       <button class="start-button" on:click={onStart} disabled={!canStart}>

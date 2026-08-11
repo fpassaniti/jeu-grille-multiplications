@@ -2,7 +2,7 @@
 
 > Document de spécification vivant. Il décrit l'existant (V1), les points d'attention, puis les spécifications de la V2 : modes de calcul multiples et gamification (pièces d'or, boutique, personnage RPG, coffres, streaks). Il est fait pour itérer : chaque section peut être amendée avant implémentation.
 
-**Dernière mise à jour** : 2026-07-23
+**Dernière mise à jour** : 2026-08-11
 
 ---
 
@@ -31,16 +31,17 @@
 | `/login` | Public | Connexion : username + emoji secret (18 choix) |
 | `/register` | Public | Inscription : username, displayName optionnel, emoji secret |
 | `/dashboard` | Connecté | Niveau, XP, barre de progression, 5 dernières parties, actions |
-| `/collection` | Connecté | Les 30 niveaux (débloqués/verrouillés), XP manquante, impression de cartes |
+| `/profile` | Connecté | Compte + changement de mode adulte/enfant (§8) |
 | `/leaderboard` | Public | Top 10 filtré par mode (adulte/enfant) × durée (2/3/5 min) |
+| `/ranking` | Public | Classement général par niveau/XP, tous joueurs d'un mode (adulte/enfant) confondus — distinct de `/leaderboard` (meilleur score d'une partie), voir §2.4 |
 | `/offline` | Public | Fallback PWA hors-ligne |
-| `/debug-print/[level]`, `/debug-score` | Debug | Aperçu carte imprimable / POST de score simulé |
+| `/debug-score` | Debug | POST de score simulé |
 
 ### 2.2 Mécanique de jeu
 
 | Élément | Comportement V1 |
 |---|---|
-| **Modes** | `adulte` (toutes les cellules 1–10 × 1–10) / `enfant` (tables choisies via TableSelector, persistées en localStorage) |
+| **Modes** | `adulte` (toutes les cellules 1–10 × 1–10) / `enfant` (tables choisies via TableSelector, persistées en localStorage) — **⚠️ obsolète, voir §8** : depuis 2026-08-10 le mode adulte/enfant est un attribut du compte (`users.player_mode`), plus un choix refait à chaque partie |
 | **Durées** | 2, 3 ou 5 minutes (défaut 3) |
 | **Génération** | Cellule aléatoire non résolue de la grille 10×10 ; mode enfant : ligne OU colonne dans les tables choisies |
 | **Temps/question** | `5 + ((row+col)/20)×10` → 5 à 15 s ; ×3 en mode enfant. Timeout → marqué incorrect, question suivante |
@@ -55,7 +56,7 @@
 | Élément | Comportement V1 |
 |---|---|
 | **XP** | XP = score de la partie (ratio 1:1), attribuée par la fonction SQL `add_user_xp(user_id, xp, update_streak)` |
-| **Niveaux** | `level = MAX(level) FROM level_definitions WHERE min_xp <= xp` ; 30 niveaux (titres i18n + images `static/images/levels/level_N.png`) |
+| **Niveaux** | `level = MAX(level) FROM level_definitions WHERE min_xp <= xp` ; 100 niveaux (titres i18n, seuils XP en croissance exponentielle jusqu'à ~6,38M XP au niveau 100 — voir `db/migrations/014_level_definitions_31_100.sql`) |
 | **Level-up** | `LevelUpModal` affiché quand le niveau retourné augmente |
 | **Streak jours** | Calculé en base (`streak_days` : +1 si joué la veille, sinon reset) mais **jamais affiché dans l'UI** |
 | **Badges** | Colonne `unlocked_badges` (JSON) présente, **aucune logique implémentée** |
@@ -64,11 +65,13 @@
 
 | Endpoint | Méthode | Payload / Query | Notes |
 |---|---|---|---|
-| `/api/auth/register` | POST | `{username, passwordChar, displayName?}` | Appelle `create_new_user()`, pose cookie session 7 j |
+| `/api/auth/register` | POST | `{username, passwordChar, displayName?, playerMode}` | `playerMode` (`adulte`/`enfant`) obligatoire depuis §8 — appelle `create_new_user()`, pose cookie session 7 j |
 | `/api/auth/login` | POST | `{username, passwordChar}` | Comparaison en clair, `UPDATE last_login` |
 | `/api/auth/logout` | POST | — | Supprime le cookie |
-| `/api/scores` | POST | `{name, score, duration, level, solvedCells, totalPossibleCells, selectedTables}` | Insère dans `game_sessions` + `scores` ; si connecté, appelle `add_user_xp`. Validation : `duration ∈ {2,3,5}` seulement — **le score n'est pas validé** |
+| `/api/scores` | POST | `{name, score, duration, level, solvedCells, totalPossibleCells, selectedTables}` | Insère dans `game_sessions` + `scores` ; si connecté, appelle `add_user_xp`. Validation : `duration ∈ {2,3,5}` seulement — **le score n'est pas validé**. **⚠️ le champ `level` du payload est ignoré depuis §8** : le serveur lit `users.player_mode` |
+| `/api/profile/mode` | POST | `{playerMode}` (§8) | `UPDATE users SET player_mode` pour le compte connecté |
 | `/api/leaderboard` | GET | `?level=&duration=` | Meilleur score par nom, top 10 |
+| `/api/ranking` | GET | `?playerMode=` (`adulte`/`enfant`) | Classement général par XP (`user_progress`), public, sans lien avec un mode/durée de partie — top 20 + position du joueur connecté s'il est hors top 20. Distinct de `/api/leaderboard` : ici on classe les **comptes** par progression globale, pas les **parties** par meilleur score |
 | `/api/user/progress` | GET | (cookie) | Progression + niveau courant/suivant + % |
 | `/api/levels`, `/api/levels/[id]` | GET | — | Définitions de niveaux, flags `unlocked`/`current` |
 
@@ -76,7 +79,7 @@
 
 | Table | Colonnes principales |
 |---|---|
-| `users` | `id (UUID)`, `username`, `password_char` (emoji en clair), `display_name`, `last_login`, `created_at` |
+| `users` | `id (UUID)`, `username`, `password_char` (emoji en clair), `display_name`, `last_login`, `created_at`, `player_mode` (`adulte`/`enfant`, §8) |
 | `user_progress` | `user_id`, `xp`, `level`, `games_played`, `total_score`, `streak_days`, `unlocked_badges (JSON)`, `last_played_at` |
 | `scores` (leaderboard) | `id`, `name`, `score`, `level (text: adulte/enfant)`, `duration`, `cells_solved`, `total_cells`, `tables_used (int[])`, `date` |
 | `game_sessions` (historique) | idem `scores` + `user_id`, `xp_earned`, `completed` |
@@ -90,9 +93,9 @@
 |---|---|
 | Jeu | `src/routes/play/+page.svelte` (~593 lignes, toute la logique), `game/StartScreen`, `GameScreen`, `EndScreen`, `GameOptions`, `GameHeader`, `GameProgress`, `CurrentMultiplication`, `SaveScoreForm`, `LevelUpModal` |
 | Plateau | `GameBoard.svelte` (grille 11×11 desktop), `MobileGame.svelte` (question + input, < 768 px) |
-| Généraux | `NavigationHeader`, `Leaderboard`, `LevelAvatar`, `TableSelector`, `PrintableCard`, `PwaInstallPrompt`, `LanguagePicker` |
+| Généraux | `NavigationHeader`, `Leaderboard`, `TableSelector`, `PwaInstallPrompt`, `LanguagePicker` |
 | Stores | `gameStore.js` (tables sélectionnées, utilisé), `languageStore.js`, `gameStateStore.js` (**code mort**) |
-| Utils | `game-logic.js` (difficulté + score), `formatters.js`, `i18n.js`, `image-paths.js`, `template-loader.js` |
+| Utils | `game-logic.js` (difficulté + score), `formatters.js`, `i18n.js` |
 | Services | `gameService.js` (wrappers fetch, partiellement dupliqués dans `/play`) |
 
 ---
@@ -260,7 +263,7 @@ i18n : nouvelles clés `modes.*`, `difficulty.*` (tiers libellés), `game.valida
 
 ### 5.1 Principes (public : enfants de 7–9 ans)
 
-- **XP et pièces séparés** : l'XP reste la progression permanente (30 niveaux, jamais dépensée) ; les pièces d'or 🪙 sont la monnaie dépensable.
+- **XP et pièces séparés** : l'XP reste la progression permanente (100 niveaux, jamais dépensée) ; les pièces d'or 🪙 sont la monnaie dépensable.
 - **Éthique** : pas d'achats réels, pas de pub, catalogue entièrement visible (pas de FOMO agressif type « aujourd'hui seulement »), pity anti-frustration, gel de streak (les enfants ne contrôlent pas leur emploi du temps), doublons toujours convertis positivement.
 - **Tout gain est calculé côté serveur** (formules, bonus, tirages de coffres) — le client ne fait qu'afficher.
 
@@ -320,8 +323,8 @@ Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 35
 #### 5.3.1 Unification avec l'ancien avatar de niveau (décision 2026-07-20)
 
 À l'implémentation, `LevelAvatar` (image statique `level_N.png` par niveau, §2.3) et `CharacterAvatar` coexistaient sans être unifiés : `LevelAvatar` seul sur l'accueil, les deux côte à côte sur le dashboard, aucun sur le header (dette #11, §3). Décision : le niveau (XP, titre, seuils, `color_theme`) reste — il structure les déblocages d'items (`unlock_level`) et les coffres de level-up — mais `LevelAvatar` n'est plus utilisé pour représenter le joueur là où il rivalisait avec `CharacterAvatar` :
-- **Accueil, dashboard, header** : un seul avatar visible, `CharacterAvatar`, avec le niveau réduit à une pastille (`LevelBadge.svelte`, dégradé `color_theme` réutilisé de `LevelAvatar` via `src/lib/utils/level-theme.js`) en overlay — le niveau redevient un statut/décoration, pas un second personnage.
-- **`/collection`** : `LevelAvatar` + `PrintableCard` inchangés — repositionné comme galerie de badges/certificats de progression à collectionner et imprimer (texte `collection.description` mis à jour en ce sens), une fonctionnalité distincte de la personnalisation du personnage.
+- **Accueil, dashboard, header** : un seul avatar visible, `CharacterAvatar`, avec le niveau réduit à une pastille (`LevelBadge.svelte`, dégradé `color_theme` réutilisé de l'ancien `LevelAvatar` via `src/lib/utils/level-theme.js`) en overlay — le niveau redevient un statut/décoration, pas un second personnage.
+- **`/collection`** : page de galerie de badges/certificats (`LevelAvatar` + `PrintableCard`) retirée le 2026-08-11, fonctionnalité abandonnée.
 
 ### 5.4 Boutique (`/shop`)
 
@@ -350,7 +353,35 @@ Coût total du catalogue complet (350 items) ≈ 1,09M 🪙, soit ~8,6 ans à 35
 - Réutilise `user_progress.streak_days` existant (#10).
 - **Gel de streak 🛡️** : 1 offert, rachetable 300 🪙 ; consommé automatiquement si 1 jour manqué (logique dans la fonction SQL).
 - **UI** : flamme 🔥 + compteur dans le header (grise si pas encore joué aujourd'hui) ; dashboard : calendrier 7 jours (✅/⬜) + prochain palier (« Encore 2 jours → coffre rare ! »).
-- **Boosters (volontairement minimal)** : week-end ×2 (pur code serveur + bannière accueil) ; potion ×2 consommable (400 🪙, 3 prochaines parties, `active_booster JSONB`). Pas de système d'événements générique en V2.
+- **Boosters historiques (`active_booster JSONB`, retiré du catalogue d'achat)** : week-end ×2 reste pur code serveur ; l'ancienne potion ×2/400🪙/3 parties n'est plus vendue depuis `db/migrations/015_potions.sql` mais `add_game_rewards()` continue de l'honorer jusqu'à épuisement pour les joueurs qui en avaient déjà une active au moment de la migration.
+
+### 5.6bis Potions (`db/migrations/015_potions.sql`)
+
+Catalogue générique piloté par données (table `potions`) — remplace les deux
+consommables ad hoc ci-dessus par 4 familles, 11 potions :
+
+| Famille | Potions (valeur/prix) | Consommation |
+|---|---|---|
+| `time_bonus` | +10s/40🪙, +20s/70🪙, +30s/100🪙 | Sélectionnée avant la partie, ajoute des secondes au chrono |
+| `time_grace` | 10s de grâce/60🪙 | Termine le calcul en cours même si le chrono atteint 0 |
+| `coin_multiplier` | ×2/150🪙, ×3/320🪙, ×5/600🪙 | Multiplie les pièces gagnées de la prochaine partie |
+| `streak_freeze` | 1j/80🪙, 2j/140🪙, 5j/300🪙, 14j/700🪙 | Créditée directement en jours dans `user_progress.streak_freezes` (banque, cap 60) |
+
+Deux modèles de consommation :
+- **Sélectionnées avant partie** (`time_bonus`/`time_grace`/`coin_multiplier`) :
+  achat = +1 dans `user_potions` (stock, « coffre » visible sur `/character`).
+  Choisies sur l'écran de démarrage (`PotionPicker.svelte`, au plus une par
+  famille), appliquées côté client (timer, grâce), puis **revérifiées côté
+  serveur** à la soumission du score (`potionCodes` dans le payload de
+  `POST /api/scores`, jamais une valeur numérique cliente) — le stock n'est
+  décrémenté que si la partie est comptabilisée (score > 0). Le multiplicateur
+  vérifié est passé en 5ᵉ paramètre `p_coin_multiplier` à `add_game_rewards()` ;
+  les secondes de bonus élargissent le plafond de plausibilité de
+  `scoreValidation.js` (`duration*60 + extraSec`).
+- **Banque directe** (`streak_freeze`) : l'achat crédite immédiatement des
+  jours dans `user_progress.streak_freezes`, sans passer par `user_potions`.
+  `add_game_rewards()` généralise l'ancienne règle « gel si exactement 1 jour
+  manqué » à un écart de N jours couvert par N-1 jours de gel banqués.
 
 ### 5.7 Schéma DB (`db/migrations/v2_gamification.sql`)
 
@@ -426,7 +457,7 @@ CREATE TABLE chest_openings (
 | Nouveau | Rôle |
 |---|---|
 | `GET /api/shop` | Catalogue joint à l'inventaire (flag `owned`) |
-| `POST /api/shop/buy` | `{itemId}` → `buy_item()` |
+| `POST /api/shop/buy` | `{itemId}` → `buy_item()` ; `{potionCode}` → `buy_potion()` |
 | `POST /api/character/equip` | `{slot, itemId\|null}` (UPSERT `user_equipment`, vérifie possession) |
 | `GET /api/chests` | Coffres disponibles (quotidien ? palier streak dû ? bienvenue ?) |
 | `POST /api/chests/open` | Crédit serveur en pièces uniquement, écrit `chest_openings` + transactions |
@@ -561,4 +592,26 @@ CREATE TABLE user_badges (
 
 Premiers badges visés — trophées de duelliste, alimentés par `challenges_issued`/`challenges_won` : « premier défi lancé », « premier défi gagné », paliers de victoires cumulées (5, 10, 25...). Catalogue extensible à d'autres catégories plus tard (niveaux, streaks...).
 
-**UI à prévoir** : un onglet/section badges (sur `/character` ou `/collection`) affichant le catalogue avec état verrouillé/débloqué.
+**UI à prévoir** : un onglet/section badges (sur `/character`) affichant le catalogue avec état verrouillé/débloqué.
+
+---
+
+## 8. Mode adulte/enfant en attribut de compte (décision 2026-08-10, TODO.md §Ajustement)
+
+### 8.1 Problème
+
+Jusqu'ici le mode adulte/enfant (`level` dans le code, `scores.level`/`game_sessions.level`) était un choix refait à chaque lancement de partie (`GameOptions.svelte`, persisté en localStorage), sans lien avec le compte. Un joueur pouvait ainsi cocher « enfant » ponctuellement pour bénéficier du temps de réponse enfant (×3, `LEVEL_TIME_FACTOR`) ou apparaître dans le classement enfant, sans jamais avoir ce profil.
+
+### 8.2 Décision
+
+Le mode adulte/enfant devient un attribut permanent du compte :
+- **Choisi à l'inscription** (obligatoire, `/register`) et stocké sur `users.player_mode` (`ALTER TABLE users ADD COLUMN player_mode VARCHAR(10) NOT NULL DEFAULT 'adulte' CHECK (player_mode IN ('adulte','enfant'))`, `db/migrations/012_player_mode.sql`). Backfill des 52 comptes existants depuis le `level` de leur dernière partie jouée (`game_sessions`), pas un défaut uniforme.
+- **Modifiable en page profil** (`/profile`, nouvelle route minimale — infos compte + toggle adulte/enfant avec confirmation en 2 taps, `POST /api/profile/mode`). La page complète (niveau/XP/badges, TODO.md « Nouvelle page profil ») reste à construire par-dessus cette base.
+- **Plus de choix au lancement d'une partie** : `GameOptions.svelte`/`StartScreen.svelte` ne proposent plus les boutons adulte/enfant ; `/play/+page.server.js` lit `users.player_mode` côté serveur et le transmet en lecture seule à l'écran de démarrage et au moteur de jeu.
+- **Anti-triche** : `POST /api/scores` ne fait plus confiance au `level` envoyé par le client (`scoreValidation.js` ne le valide/retourne plus) — le serveur relit `users.player_mode` pour l'utilisateur de la session et l'utilise comme valeur autoritaire pour l'INSERT dans `game_sessions`/`scores`. Empêche un compte adulte de forger un payload `level: 'enfant'` pour apparaître dans le classement enfant.
+- **Un changement de mode n'affecte pas l'historique** : `scores`/`game_sessions.level` reste celui enregistré au moment de chaque partie (colonne déjà figée par ligne, §2.5) — le classement (`/api/leaderboard`) continue de filtrer sur cette colonne, donc un record fait en adulte ne réapparaît jamais dans le classement enfant même après un changement de mode. Aucun changement nécessaire côté leaderboard.
+- Plus de mode invité (déjà supprimé le 2026-07-19, voir mémoire projet) : créer un compte est obligatoire pour jouer, donc `player_mode` est toujours défini avant toute partie.
+
+### 8.3 Fichiers clés
+
+`db/migrations/012_player_mode.sql` (+ `db/create_new_user.sql` mis à jour, `create_new_user()` gagne un paramètre `p_player_mode`) ; `src/routes/register/+page.svelte` + `/api/auth/register` (`playerMode` obligatoire) ; `src/routes/profile/` (nouveau) + `/api/profile/mode` (nouveau) ; `src/routes/play/+page.server.js` (charge `player_mode`) ; `src/lib/game/persistence.js` (le `level` sort du schema de settings localStorage) ; `src/routes/api/scores/+server.js` + `scoreValidation.js` (autorité serveur).

@@ -7,7 +7,7 @@
   const LAYER_ORDER = ['background', 'aura', 'back', 'body', 'outfit', 'weapon', 'hat', 'pet'];
 </script>
 
-<div class="character-avatar" style="width: {size}px; height: {size}px;">
+<div class="character-avatar" style="width: var(--avatar-size, {size}px); height: var(--avatar-size, {size}px);">
   {#if !equipment.background}
     <div class="sky-fallback"></div>
   {/if}

@@ -22,6 +22,7 @@
  *     --unlock-level <entier> \
  *     --name-fr "..." --name-en "..." --name-es "..." --name-zh "..." \
  *     [--default]                  (marque is_default=true, gratuit et non achetable)
+ *     [--force]                    (si --code existe déjà : remplace juste l'image, aucune erreur, aucune écriture en base)
  *     [--dry-run]
  */
 import 'dotenv/config';
@@ -44,7 +45,7 @@ function parseArgs(argv) {
     const token = argv[i];
     if (!token.startsWith('--')) continue;
     const key = token.slice(2);
-    if (key === 'dry-run' || key === 'default') {
+    if (key === 'dry-run' || key === 'default' || key === 'force') {
       args[key] = true;
       continue;
     }
@@ -59,7 +60,7 @@ function usageAndExit(message) {
   console.error(
     'Usage: node scripts/add-shop-item.mjs --code <code> --slot <slot> --image <chemin.png> --price <N> ' +
       '--rarity <common|uncommon|rare|epic|legendary|mythic|none> --unlock-level <N> ' +
-      '--name-fr "..." --name-en "..." --name-es "..." --name-zh "..." [--default] [--dry-run]'
+      '--name-fr "..." --name-en "..." --name-es "..." --name-zh "..." [--default] [--force] [--dry-run]'
   );
   process.exit(1);
 }
@@ -152,7 +153,11 @@ async function main() {
     `;
   } catch (error) {
     if (error.code === '23505') {
-      throw new Error(`le code '${item.code}' existe déjà en base (contrainte unique sur items.code).`);
+      if (args.force) {
+        console.log(`✓ Image mise à jour pour '${item.code}' (déjà en base, aucune donnée modifiée).`);
+        return;
+      }
+      throw new Error(`le code '${item.code}' existe déjà en base (contrainte unique sur items.code, relancer avec --force pour ne remplacer que l'image).`);
     }
     throw error;
   }

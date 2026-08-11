@@ -1,12 +1,13 @@
 import { json } from '@sveltejs/kit';
 import { sql } from '$lib/server/db';
 import { isKnownMode } from '$lib/modes/index.js';
+import { DEFAULT_PLAYER_MODE } from '$lib/utils/player-mode.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function GET({ url }) {
   try {
     // Extraire les paramètres de requête
-    const level = url.searchParams.get('level') || 'adulte';
+    const level = url.searchParams.get('level') || DEFAULT_PLAYER_MODE;
     const duration = url.searchParams.get('duration') || '5'; // Par défaut 5 minutes
     // Défaut 'tables' : l'historique V1 reste le classement des tables
     const mode = url.searchParams.get('mode') || 'tables';

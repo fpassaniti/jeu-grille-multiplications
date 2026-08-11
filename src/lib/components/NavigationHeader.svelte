@@ -69,6 +69,9 @@
           <li>
             <a href="/play" class="nav-link button" on:click={handlePlayClick}>{_('common.play')}</a>
           </li>
+          <li>
+            <a href="/ranking" class="nav-link button">{_('common.ranking')}</a>
+          </li>
           {#if user}
             <li>
               <a href="/character" class="nav-link button">{_('common.character')}</a>
@@ -93,7 +96,7 @@
         </div>
 
         {#if user}
-          <span class="user-greeting">{_('common.greeting', { name: user.displayName })}</span>
+          <a href="/profile" class="user-greeting-button">{user.displayName}</a>
           <button class="logout-button" on:click={handleLogout} title={_('navigation.logoutTitle')}>
             <span class="logout-icon">🚪</span>
           </button>
@@ -140,6 +143,11 @@
             <span class="nav-icon">🎮</span> {_('common.play')}
           </a>
         </li>
+        <li>
+          <a href="/ranking" class="mobile-nav-link" on:click={closeMobileMenu}>
+            <span class="nav-icon">🏅</span> {_('common.ranking')}
+          </a>
+        </li>
         {#if user}
           <li>
             <a href="/character" class="mobile-nav-link" on:click={closeMobileMenu}>
@@ -149,11 +157,6 @@
           <li>
             <a href="/shop" class="mobile-nav-link" on:click={closeMobileMenu}>
               <span class="nav-icon">🛍️</span> {_('common.shop')}
-            </a>
-          </li>
-          <li>
-            <a href="/collection" class="mobile-nav-link" on:click={closeMobileMenu}>
-              <span class="nav-icon">📚</span> {_('common.collection')}
             </a>
           </li>
           {#if user.username === 'Fred'}
@@ -180,7 +183,7 @@
       {#if user}
         <div class="mobile-user-info">
           <span class="mobile-greeting">{_('common.loggedInAs')}</span>
-          <span class="mobile-username">{user.displayName}</span>
+          <a href="/profile" class="mobile-username" on:click={closeMobileMenu}>{user.displayName}</a>
         </div>
         <button class="mobile-logout-button" on:click={() => { handleLogout(); closeMobileMenu(); }}>
           <span class="nav-icon">🚪</span> {_('common.logout')}
@@ -294,9 +297,19 @@
     align-items: center;
   }
 
-  .user-greeting {
+  .user-greeting-button {
+    padding: 8px 15px;
+    border-radius: var(--border-radius-md);
+    background-color: var(--bg-secondary);
     color: var(--primary);
     font-weight: bold;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .user-greeting-button:hover {
+    background-color: var(--primary-light);
+    transform: translateY(-2px);
   }
 
   .login-button, .register-button {
@@ -525,6 +538,7 @@
     font-weight: bold;
     color: var(--primary);
     font-size: 1.1rem;
+    text-decoration: none;
   }
 
   .mobile-logout-button {

@@ -82,6 +82,47 @@ describe('GameEngine — cycle de vie', () => {
   });
 });
 
+describe('GameEngine — potions (bonus de temps, grâce, multiplicateur)', () => {
+  it('bonusTimeSec ajoute des secondes au chrono de départ', () => {
+    engine.start({ ...TABLES_CONFIG, bonusTimeSec: 20 });
+    expect(engine.gameTimer).toBe(200); // 180 + 20
+  });
+
+  it('results.potionCodes expose les potions passées à start()', () => {
+    engine.start({ ...TABLES_CONFIG, potionCodes: ['time_bonus_20', 'coin_x2'] });
+    expect(engine.results.potionCodes).toEqual(['time_bonus_20', 'coin_x2']);
+  });
+
+  it('sans potion de grâce, le chrono à 0 termine immédiatement même en pleine question', () => {
+    engine.start(TABLES_CONFIG); // graceEnabled par défaut = false
+    engine.gameTimer = 1;
+    vi.advanceTimersByTime(1000);
+    expect(engine.state).toBe('finished');
+  });
+
+  it('potion de grâce : chrono à 0 avec une question en cours → pas de fin immédiate', () => {
+    engine.start({ ...TABLES_CONFIG, graceEnabled: true });
+    engine.gameTimer = 1;
+    vi.advanceTimersByTime(1000); // gameTimer atteint 0, feedback === null (question en cours)
+    expect(engine.state).toBe('playing');
+
+    vi.advanceTimersByTime(10_000); // fenêtre de grâce (GRACE_MS) épuisée sans réponse
+    expect(engine.state).toBe('finished');
+    expect(engine.results.completed).toBe(true);
+  });
+
+  it('potion de grâce : résoudre le calcul en cours pendant la grâce termine la partie', () => {
+    engine.start({ ...TABLES_CONFIG, graceEnabled: true });
+    engine.gameTimer = 1;
+    vi.advanceTimersByTime(1000);
+    expect(engine.state).toBe('playing');
+
+    engine.onAnswerInput(String(engine.question.answer));
+    vi.advanceTimersByTime(500); // CORRECT_DELAY_MS
+    expect(engine.state).toBe('finished');
+  });
+});
+
 describe('GameEngine — validation des réponses (fix bug #6)', () => {
   it('un préfixe correct ne déclenche PAS de vérification', () => {
     engine.start(TABLES_CONFIG);

@@ -9,7 +9,6 @@
   export let level = 'adulte';
   export let duration = 3;
   export let options = {};
-  export let onLevelSelect = () => {};
   export let onDurationSelect = () => {};
   export let onOptionsChange = () => {};
 
@@ -29,21 +28,6 @@
 </script>
 
 <div class="game-options">
-  <div class="option-section card-inset">
-    <h2>{_('play.chooseLevel')}</h2>
-    <div class="option-buttons">
-      <button class:active={level === 'adulte'} on:click={() => onLevelSelect('adulte')}>
-        <span class="emoji">👨‍💼</span> {_('common.adult')}
-      </button>
-      <button class:active={level === 'enfant'} on:click={() => onLevelSelect('enfant')}>
-        <span class="emoji">🧒</span> {_('common.child')}
-      </button>
-    </div>
-    <p class="option-description">
-      {level === 'adulte' ? _('play.adultResponseTime') : _('play.childResponseTime')}
-    </p>
-  </div>
-
   {#if mode.boardType === 'grid'}
     {#if level === 'enfant'}
       <div class="option-section card-inset">
@@ -100,12 +84,6 @@
     justify-content: center;
     gap: 15px;
     margin: 15px 0;
-  }
-
-  .option-description {
-    font-size: 0.9rem;
-    color: var(--text-light);
-    margin-top: 10px;
   }
 
   .emoji {

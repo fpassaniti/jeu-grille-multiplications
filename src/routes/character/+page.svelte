@@ -30,6 +30,15 @@
     return data.shop.items.filter((item) => item.slot === slot && item.owned);
   }
 
+  function potionName(potion) {
+    return potion.name[getLanguage()] ?? potion.name.fr;
+  }
+
+  $: ownedPotions = data.shop.potions.catalog.filter(
+    (p) => p.family !== 'streak_freeze' && p.quantity > 0
+  );
+  $: streakFreezeDays = data.shop.potions.streakFreezeDays;
+
   function rarityFor(slot) {
     return data.shop.items.find((i) => i.id === equipment[slot]?.itemId)?.rarity ?? 'common';
   }
@@ -151,6 +160,25 @@
       </div>
     </div>
   {/if}
+
+  <div class="potion-chest card">
+    <h2>{_('character.potionChest')}</h2>
+    {#if streakFreezeDays > 0}
+      <p class="freeze-bank">🛡️ {_('shop.streakFreezeDays', { days: streakFreezeDays })}</p>
+    {/if}
+    {#if ownedPotions.length > 0}
+      <div class="potion-chest-grid">
+        {#each ownedPotions as potion}
+          <div class="potion-chest-item">
+            <span class="potion-chest-name">{potionName(potion)}</span>
+            <span class="potion-chest-qty">×{potion.quantity}</span>
+          </div>
+        {/each}
+      </div>
+    {:else if streakFreezeDays === 0}
+      <p class="empty-hint">{_('character.noPotions')}</p>
+    {/if}
+  </div>
 
   <div class="character-footer">
     <a href="/shop" class="button shop-link">🛍️ {_('character.goToShop')}</a>
@@ -330,6 +358,41 @@
   .empty-hint {
     color: var(--text-light);
     font-style: italic;
+  }
+
+  .potion-chest {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+
+  .potion-chest h2 {
+    color: var(--primary-dark);
+    margin-bottom: 12px;
+  }
+
+  .freeze-bank {
+    font-weight: bold;
+    margin-bottom: 10px;
+  }
+
+  .potion-chest-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .potion-chest-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background-color: var(--bg-secondary);
+    border-radius: var(--border-radius-md);
+  }
+
+  .potion-chest-qty {
+    font-size: 0.8rem;
+    color: var(--text-light);
   }
 
   .character-footer {

@@ -13,6 +13,8 @@ const CORRECT_DELAY_MS = 500;
 const INCORRECT_FLASH_MS = 600;
 const TIMEOUT_DELAY_MS = 1000;
 const POOL_RESET_NOTICE_MS = 1500;
+/** Fenêtre de grâce accordée par la potion "dernier calcul" une fois le chrono à 0. */
+const GRACE_MS = 10_000;
 
 export class GameEngine {
   // ---- état réactif ----
@@ -53,15 +55,27 @@ export class GameEngine {
   #erredThisQuestion = false;
   /** Somme des points déjà crédités chiffre par chiffre pour la question posée en cours. */
   #digitPointsAccumulated = 0;
+  /** Secondes ajoutées par une potion de bonus de temps (0 si aucune). */
+  #bonusTimeSec = 0;
+  /** Codes des potions sélectionnées pour cette partie, renvoyés dans `results`. */
+  #potionCodes = [];
+  /** Potion "dernier calcul" active : une question en cours au moment où le
+   * chrono atteint 0 obtient une fenêtre de grâce avant la fin forcée. */
+  #graceEnabled = false;
+  #graceActive = false;
 
   /**
-   * @param {{modeId: string, options: Object, level: 'adulte'|'enfant', durationMin: number}} config
+   * @param {{modeId: string, options: Object, level: 'adulte'|'enfant', durationMin: number, bonusTimeSec?: number, graceEnabled?: boolean, potionCodes?: string[]}} config
    */
-  start({ modeId, options, level, durationMin }) {
+  start({ modeId, options, level, durationMin, bonusTimeSec = 0, graceEnabled = false, potionCodes = [] }) {
     this.#clearTimers();
     const mode = getMode(modeId);
     this.#config = { modeId: mode.id, options, level, durationMin };
     this.#generator = mode.createGenerator(options, level);
+    this.#bonusTimeSec = bonusTimeSec;
+    this.#graceEnabled = graceEnabled;
+    this.#graceActive = false;
+    this.#potionCodes = potionCodes;
 
     this.score = 0;
     this.errorsCount = 0;
@@ -72,13 +86,22 @@ export class GameEngine {
     this.digitIndex = 0;
     this.feedback = null;
     this.poolResetNotice = false;
-    this.gameTimer = durationMin * 60;
+    this.gameTimer = durationMin * 60 + bonusTimeSec;
     this.#refreshDerived();
     this.state = 'playing';
 
     this.#gameInterval = setInterval(() => {
       this.gameTimer -= 1;
-      if (this.gameTimer <= 0) {
+      if (this.gameTimer <= 0 && !this.#graceActive) {
+        // Grâce ("dernier calcul") : une question est en cours (pas de
+        // feedback en attente) → on laisse une fenêtre de GRACE_MS pour la
+        // terminer au lieu de couper immédiatement. #markQuestionSolved
+        // termine la partie dès que cette question est résolue.
+        if (this.#graceEnabled && this.feedback === null) {
+          this.#graceActive = true;
+          this.#after(GRACE_MS, () => this.end());
+          return;
+        }
         this.end();
       }
     }, 1000);
@@ -156,7 +179,12 @@ export class GameEngine {
     // Temps réellement joué (déduit du décompte, immunisé contre la dérive
     // d'horloge) : couvre la fin anticipée ("Finir la partie") pour un
     // anti-replay serveur basé sur la durée réelle plutôt que nominale.
-    const elapsedSec = Math.max(1, durationMin * 60 - Math.max(0, this.gameTimer));
+    // La base inclut le bonus de temps éventuel (potion) : sinon un temps de
+    // jeu légitiment prolongé se retrouverait tronqué au plafond nominal.
+    const elapsedSec = Math.max(
+      1,
+      durationMin * 60 + this.#bonusTimeSec - Math.max(0, this.gameTimer)
+    );
     return {
       modeId: this.#config?.modeId ?? 'tables',
       options: this.#config?.options ?? {},
@@ -167,7 +195,8 @@ export class GameEngine {
       questionsSolved: this.progress.cumulative,
       questionsTotal: this.progress.total,
       errorsCount: this.errorsCount,
-      completed: this.completed
+      completed: this.completed,
+      potionCodes: this.#potionCodes
     };
   }
 
@@ -301,6 +330,12 @@ export class GameEngine {
     this.#refreshDerived();
     this.feedback = 'correct';
     this.#stopQuestionTimer();
+    if (this.#graceActive) {
+      // Grâce consommée par la résolution du calcul en cours : fin immédiate
+      // plutôt que d'enchaîner une nouvelle question hors chrono.
+      this.#after(CORRECT_DELAY_MS, () => this.end());
+      return;
+    }
     this.#after(CORRECT_DELAY_MS, () => this.#nextQuestion());
   }
 

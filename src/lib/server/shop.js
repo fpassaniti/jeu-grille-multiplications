@@ -1,4 +1,5 @@
 import { sql } from '$lib/server/db';
+import { getUserPotions } from '$lib/server/potions.js';
 
 const EQUIPMENT_SLOTS = ['background', 'aura', 'back', 'body', 'outfit', 'weapon', 'hat', 'pet'];
 // Slots avec un équipement de départ (résolution virtuelle, aucune ligne user_equipment seedée)
@@ -25,12 +26,14 @@ export async function getShopData(userId) {
   `;
   const { coins = 0, level = 1, active_booster: activeBooster = null, streak_freezes: streakFreezes = 0 } =
     progress?.[0] ?? {};
+  const potions = await getUserPotions(userId);
 
   return {
     coins,
     level,
     activeBooster,
     streakFreezes,
+    potions,
     items: items.map((item) => ({
       id: item.id,
       code: item.code,

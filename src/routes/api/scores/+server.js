@@ -2,6 +2,8 @@ import { json } from '@sveltejs/kit';
 import { sql } from '$lib/server/db';
 import { getSessionUser } from '$lib/server/auth';
 import { normalizePayload } from '$lib/server/scoreValidation.js';
+import { DEFAULT_PLAYER_MODE } from '$lib/utils/player-mode.js';
+import { verifyAndConsumePotions } from '$lib/server/potions.js';
 
 const MIN_PERFECT_QUESTIONS = 10;
 
@@ -9,22 +11,6 @@ const MIN_PERFECT_QUESTIONS = 10;
 export async function POST({ request, cookies }) {
   try {
     const body = await request.json();
-    const normalized = normalizePayload(body);
-    if ('error' in normalized) {
-      return json({ error: normalized.error }, { status: 400 });
-    }
-    const {
-      score,
-      duration,
-      level,
-      gameMode,
-      modeOptions,
-      questionsSolved,
-      questionsTotal,
-      errorsCount,
-      elapsedSec,
-      completed
-    } = normalized.value;
 
     // Le jeu est réservé aux comptes connectés : plus de partie invitée.
     const sessionUser = getSessionUser(cookies);
@@ -33,6 +19,38 @@ export async function POST({ request, cookies }) {
     }
     const userId = sessionUser.id;
     const userDisplayName = sessionUser.displayName || sessionUser.username;
+
+    // Le level (adulte/enfant) n'est plus fourni par le client : c'est un attribut
+    // du compte (users.player_mode), lu ici pour ne pas faire confiance à un
+    // payload forgé — un joueur "adulte" ne doit pas pouvoir apparaître dans le
+    // classement enfant en envoyant simplement level: 'enfant'.
+    const userRows = await sql`SELECT player_mode FROM users WHERE id = ${userId}`;
+    const level = userRows[0]?.player_mode ?? DEFAULT_PLAYER_MODE;
+
+    // Potions sélectionnées avant la partie (bonus de temps/grâce/multiplicateur
+    // de pièces) : vérifiées ici (jamais depuis une valeur numérique du
+    // payload) pour élargir le plafond de plausibilité de scoreValidation.
+    // Le stock n'est décrémenté que si la partie est comptabilisée, plus bas.
+    const potionCodes = Array.isArray(body.potionCodes) ? body.potionCodes : [];
+    const { extraSec, coinMultiplier } = await verifyAndConsumePotions(userId, potionCodes, {
+      counted: false
+    });
+
+    const normalized = normalizePayload(body, extraSec);
+    if ('error' in normalized) {
+      return json({ error: normalized.error }, { status: 400 });
+    }
+    const {
+      score,
+      duration,
+      gameMode,
+      modeOptions,
+      questionsSolved,
+      questionsTotal,
+      errorsCount,
+      elapsedSec,
+      completed
+    } = normalized.value;
 
     // Partie à 0 point (aucun calcul résolu) : ni enregistrée, ni récompensée —
     // sinon un joueur peut démarrer une partie et cliquer sur « Terminer la
@@ -65,6 +83,11 @@ export async function POST({ request, cookies }) {
       );
     }
 
+    // Partie comptabilisée : on décrémente maintenant le stock des potions
+    // vérifiées plus haut (pas sur une partie à 0 point, cf. early return
+    // ci-dessus — pas de gaspillage sur un abandon accidentel).
+    await verifyAndConsumePotions(userId, potionCodes, { counted: true });
+
     const playerName = body.name || userDisplayName;
     const isPerfect = errorsCount === 0 && questionsSolved >= MIN_PERFECT_QUESTIONS;
 
@@ -92,7 +115,7 @@ export async function POST({ request, cookies }) {
     let progressUpdate = null;
     let rewards = null;
     const rewardsData = await sql`
-      SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect}, ${completed})
+      SELECT * FROM add_game_rewards(${userId}, ${score}, ${isPerfect}, ${completed}, ${coinMultiplier})
     `;
     if (rewardsData && rewardsData.length > 0) {
       const r = rewardsData[0];

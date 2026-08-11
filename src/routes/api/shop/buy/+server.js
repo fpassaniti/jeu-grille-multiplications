@@ -1,13 +1,13 @@
 import { json } from '@sveltejs/kit';
 import { sql } from '$lib/server/db';
 import { getSessionUser } from '$lib/server/auth';
+import { buyPotion } from '$lib/server/potions.js';
 
 const ERROR_STATUS = {
   item_not_found: 404,
-  unknown_consumable: 404,
+  unknown_potion: 404,
   level_locked: 403,
   already_owned: 409,
-  already_active: 409,
   freeze_cap_reached: 409,
   insufficient_coins: 402
 };
@@ -22,12 +22,8 @@ export async function POST({ request, cookies }) {
   try {
     const body = await request.json();
 
-    if (body.consumable) {
-      if (!['freeze', 'booster'].includes(body.consumable)) {
-        return json({ error: 'Consommable inconnu' }, { status: 400 });
-      }
-      const rows = await sql`SELECT buy_consumable(${sessionUser.id}, ${body.consumable}) AS result`;
-      const result = rows[0].result;
+    if (body.potionCode) {
+      const result = await buyPotion(sessionUser.id, body.potionCode);
       if (result.error) {
         return json({ error: result.error }, { status: ERROR_STATUS[result.error] ?? 400 });
       }

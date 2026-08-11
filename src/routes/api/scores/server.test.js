@@ -21,8 +21,12 @@ vi.mock('@sveltejs/kit', async () => {
 const { mockDb } = vi.hoisted(() => ({
   mockDb: {
     recentGame: false,
+    playerMode: 'adulte',
     replayCalls: [],
+    gameSessionInsertCalls: [],
     rewardsCalls: [],
+    ownedPotionRows: [],
+    potionUpdateCalls: [],
     rewardsResponse: {
       xp: 600,
       level: 2,
@@ -46,11 +50,15 @@ vi.mock('@neondatabase/serverless', () => {
       return async (strings, ...values) => {
         const query = typeof strings === 'string' ? strings : strings[0];
 
+        if (query.includes('SELECT player_mode FROM users')) {
+          return [{ player_mode: mockDb.playerMode }];
+        }
         if (query.includes('SELECT 1 FROM game_sessions')) {
           mockDb.replayCalls.push(values);
           return mockDb.recentGame ? [{ '?column?': 1 }] : [];
         }
         if (query.includes('INSERT INTO game_sessions')) {
+          mockDb.gameSessionInsertCalls.push(values);
           return [{ id: 'mock-id', user_id: 'user-id', score: 100, date: new Date() }];
         }
         if (query.includes('INSERT INTO scores')) {
@@ -65,6 +73,13 @@ vi.mock('@neondatabase/serverless', () => {
         }
         if (query.includes('SELECT title FROM level_definitions')) {
           return [{ title: 'Apprenti Calculateur' }];
+        }
+        if (query.includes('JOIN user_potions up ON up.potion_code = p.code AND up.user_id')) {
+          return mockDb.ownedPotionRows;
+        }
+        if (query.includes('UPDATE user_potions SET quantity')) {
+          mockDb.potionUpdateCalls.push(values);
+          return [];
         }
 
         return [];
@@ -81,8 +96,12 @@ describe('Endpoint API /api/scores', () => {
     // Réinitialiser les mocks avant chaque test
     vi.clearAllMocks();
     mockDb.recentGame = false;
+    mockDb.playerMode = 'adulte';
     mockDb.replayCalls = [];
+    mockDb.gameSessionInsertCalls = [];
     mockDb.rewardsCalls = [];
+    mockDb.ownedPotionRows = [];
+    mockDb.potionUpdateCalls = [];
     mockDb.rewardsResponse = {
       xp: 600,
       level: 2,
@@ -458,13 +477,74 @@ describe('Endpoint API /api/scores', () => {
     expect(response.body).toHaveProperty('gameMode', 'tables');
   });
 
-  it('devrait rejeter un niveau invalide', async () => {
+  it('ignore le level envoyé par le client et utilise le player_mode du compte (anti-triche)', async () => {
+    // Le compte est "adulte" en base ; le client forge un payload level: 'enfant'
+    // pour tenter d'apparaître dans le classement enfant sans avoir ce mode.
+    mockDb.playerMode = 'adulte';
     mockRequest.json.mockResolvedValue({
       score: 100,
       duration: 3,
-      level: 'expert'
+      level: 'enfant',
+      solvedCells: 10,
+      totalPossibleCells: 20
     });
     const response = await POST({ request: mockRequest, cookies: mockCookies });
-    expect(response.status).toBe(400);
+
+    expect(response.status).toBe(200);
+    const [insertValues] = mockDb.gameSessionInsertCalls;
+    expect(insertValues[5]).toBe('adulte');
+  });
+
+  it('une potion multiplicateur de pièces possédée est passée à add_game_rewards puis décrémentée', async () => {
+    mockDb.ownedPotionRows = [{ code: 'coin_x3', family: 'coin_multiplier', value: 3 }];
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      gameMode: 'tables',
+      questionsSolved: 10,
+      potionCodes: ['coin_x3']
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(mockDb.rewardsCalls).toHaveLength(1);
+    expect(mockDb.rewardsCalls[0][4]).toBe(3); // p_coin_multiplier
+    // Décrémenté une seule fois (partie comptabilisée, score > 0)
+    expect(mockDb.potionUpdateCalls).toHaveLength(1);
+  });
+
+  it('un code de potion non possédé est ignoré : pas de multiplicateur, pas de décrément', async () => {
+    mockDb.ownedPotionRows = []; // aucune ligne : la jointure ne retourne rien
+    mockRequest.json.mockResolvedValue({
+      score: 100,
+      duration: 3,
+      gameMode: 'tables',
+      questionsSolved: 10,
+      potionCodes: ['coin_x5']
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(mockDb.rewardsCalls[0][4]).toBeNull();
+    expect(mockDb.potionUpdateCalls).toHaveLength(0);
+  });
+
+  it('une partie à 0 point ne décrémente pas le stock de potions', async () => {
+    mockDb.ownedPotionRows = [{ code: 'time_bonus_10', family: 'time_bonus', value: 10 }];
+    mockRequest.json.mockResolvedValue({
+      score: 0,
+      duration: 3,
+      gameMode: 'tables',
+      questionsSolved: 0,
+      potionCodes: ['time_bonus_10']
+    });
+
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+
+    expect(response.status).toBe(200);
+    expect(response.body.counted).toBe(false);
+    expect(mockDb.potionUpdateCalls).toHaveLength(0);
   });
 });

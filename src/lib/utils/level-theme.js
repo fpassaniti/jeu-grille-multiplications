@@ -13,7 +13,7 @@ const THEME_GRADIENTS = {
 
 /**
  * Dégradé CSS associé à un `color_theme` de `level_definitions`.
- * Partagé entre LevelAvatar (repli image) et LevelBadge (pastille de niveau).
+ * Utilisé par LevelBadge (pastille de niveau).
  * @param {string|null} colorTheme
  * @returns {string}
  */

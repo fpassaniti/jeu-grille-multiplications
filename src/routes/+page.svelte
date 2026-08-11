@@ -1,6 +1,5 @@
 <script>
   import { invalidateAll } from '$app/navigation';
-  import PrintableCard from '$lib/components/PrintableCard.svelte';
   import CharacterAvatar from '$lib/components/character/CharacterAvatar.svelte';
   import LevelBadge from '$lib/components/LevelBadge.svelte';
   import ChestModal from '$lib/components/chest/ChestModal.svelte';
@@ -121,19 +120,6 @@
               <span class="emoji">🎮</span> {_('dashboard.playButton')}
             </a>
 
-            <a href="/collection" class="button dashboard-secondary-button">
-              <span class="emoji">📚</span> {_('dashboard.collectionButton')}
-            </a>
-
-            <div class="print-button-wrapper">
-              <PrintableCard
-                level={data.userProgress?.level || 1}
-                title={data.userProgress?.currentLevel?.title || 'Explorateur des Nombres'}
-                description={data.userProgress?.currentLevel?.description || 'Tu as commencé ton voyage dans le monde des mathématiques!'}
-                colorTheme={data.userProgress?.currentLevel?.color_theme || 'blue'}
-                playerName={data.user?.displayName || 'Aventurier'}
-              />
-            </div>
           </div>
         </div>
 
@@ -261,18 +247,6 @@
             <div class="feature-icon">📊</div>
             <h3>{_('home.features.gainLevels.title')}</h3>
             <p>{_('home.features.gainLevels.description')}</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">🏅</div>
-            <h3>{_('home.features.collectTitles.title')}</h3>
-            <p>{_('home.features.collectTitles.description')}</p>
-          </div>
-
-          <div class="feature-card">
-            <div class="feature-icon">🖨️</div>
-            <h3>{_('home.features.printCard.title')}</h3>
-            <p>{_('home.features.printCard.description')}</p>
           </div>
 
           <div class="feature-card">
@@ -697,26 +671,6 @@
     justify-content: center;
   }
 
-  .dashboard-secondary-button {
-    flex: 1;
-    padding: 15px;
-    background-color: var(--primary);
-    color: white;
-    font-size: 1.1rem;
-    border-radius: var(--border-radius-md);
-    box-shadow: 0 4px 0 var(--primary-dark);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .print-button-wrapper {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
   .emoji {
     margin-right: 5px;
   }
@@ -814,6 +768,18 @@
     font-size: 0.9rem;
     box-shadow: 0 3px 0 var(--accent-dark);
     display: inline-block;
+  }
+
+  @media (min-width: 1025px) {
+    .level-image {
+      flex: 0 0 220px;
+    }
+
+    .dashboard-avatar-wrapper {
+      width: 220px;
+      height: 220px;
+      --avatar-size: 220px;
+    }
   }
 
   @media (max-width: 767px) {

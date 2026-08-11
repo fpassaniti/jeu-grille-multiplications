@@ -138,11 +138,25 @@ describe('API d\'authentification', () => {
       expect(response.body).toHaveProperty('error', 'Le mot de passe doit être un seul caractère');
     });
 
+    it('devrait retourner une erreur 400 si le mode adulte/enfant est manquant', async () => {
+      mockRequest.json.mockResolvedValue({
+        username: 'newuser',
+        passwordChar: '🍎'
+        // playerMode manquant
+      });
+
+      const response = await registerPost({ request: mockRequest, cookies: mockCookies });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('error', 'Mode adulte/enfant requis');
+    });
+
     it('devrait créer un nouvel utilisateur avec succès', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'newuser',
         passwordChar: '🍎',
-        displayName: 'New User'
+        displayName: 'New User',
+        playerMode: 'adulte'
       });
 
       const response = await registerPost({ request: mockRequest, cookies: mockCookies });

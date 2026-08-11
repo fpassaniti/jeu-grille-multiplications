@@ -10,11 +10,19 @@
  *   3. (pause : revue humaine des _diff_asset_N.png, retouche si besoin)
  *   4. scripts/compose-item-layer.mjs -> <slug>_layer.png
  *   5. scripts/add-shop-item.mjs -> copie + insertion en base
+ *   6. déplacement de l'entrée depuis items-plan.json vers items-plan-done.json
+ *      (uniquement si l'insertion en base a réellement eu lieu, donc jamais en --dry-run)
  *
  * Exception pour le slot 'background' : un décor change tout le cadre par
  * définition, il n'y a donc rien de localisé à soustraire par diff — les
  * étapes 2 et 4 sont sautées, l'image validée est normalisée directement en
  * <slug>_layer.png (voir PROMPT_ASSETS.md §5.1).
+ *
+ * Exception pour le slot 'body' : ce slot remplace entièrement l'item par
+ * défaut (aucun calque en dessous une fois équipé), donc l'image validée doit
+ * rester intacte plutôt que d'être réduite à une diff contre base.jpg — les
+ * étapes 2 et 4 sont sautées, seul le fond vert est détouré avant d'écrire
+ * <slug>_layer.png (voir PROMPT_ASSETS.md §5.3).
  *
  * Ne duplique aucune logique des 3 scripts existants : il les invoque tels
  * quels (mêmes commandes que PROMPT_ASSETS.md §6 / example_cmd_item-art.md).
@@ -27,9 +35,13 @@
  *   node item-art/scripts/generate-item-art.mjs --code <code>
  *   node item-art/scripts/generate-item-art.mjs --all
  *     [--plan item-art/items-plan.json]
+ *     [--done item-art/items-plan-done.json]
  *     [--base item-art/raw/robot-unit01/base.jpg]
  *     [--model gemini-3.1-flash-lite-image]
  *     [--dry-run]   (passthrough vers add-shop-item.mjs)
+ *     [--force]     (passthrough vers add-shop-item.mjs : remplace juste l'image d'un item déjà en base)
+ *     [--yes]       (mode non interactif : régénère/valide chaque image sans poser de question — utile pour
+ *                    rejouer le pipeline en batch sur des items déjà produits, ex. correction de style)
  */
 import 'dotenv/config';
 import sharp from 'sharp';
@@ -42,6 +54,7 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..', '..');
 const DEFAULT_PLAN = join(ROOT, 'item-art', 'items-plan.json');
+const DEFAULT_DONE = join(ROOT, 'item-art', 'items-plan-done.json');
 const DEFAULT_BASE = join(ROOT, 'item-art', 'raw', 'robot-unit01', 'base.jpg');
 const DEFAULT_MODEL = 'gemini-3.1-flash-lite-image';
 
@@ -61,7 +74,7 @@ function parseArgs(argv) {
     const token = argv[i];
     if (!token.startsWith('--')) continue;
     const key = token.slice(2);
-    if (key === 'dry-run' || key === 'all') {
+    if (key === 'dry-run' || key === 'all' || key === 'force' || key === 'yes') {
       args[key] = true;
       continue;
     }
@@ -75,8 +88,9 @@ function usageAndExit(message) {
   if (message) console.error(`Erreur : ${message}\n`);
   console.error(
     'Usage: node item-art/scripts/generate-item-art.mjs (--code <code> | --all) ' +
-      '[--plan item-art/items-plan.json] [--base item-art/raw/robot-unit01/base.jpg] ' +
-      '[--model gemini-3.1-flash-lite-image] [--dry-run]'
+      '[--plan item-art/items-plan.json] [--done item-art/items-plan-done.json] ' +
+      '[--base item-art/raw/robot-unit01/base.jpg] ' +
+      '[--model gemini-3.1-flash-lite-image] [--dry-run] [--force] [--yes]'
   );
   process.exit(1);
 }
@@ -84,6 +98,22 @@ function usageAndExit(message) {
 function loadPlan(planPath) {
   if (!existsSync(planPath)) usageAndExit(`fichier --plan introuvable : ${planPath}`);
   return JSON.parse(readFileSync(planPath, 'utf8'));
+}
+
+/**
+ * Retire l'item de items-plan.json et l'archive dans items-plan-done.json.
+ * Relit planPath depuis le disque (pas la variable `plan` en mémoire) pour
+ * rester correct quand --all traite plusieurs items dans la même exécution.
+ */
+function markItemDone(planPath, donePath, item) {
+  const remaining = loadPlan(planPath).filter((entry) => entry.code !== item.code);
+  writeFileSync(planPath, `${JSON.stringify(remaining, null, 2)}\n`);
+
+  const done = existsSync(donePath) ? JSON.parse(readFileSync(donePath, 'utf8')) : [];
+  done.push(item);
+  writeFileSync(donePath, `${JSON.stringify(done, null, 2)}\n`);
+
+  console.log(`✓ Déplacé ${item.code} de ${relative(ROOT, planPath)} vers ${relative(ROOT, donePath)}`);
 }
 
 function rarityNoteFor(item) {
@@ -110,6 +140,24 @@ function buildAccessoryPrompt(item) {
 }
 
 /**
+ * Prompt pour un remplacement de corps (slot 'body') : contrairement aux accessoires,
+ * ce n'est pas un ajout localisé mais un remplacement complet du personnage — la
+ * référence base.jpg est quand même envoyée (on veut garder la même pose/proportions/
+ * cadrage), mais le prompt décrit un remplacement, pas une addition (voir processItem :
+ * ce slot saute ensuite la soustraction par diff, PROMPT_ASSETS.md §5.3).
+ */
+function buildBodyPrompt(item) {
+  const rarityNote = rarityNoteFor(item);
+  return (
+    `Edit the attached reference image: replace the robot's entire body with ${item.itemDescription}, ` +
+    `styled for ${item.rarity} rarity (${rarityNote}). This is a full body replacement, not an accessory ` +
+    'addition — the new body should occupy the same silhouette region, standing pose and proportions as ' +
+    'the reference. Keep the same camera framing, same flat green chroma-key background. No clothing, ' +
+    'no accessories, no held items — bare body only.'
+  );
+}
+
+/**
  * Prompt pour un décor (slot 'background') : pas d'édition par diff — la
  * référence ne sert qu'à caler la ligne de sol (pieds du robot) et la
  * perspective caméra ; le robot ne doit pas apparaître dans le résultat
@@ -120,15 +168,17 @@ function buildAccessoryPrompt(item) {
 // pieds posés à environ 90% de la hauteur du cadre depuis le haut. Utilisé comme description
 // numérique de la ligne de sol/perspective puisqu'on ne peut plus envoyer l'image en référence.
 const CANONICAL_FLOOR_LINE = 'about 90% down from the top of the square frame (roughly a 10% margin of floor below it)';
-const CANONICAL_CAMERA = 'flat, mostly frontal camera angle with very little perspective distortion, matching a simple flat cartoon mascot render';
+const CANONICAL_CAMERA = 'flat, mostly frontal camera angle with very little perspective distortion, matching the reference robot figure\'s camera framing';
 
 function buildBackgroundPrompt(item) {
   const rarityNote = rarityNoteFor(item);
   return (
     `Generate a full-frame background illustration for a game avatar, no reference image provided: ${item.itemDescription}. ` +
     `Square 1:1 canvas, ${CANONICAL_CAMERA}. The ground/floor line sits at ${CANONICAL_FLOOR_LINE}. ` +
-    'Flat cartoon illustration style — thick bold black outlines (4-6px), vivid saturated flat colors, ' +
-    'no gradients except simple flat highlights. ' +
+    'Photorealistic 3D-rendered diorama style, like a studio product photo of a toy/action-figure set — ' +
+    'soft studio lighting, natural shadows and ambient occlusion, realistic materials and color grading ' +
+    'matching a matte-grey metal-and-plastic robot figure standing in front of it. No flat cartoon shading, ' +
+    'no thick black outlines, no cel-shading or comic linework, no flat vector coloring. ' +
     `Apply a visual richness level for ${item.rarity} rarity (${rarityNote}) to the scene itself (lighting, props, detail density). ` +
     'Opaque painted scene filling the entire square frame edge to edge — no transparency, no empty margin. ' +
     'Do not include any robot, character, creature, mascot, or figure of any kind — the scene must be completely ' +
@@ -139,7 +189,82 @@ function buildBackgroundPrompt(item) {
 }
 
 function buildPrompt(item) {
-  return item.slot === 'background' ? buildBackgroundPrompt(item) : buildAccessoryPrompt(item);
+  if (item.slot === 'background') return buildBackgroundPrompt(item);
+  if (item.slot === 'body') return buildBodyPrompt(item);
+  return buildAccessoryPrompt(item);
+}
+
+const CHROMA_KEY_BAND = 40;
+const CHROMA_KEY_THRESHOLD = 60;
+
+/** Moyenne des pixels d'un patch NxN à (x0,y0) dans un buffer RGBA — voir extract-item-diff.mjs. */
+function averageChromaPatch(data, info, x0, y0, patchSize) {
+  const { width, height, channels } = info;
+  let r = 0;
+  let g = 0;
+  let b = 0;
+  let count = 0;
+  for (let y = y0; y < y0 + patchSize && y < height; y += 1) {
+    for (let x = x0; x < x0 + patchSize && x < width; x += 1) {
+      const idx = (y * width + x) * channels;
+      r += data[idx];
+      g += data[idx + 1];
+      b += data[idx + 2];
+      count += 1;
+    }
+  }
+  return { r: r / count, g: g / count, b: b / count };
+}
+
+/** Échantillonne la couleur clé (fond vert) sur les 4 coins de l'image. */
+function sampleChromaKeyColor(data, info) {
+  const { width, height } = info;
+  const patchSize = 5;
+  const corners = [
+    averageChromaPatch(data, info, 0, 0, patchSize),
+    averageChromaPatch(data, info, width - patchSize, 0, patchSize),
+    averageChromaPatch(data, info, 0, height - patchSize, patchSize),
+    averageChromaPatch(data, info, width - patchSize, height - patchSize, patchSize)
+  ];
+  const sum = corners.reduce((acc, c) => ({ r: acc.r + c.r, g: acc.g + c.g, b: acc.b + c.b }), { r: 0, g: 0, b: 0 });
+  return { r: sum.r / corners.length, g: sum.g / corners.length, b: sum.b / corners.length };
+}
+
+/**
+ * Détoure le fond vert d'un buffer RGBA (sous lowThreshold -> transparent, au-dessus
+ * de lowThreshold + CHROMA_KEY_BAND -> opaque, dégradé anti-alias entre les deux) —
+ * même principe que removeGreenScreen d'extract-item-diff.mjs, réimplémenté ici car
+ * ce script exécute main() sans garde d'import (ses fonctions ne sont pas
+ * réutilisables directement, cf. PROMPT_ASSETS.md §5.2/§5.3).
+ */
+function stripChromaKeyBackground(data, info, keyColor, lowThreshold) {
+  const highThreshold = lowThreshold + CHROMA_KEY_BAND;
+  const { width, height, channels } = info;
+  const out = Buffer.alloc(width * height * 4);
+  for (let i = 0; i < width * height; i += 1) {
+    const srcIdx = i * channels;
+    const dstIdx = i * 4;
+    const r = data[srcIdx];
+    const g = data[srcIdx + 1];
+    const b = data[srcIdx + 2];
+    const dr = r - keyColor.r;
+    const dg = g - keyColor.g;
+    const db = b - keyColor.b;
+    const distance = Math.sqrt(dr * dr + dg * dg + db * db);
+    let alpha;
+    if (distance <= lowThreshold) {
+      alpha = 0;
+    } else if (distance >= highThreshold) {
+      alpha = 255;
+    } else {
+      alpha = Math.round(((distance - lowThreshold) / CHROMA_KEY_BAND) * 255);
+    }
+    out[dstIdx] = r;
+    out[dstIdx + 1] = g;
+    out[dstIdx + 2] = b;
+    out[dstIdx + 3] = alpha;
+  }
+  return out;
 }
 
 /**
@@ -200,7 +325,7 @@ async function confirm(rl, question) {
   return answer.trim().toLowerCase().startsWith('o');
 }
 
-async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) {
+async function processItem(item, { plan, planPath, donePath, basePath, model, apiKey, dryRun, force, yes, rl }) {
   console.log(`\n=== ${item.code} (${item.slot}, ${item.rarity}) — ${item.names.fr} ===`);
 
   const rawDir = join(ROOT, 'item-art', 'raw', 'robot-unit01');
@@ -210,7 +335,7 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
   let variantPath = existingVariant ? join(rawDir, existingVariant) : null;
   let needsGeneration = !variantPath;
   if (variantPath) {
-    needsGeneration = await confirm(rl, `${variantPath} existe déjà. Régénérer via Gemini (écrase le fichier) ?`);
+    needsGeneration = yes || (await confirm(rl, `${variantPath} existe déjà. Régénérer via Gemini (écrase le fichier) ?`));
   }
 
   while (needsGeneration) {
@@ -226,7 +351,7 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
       console.log('Vérifier : aucun robot/personnage visible, plus aucun vert chroma-key, ligne de sol cohérente.');
     }
 
-    const ok = await confirm(rl, `Ouvrez ${variantPath} pour vérifier le rendu. Continuer avec cette image ?`);
+    const ok = yes || (await confirm(rl, `Ouvrez ${variantPath} pour vérifier le rendu. Continuer avec cette image ?`));
     if (ok) {
       needsGeneration = false;
     } else {
@@ -257,6 +382,22 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
     }
     await pipeline.png({ compressionLevel: 9, effort: 10 }).toFile(join(ROOT, layerImage));
     console.log(`Écrit (calque plein cadre, décor direct) : ${layerImage}`);
+  } else if (item.slot === 'body') {
+    // Pas de soustraction pour un remplacement de corps : le slot 'body' remplace
+    // entièrement l'item par défaut (CharacterAvatar.svelte, aucun calque en dessous
+    // une fois équipé), donc la variante validée doit être gardée en entier — une
+    // diff contre base.jpg couperait en transparent tout pixel resté identique
+    // (yeux, style), perçant des trous sans rien derrière pour les combler
+    // (PROMPT_ASSETS.md §5.3). On détoure juste le fond vert de la variante.
+    mkdirSync(extractedDir, { recursive: true });
+
+    const { data, info } = await sharp(variantPath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+    const keyColor = sampleChromaKeyColor(data, info);
+    const stripped = stripChromaKeyBackground(data, info, keyColor, CHROMA_KEY_THRESHOLD);
+    await sharp(stripped, { raw: { width: info.width, height: info.height, channels: 4 } })
+      .png({ compressionLevel: 9, effort: 10 })
+      .toFile(join(ROOT, layerImage));
+    console.log(`Écrit (calque plein cadre transparent, corps direct, sans diff) : ${layerImage}`);
   } else {
     run('node', [
       'item-art/scripts/extract-item-diff.mjs',
@@ -315,7 +456,10 @@ async function processItem(item, { plan, basePath, model, apiKey, dryRun, rl }) 
     item.names.zh
   ];
   if (dryRun) addArgs.push('--dry-run');
+  if (force) addArgs.push('--force');
   run('node', addArgs);
+
+  if (!dryRun) markItemDone(planPath, donePath, item);
 }
 
 async function main() {
@@ -323,9 +467,12 @@ async function main() {
   if (!args.code && !args.all) usageAndExit('préciser --code <code> ou --all');
 
   const planPath = args.plan ? join(ROOT, args.plan) : DEFAULT_PLAN;
+  const donePath = args.done ? join(ROOT, args.done) : DEFAULT_DONE;
   const basePath = args.base ? join(ROOT, args.base) : DEFAULT_BASE;
   const model = args.model ?? DEFAULT_MODEL;
   const dryRun = Boolean(args['dry-run']);
+  const force = Boolean(args.force);
+  const yes = Boolean(args.yes);
 
   if (!existsSync(basePath)) usageAndExit(`fichier --base introuvable : ${basePath}`);
 
@@ -339,7 +486,7 @@ async function main() {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
   try {
     for (const item of items) {
-      await processItem(item, { plan, basePath, model, apiKey, dryRun, rl });
+      await processItem(item, { plan, planPath, donePath, basePath, model, apiKey, dryRun, force, yes, rl });
     }
   } finally {
     rl.close();

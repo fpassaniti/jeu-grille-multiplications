@@ -5,6 +5,7 @@
   let username = '';
   let passwordChar = '';
   let displayName = '';
+  let playerMode = '';
   let loading = false;
   let error = null;
   let success = false;
@@ -16,8 +17,8 @@
   async function handleRegister() {
     submitted = true;
 
-    if (!username || !passwordChar) {
-      error = 'Le prénom et le caractère secret sont obligatoires';
+    if (!username || !passwordChar || !playerMode) {
+      error = _('auth.requiredFields');
       return;
     }
 
@@ -33,7 +34,8 @@
         body: JSON.stringify({
           username,
           passwordChar,
-          displayName: displayName || username
+          displayName: displayName || username,
+          playerMode
         })
       });
 
@@ -109,6 +111,34 @@
             autocomplete="off"
           />
           <p class="input-help">{_('auth.displayNameHelp')}</p>
+        </div>
+
+        <div class="form-group">
+          <span class="form-label">{_('auth.playerMode')}</span>
+          <div class="player-mode-buttons">
+            <button
+              type="button"
+              class="player-mode-btn"
+              class:selected={playerMode === 'adulte'}
+              on:click={() => (playerMode = 'adulte')}
+              disabled={loading}
+            >
+              <span class="emoji">👨‍💼</span> {_('common.adult')}
+            </button>
+            <button
+              type="button"
+              class="player-mode-btn"
+              class:selected={playerMode === 'enfant'}
+              on:click={() => (playerMode = 'enfant')}
+              disabled={loading}
+            >
+              <span class="emoji">🧒</span> {_('common.child')}
+            </button>
+          </div>
+          {#if submitted && !playerMode}
+            <div class="error-text">{_('auth.choosePlayerMode')}</div>
+          {/if}
+          <p class="input-help">{_('auth.playerModeHelp')}</p>
         </div>
 
         <div class="form-group">
@@ -189,9 +219,27 @@
     gap: 8px;
   }
 
-  .form-group label {
+  .form-group label,
+  .form-label {
     font-weight: bold;
     color: var(--primary-dark);
+  }
+
+  .player-mode-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+  }
+
+  .player-mode-btn {
+    padding: 12px 20px;
+    border-radius: var(--border-radius-md);
+    background-color: var(--bg-secondary);
+  }
+
+  .player-mode-btn.selected {
+    background-color: var(--primary);
+    color: white;
   }
 
   .form-group input {

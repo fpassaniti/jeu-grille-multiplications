@@ -5,7 +5,7 @@ vi.mock('@sveltejs/kit', () => ({
   json: vi.fn((data, options = {}) => ({ status: options.status || 200, body: data }))
 }));
 
-const { mockDb } = vi.hoisted(() => ({ mockDb: { buyItemResult: null, consumableResult: null } }));
+const { mockDb } = vi.hoisted(() => ({ mockDb: { buyItemResult: null, potionResult: null } }));
 
 vi.mock('@neondatabase/serverless', () => ({
   neon: vi.fn(() => async (strings, ...values) => {
@@ -13,8 +13,8 @@ vi.mock('@neondatabase/serverless', () => ({
     if (query.includes('SELECT * FROM buy_item')) {
       return [mockDb.buyItemResult];
     }
-    if (query.includes('SELECT buy_consumable')) {
-      return [{ result: mockDb.consumableResult }];
+    if (query.includes('SELECT buy_potion')) {
+      return [{ result: mockDb.potionResult }];
     }
     return [];
   })
@@ -31,7 +31,7 @@ describe('POST /api/shop/buy', () => {
       get: vi.fn(() => JSON.stringify({ user: { id: 'user-id', displayName: 'Test' } }))
     };
     mockDb.buyItemResult = null;
-    mockDb.consumableResult = null;
+    mockDb.potionResult = null;
   });
 
   it('401 si non connecté', async () => {
@@ -68,24 +68,25 @@ describe('POST /api/shop/buy', () => {
     expect(response.status).toBe(400);
   });
 
-  it('achète un consommable (gel de streak)', async () => {
-    mockRequest.json.mockResolvedValue({ consumable: 'freeze' });
-    mockDb.consumableResult = { success: true, pricePaid: 300, coinsBalance: 700 };
+  it('achète une potion (gel de streak)', async () => {
+    mockRequest.json.mockResolvedValue({ potionCode: 'streak_freeze_1' });
+    mockDb.potionResult = { success: true, pricePaid: 80, coinsBalance: 700 };
     const response = await POST({ request: mockRequest, cookies: mockCookies });
     expect(response.status).toBe(200);
-    expect(response.body).toEqual({ success: true, coinsBalance: 700, pricePaid: 300 });
+    expect(response.body).toEqual({ success: true, coinsBalance: 700, pricePaid: 80 });
   });
 
-  it('mappe l\'erreur already_active du consommable vers 409', async () => {
-    mockRequest.json.mockResolvedValue({ consumable: 'booster' });
-    mockDb.consumableResult = { error: 'already_active' };
+  it('mappe l\'erreur unknown_potion vers 404', async () => {
+    mockRequest.json.mockResolvedValue({ potionCode: 'nawak' });
+    mockDb.potionResult = { error: 'unknown_potion' };
+    const response = await POST({ request: mockRequest, cookies: mockCookies });
+    expect(response.status).toBe(404);
+  });
+
+  it('mappe l\'erreur freeze_cap_reached vers 409', async () => {
+    mockRequest.json.mockResolvedValue({ potionCode: 'streak_freeze_14' });
+    mockDb.potionResult = { error: 'freeze_cap_reached' };
     const response = await POST({ request: mockRequest, cookies: mockCookies });
     expect(response.status).toBe(409);
-  });
-
-  it('rejette un consommable inconnu', async () => {
-    mockRequest.json.mockResolvedValue({ consumable: 'nawak' });
-    const response = await POST({ request: mockRequest, cookies: mockCookies });
-    expect(response.status).toBe(400);
   });
 });

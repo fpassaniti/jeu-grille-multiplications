@@ -92,7 +92,7 @@ Le point le plus surprenant de l'audit pour un produit visant des enfants avec s
 - C'est un choix assumé et documenté dans `SPEC.md` §3 point 4 ("sécurité faible, choix assumé enfants, pas de changement prévu") — mais l'absence totale de lien parent (pas de consentement, pas de dashboard parental, pas d'e-mail de secours) va au-delà d'un simple compromis de simplicité et mérite d'être retestée à la lumière de l'attente produit de "supervision adulte".
 
 ### Routes de debug potentiellement exposées en production
-`/debug-print/[level]` et `/debug-score` ne présentent aucune garde d'environnement détectée dans le code exploré — à vérifier et gater derrière un contrôle d'environnement ou un rôle admin.
+`/debug-score` ne présente aucune garde d'environnement détectée dans le code exploré — à vérifier et gater derrière un contrôle d'environnement ou un rôle admin. (`/debug-print` a été retiré le 2026-08-11 avec la fonctionnalité collection/impression de certificat.)
 
 ### Petites incohérences de finition
 - Couleur du thème PWA (`#5B21B6`, violet) différente de la couleur primaire in-app (`#4d57ff`, bleu) — l'icône installée et l'app elle-même ne racontent pas tout à fait la même identité.
@@ -123,7 +123,7 @@ Pour un produit destiné à des enfants (dont certains à besoins spécifiques) 
 - Afficher `errorsCount` et le fait qu'un `freeze_used` a sauvé le streak sur l'écran de fin — les données existent déjà, il ne manque que l'affichage.
 - Ajouter un message de validation visible (pas seulement un bouton désactivé) sur tous les modes, pas seulement "tables".
 - Corriger l'incohérence de couleur manifest/app, ajouter les captures d'écran manquantes du manifest.
-- Vérifier/gater les routes `/debug-print` et `/debug-score` en production.
+- Vérifier/gater la route `/debug-score` en production.
 - Premier passage d'accessibilité : aria-labels sur les boutons à icône/emoji, `prefers-reduced-motion` sur les animations existantes.
 
 ### Structurel, à intégrer à la roadmap V2 déjà écrite
