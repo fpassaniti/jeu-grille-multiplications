@@ -357,7 +357,7 @@ export default {
     timeLabel: 'Time:',
     levelLabel: 'Level:',
     scoreLabel: 'Score:',
-    solvedLabel: 'Multiplications solved:',
+    solvedLabel: '{mode} solved:',
     errorsLabel: 'Errors:',
     tablesLabel: 'Selected tables:',
     currentMultiplicationLabel: 'Current multiplication:',

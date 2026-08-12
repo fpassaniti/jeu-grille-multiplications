@@ -5,6 +5,7 @@
   // Props
   export let progress = { solved: 0, total: null, cumulative: 0 };
   export let poolResetNotice = false;
+  export let mode = null;
 
   $: percentage = progress.total ? (progress.solved / progress.total) * 100 : 0;
 </script>
@@ -18,7 +19,7 @@
 
   {#if progress.total !== null}
     <div class="progress-label">
-      {_('play.solvedLabel')} {progress.cumulative}/{progress.total}
+      {_('play.solvedLabel', { mode: mode ? _(mode.labelKey) : _('modes.tables') })} {progress.cumulative}/{progress.total}
     </div>
     <div class="progress-bar">
       <div class="progress-fill" style="width: {percentage}%"></div>

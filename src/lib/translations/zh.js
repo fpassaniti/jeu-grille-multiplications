@@ -357,7 +357,7 @@ export default {
     timeLabel: '时间：',
     levelLabel: '级别：',
     scoreLabel: '分数：',
-    solvedLabel: '已解决的乘法题：',
+    solvedLabel: '已解决的{mode}：',
     errorsLabel: '错误数：',
     tablesLabel: '已选择的乘法表：',
     currentMultiplicationLabel: '当前乘法题：',

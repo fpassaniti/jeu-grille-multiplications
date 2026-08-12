@@ -39,7 +39,7 @@
   <div class="game-header-sticky card">
     <GameHeader {gameTimer} {level} {score} modeIcon={mode.icon} endGame={onEnd} />
 
-    <GameProgress {progress} {poolResetNotice} />
+    <GameProgress {progress} {poolResetNotice} {mode} />
 
     {#if mode.boardType === 'grid' && level === 'enfant' && board}
       <div class="tables-info">

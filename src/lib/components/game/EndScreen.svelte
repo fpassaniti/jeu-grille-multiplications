@@ -63,7 +63,7 @@
       <div class="result-card">
         <div class="result-icon">✅</div>
         <p>
-          {_('play.solvedLabel')}
+          {_('play.solvedLabel', { mode: _(mode.labelKey) })}
           <span class="final-solved"
             >{results.questionsSolved}{results.questionsTotal !== null
               ? `/${results.questionsTotal}`
