@@ -16,10 +16,8 @@
  */
 
 /**
- * État de la grille 10×10 (mode tables uniquement).
+ * État additionnel du mode tables.
  * @typedef {Object} BoardState
- * @property {number[][]} grid - grid[r][c] = (r+1)*(c+1)
- * @property {boolean[][]} solvedCells
  * @property {number[]} selectedNumbers - Tables actives (mode enfant)
  */
 
@@ -56,7 +54,7 @@
  * @property {boolean} enabled
  * @property {string} labelKey - Clé i18n ('modes.addition')
  * @property {string} icon - Emoji affiché sur la carte du mode
- * @property {'grid'|'generic'} boardType - Le mapping vers les composants vit dans GameScreen.svelte
+ * @property {'grid'|'generic'} boardType - 'grid' = mode tables (sélecteur de tables, résumé de fin de partie), sans lien avec l'affichage de la question (toujours QuestionPanel)
  * @property {Tier[]} tiers - [] pour tables
  * @property {Object} defaultOptions
  * @property {(options: any) => ValidationResult} validateOptions - Retourne la version normalisée

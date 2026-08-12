@@ -2,21 +2,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { tick } from 'svelte';
 import { render, fireEvent } from '@testing-library/svelte';
-import GameBoard from '../../lib/components/GameBoard.svelte';
 import QuestionPanel from '../../lib/components/QuestionPanel.svelte';
 import TableSelector from '../../lib/components/TableSelector.svelte';
-
-function makeBoard() {
-  return {
-    grid: Array(10)
-      .fill(0)
-      .map((_, i) => Array(10).fill(0).map((_, j) => (i + 1) * (j + 1))),
-    solvedCells: Array(10)
-      .fill(0)
-      .map(() => Array(10).fill(false)),
-    selectedNumbers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-  };
-}
 
 function tablesQuestion(row = 5, col = 5) {
   return {
@@ -29,64 +16,6 @@ function tablesQuestion(row = 5, col = 5) {
     meta: { row, col }
   };
 }
-
-describe('Composant GameBoard', () => {
-  const defaultProps = {
-    board: makeBoard(),
-    question: tablesQuestion(),
-    userAnswer: '',
-    feedback: null,
-    level: 'adulte',
-    windowWidth: 1024,
-    windowHeight: 768,
-    onInput: vi.fn(),
-    onSubmit: vi.fn()
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
-  it('rend la grille 10×10 avec ses en-têtes', () => {
-    const { container } = render(GameBoard, { props: defaultProps });
-    expect(container.querySelector('.grid')).not.toBeNull();
-    // 100 cellules + 21 en-têtes (1 coin + 10 colonnes + 10 lignes)
-    const cells = container.querySelectorAll('.grid-cell, .grid-header-cell');
-    expect(cells.length).toBe(100 + 21);
-  });
-
-  it('place l’input dans la cellule courante (question.meta)', () => {
-    const { container } = render(GameBoard, { props: defaultProps });
-    const currentCell = container.querySelector('.grid-cell.current');
-    expect(currentCell).not.toBeNull();
-    expect(currentCell.querySelector('input')).not.toBeNull();
-  });
-
-  it('remonte la saisie via onInput', async () => {
-    const onInput = vi.fn();
-    const { container } = render(GameBoard, { props: { ...defaultProps, onInput } });
-    const input = container.querySelector('.grid-cell.current input');
-    await fireEvent.input(input, { target: { value: '25' } });
-    expect(onInput).toHaveBeenCalledWith('25');
-  });
-
-  it('affiche les cellules résolues', () => {
-    const board = makeBoard();
-    board.solvedCells[2][3] = true;
-    const { container } = render(GameBoard, { props: { ...defaultProps, board } });
-    const solved = container.querySelector('.grid-cell.solved .solved-result');
-    expect(solved).not.toBeNull();
-    expect(solved.textContent).toBe('12'); // (2+1)×(3+1)
-  });
-
-  it('grise les cellules hors tables sélectionnées en mode enfant', () => {
-    const board = { ...makeBoard(), selectedNumbers: [3] };
-    const { container } = render(GameBoard, {
-      props: { ...defaultProps, board, level: 'enfant', question: tablesQuestion(3, 7) }
-    });
-    expect(container.querySelectorAll('.grid-cell.inactive').length).toBe(81); // 100 − 19
-  });
-});
 
 describe('Composant QuestionPanel', () => {
   const baseProps = {
@@ -170,6 +99,61 @@ describe('Composant QuestionPanel', () => {
     const input = container.querySelector('.stage-input');
     await fireEvent.input(input, { target: { value: '8' } });
     expect(onInput).toHaveBeenCalledWith('8');
+  });
+
+  it('touche chiffre non-shiftée (AZERTY) au keydown est reconnue via event.code', async () => {
+    const onInput = vi.fn();
+    const { container } = render(QuestionPanel, {
+      props: { ...baseProps, question: tablesQuestion(), onInput }
+    });
+    const input = container.querySelector('input');
+    const result = await fireEvent.keyDown(input, { code: 'Digit5', key: '(' });
+    expect(onInput).toHaveBeenCalledWith('5');
+    expect(result).toBe(false); // preventDefault() appelé
+  });
+
+  it('pavé numérique physique non affecté par la normalisation clavier', async () => {
+    const onInput = vi.fn();
+    const { container } = render(QuestionPanel, {
+      props: { ...baseProps, question: tablesQuestion(), onInput }
+    });
+    const input = container.querySelector('input');
+    const result = await fireEvent.keyDown(input, { code: 'Numpad5', key: '5' });
+    expect(onInput).not.toHaveBeenCalled();
+    expect(result).toBe(true); // pas de preventDefault, flux natif inchangé
+  });
+
+  it('clavier virtuel mobile (pas de code exploitable) non intercepté', async () => {
+    const onInput = vi.fn();
+    const { container } = render(QuestionPanel, {
+      props: { ...baseProps, question: tablesQuestion(), onInput }
+    });
+    const input = container.querySelector('input');
+    const result = await fireEvent.keyDown(input, { code: '', key: '5' });
+    expect(onInput).not.toHaveBeenCalled();
+    expect(result).toBe(true);
+  });
+
+  it('raccourcis Ctrl/Meta/Alt+chiffre non interceptés', async () => {
+    const onInput = vi.fn();
+    const { container } = render(QuestionPanel, {
+      props: { ...baseProps, question: tablesQuestion(), onInput }
+    });
+    const input = container.querySelector('input');
+    await fireEvent.keyDown(input, { code: 'Digit1', ctrlKey: true });
+    await fireEvent.keyDown(input, { code: 'Digit1', metaKey: true });
+    await fireEvent.keyDown(input, { code: 'Digit1', altKey: true });
+    expect(onInput).not.toHaveBeenCalled();
+  });
+
+  it('composition IME en cours non interceptée', async () => {
+    const onInput = vi.fn();
+    const { container } = render(QuestionPanel, {
+      props: { ...baseProps, question: tablesQuestion(), onInput }
+    });
+    const input = container.querySelector('input');
+    await fireEvent.keyDown(input, { code: 'Digit1', isComposing: true });
+    expect(onInput).not.toHaveBeenCalled();
   });
 
   it('multiplication posée n\'affiche pas de cases pour ×10 (règle mentale, pas posée)', () => {

@@ -34,6 +34,10 @@ On va simplifier la partie enfant / adulte, voici les changements :
 
 - [x] Sur la page d'accueil, agrandir le personnage un peu, on a de la marge donc prenons là pour mieux voir le personnage en mode desktop
 
+- [x] Le système de matrice de calcul pour les tables de multiplication se révèle en fin de compte inutile... le mode mobile est largement suffisant avec juste le calcul et un champ de résultat, surtout qu'en tablette, la table prend trop de place, et avec le clavier on ne voit pas le calcul donc ce n'est même pas utilisable. (fait le 2026-08-12 : suppression de `GameBoard.svelte` et `CurrentQuestion.svelte`, `QuestionPanel` utilisé sur tous les modes/devices ; `boardType: 'grid'` conservé uniquement comme indicateur pour le sélecteur de tables et le résumé de fin de partie)
+
+- [x] Sur un clavier français, pour faire des chiffres il faut maintenir shift enfoncé, est il possible d'écouter les touches et convertir en chiffre intelligmment? comment faire fonctionner cela pour n'importe quel clavier autre que les claviers internationaux qui ont déhà les chiffres par défaut ? tout en s'assurant que cela n'a aucun impact sur l'utilisation des pavé numérique, ou clavier virtuel en mode mobile ou tablette (fait le 2026-08-12 : `QuestionPanel.svelte` normalise la touche via `event.code` (Digit0-9, indépendant de la disposition/Shift) sur `keydown`, pavé numérique et clavier virtuel mobile inchangés — voir SPEC.md §4.5.1)
+
 ### FIx
 
 - [x] Dans la home, les boutons collection et imprimer n'ont plus lieu d'être, ils peuvent être retiré, et les pages et fonctions associées également (fait le 2026-08-11 : suppression de `/collection`, `/debug-print`, `PrintableCard.svelte`, `LevelAvatar.svelte`, `template-loader.js`, `image-paths.js` et des clés de traduction associées)

@@ -1,9 +1,7 @@
 <script>
-  import GameBoard from '$lib/components/GameBoard.svelte';
   import QuestionPanel from '$lib/components/QuestionPanel.svelte';
   import GameHeader from './GameHeader.svelte';
   import GameProgress from './GameProgress.svelte';
-  import CurrentQuestion from './CurrentQuestion.svelte';
   import { getMode } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
@@ -23,16 +21,11 @@
   export let solvedHistory = [];
   export let board = null;
   export let poolResetNotice = false;
-  export let isMobile = false;
-  export let windowWidth = 0;
-  export let windowHeight = 0;
   export let onInput = () => {};
   export let onSubmit = () => {};
   export let onEnd = () => {};
 
-  // Mapping boardType → composant : 'grid' + desktop → GameBoard, sinon QuestionPanel
   $: mode = getMode(modeId);
-  $: useGrid = mode.boardType === 'grid' && !isMobile;
 </script>
 
 <div class="game-screen">
@@ -48,39 +41,21 @@
         {board.selectedNumbers.join(', ')}
       </div>
     {/if}
-
-    {#if useGrid}
-      <CurrentQuestion {question} {questionTimer} {timeAllowed} />
-    {/if}
   </div>
 
   <div class="game-board-container card">
-    {#if useGrid}
-      <GameBoard
-        {board}
-        {question}
-        {userAnswer}
-        {feedback}
-        {level}
-        {windowWidth}
-        {windowHeight}
-        {onInput}
-        {onSubmit}
-      />
-    {:else}
-      <QuestionPanel
-        {question}
-        {userAnswer}
-        {stageIndex}
-        {digitIndex}
-        {feedback}
-        {questionTimer}
-        {timeAllowed}
-        {solvedHistory}
-        {onInput}
-        {onSubmit}
-      />
-    {/if}
+    <QuestionPanel
+      {question}
+      {userAnswer}
+      {stageIndex}
+      {digitIndex}
+      {feedback}
+      {questionTimer}
+      {timeAllowed}
+      {solvedHistory}
+      {onInput}
+      {onSubmit}
+    />
   </div>
 </div>
 

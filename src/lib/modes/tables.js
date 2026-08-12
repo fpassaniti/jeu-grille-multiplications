@@ -146,17 +146,7 @@ export default {
         solved.clear();
       },
       boardState() {
-        const grid = [];
-        const solvedCells = [];
-        for (let r = 0; r < 10; r++) {
-          grid.push([]);
-          solvedCells.push([]);
-          for (let c = 0; c < 10; c++) {
-            grid[r].push((r + 1) * (c + 1));
-            solvedCells[r].push(solved.has(`${r + 1},${c + 1}`));
-          }
-        }
-        return { grid, solvedCells, selectedNumbers: [...selectedNumbers] };
+        return { selectedNumbers: [...selectedNumbers] };
       }
     };
   }

@@ -24,10 +24,8 @@
   let gameResults = $state(null);
   let levelUp = $state(false);
 
-  // Dimensions / mobile
+  // Dimensions (largeur max du container)
   let windowWidth = $state(0);
-  let windowHeight = $state(0);
-  const isMobile = $derived(windowWidth > 0 && windowWidth < 768);
 
   const currentOptions = $derived(optionsFor(settings, settings.lastMode));
 
@@ -159,7 +157,7 @@
   });
 </script>
 
-<svelte:window bind:innerWidth={windowWidth} bind:innerHeight={windowHeight} />
+<svelte:window bind:innerWidth={windowWidth} />
 
 <svelte:head>
   <title>MultyFun - Jeu de Calcul Mental</title>
@@ -204,9 +202,6 @@
       solvedHistory={engine.solvedHistory}
       board={engine.board}
       poolResetNotice={engine.poolResetNotice}
-      {isMobile}
-      {windowWidth}
-      {windowHeight}
       onInput={(raw) => engine.onAnswerInput(raw)}
       onSubmit={() => engine.submitAnswer()}
       onEnd={() => engine.end({ manual: true })}

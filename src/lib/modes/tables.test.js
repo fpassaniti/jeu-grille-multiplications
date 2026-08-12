@@ -119,16 +119,8 @@ describe('générateur', () => {
     }
   });
 
-  it('boardState retourne des références fraîches et l’état résolu', () => {
+  it('boardState retourne les tables actives', () => {
     const gen = tables.createGenerator({ selectedTables: [] }, 'adulte', seededRng(6));
-    const before = gen.boardState();
-    expect(before.grid[2][4]).toBe(15); // (2+1)×(4+1)
-    expect(before.solvedCells.flat().every((s) => s === false)).toBe(true);
-    const q = gen.next();
-    gen.markSolved(q.id);
-    const after = gen.boardState();
-    expect(after).not.toBe(before);
-    expect(after.solvedCells).not.toBe(before.solvedCells);
-    expect(after.solvedCells[q.meta.row - 1][q.meta.col - 1]).toBe(true);
+    expect(gen.boardState().selectedNumbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
   });
 });

@@ -44,6 +44,30 @@
     onInput(event.target.value);
   }
 
+  // Sur clavier AZERTY (et autres dispositions), la rangée de chiffres ne
+  // produit un chiffre qu'avec Shift maintenu. `event.code` reflète la
+  // position physique de la touche (Digit0-Digit9), indépendamment de la
+  // disposition et de Shift/AltGr — on l'utilise pour taper directement le
+  // bon chiffre. Le pavé numérique (NumpadN) et le clavier virtuel mobile
+  // (pas de `code` exploitable pour un tap tactile) ne matchent jamais et
+  // suivent donc le flux natif `on:input` inchangé.
+  function digitFromKeydown(event) {
+    if (event.ctrlKey || event.metaKey || event.altKey || event.isComposing) return null;
+    const match = /^Digit([0-9])$/.exec(event.code ?? '');
+    return match ? match[1] : null;
+  }
+
+  function handleKeydown(event) {
+    const digit = digitFromKeydown(event);
+    if (digit === null) return;
+    event.preventDefault();
+    const target = event.target;
+    const value = target.value ?? '';
+    const start = target.selectionStart ?? value.length;
+    const end = target.selectionEnd ?? value.length;
+    onInput(value.slice(0, start) + digit + value.slice(end));
+  }
+
   function handleSubmit(event) {
     event.preventDefault();
     onSubmit();
@@ -119,6 +143,7 @@
               class="stage-input"
               value={userAnswer}
               on:input={handleInput}
+              on:keydown={handleKeydown}
               inputmode="numeric"
               pattern="[0-9]*"
               autocomplete="off"
@@ -136,6 +161,7 @@
             type="text"
             value={userAnswer}
             on:input={handleInput}
+            on:keydown={handleKeydown}
             inputmode="numeric"
             pattern="[0-9]*"
             autocomplete="off"
