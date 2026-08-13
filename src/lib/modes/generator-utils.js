@@ -4,7 +4,7 @@
  * anti-répétition et fabrique de générateurs génériques.
  * JS pur, rng injectable pour des tests déterministes.
  */
-import { POSED_SCORE_CALIBRATION } from '../game/balance-config.js';
+import { POSED_SCORE_CALIBRATION, OPERATOR_SCORE_MULTIPLIER } from '../game/balance-config.js';
 
 /**
  * Entier aléatoire inclusif dans [min, max].
@@ -352,7 +352,10 @@ export function makeGenericGenerator(modeId, allTiers, operator) {
             meta: { tier: tier.id, ...meta },
             posed: computePosed(operator, operands, meta),
             stages,
-            digitWeight: (tier.difficulty / totalDigits) * POSED_SCORE_CALIBRATION
+            digitWeight:
+              (tier.difficulty / totalDigits) *
+              POSED_SCORE_CALIBRATION *
+              (OPERATOR_SCORE_MULTIPLIER[operator] ?? 1)
           };
         }, antiRepeat);
       },

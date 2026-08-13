@@ -1,9 +1,10 @@
 <script>
   import {_} from '$lib/utils/i18n';
+  import { SMOOTHIE_INGREDIENTS, MAX_SMOOTHIE_SIZE } from '$lib/utils/smoothie.js';
 
   // État du formulaire
   let username = '';
-  let passwordChar = '';
+  let smoothie = [];
   let displayName = '';
   let playerMode = '';
   let loading = false;
@@ -11,13 +12,18 @@
   let success = false;
   let submitted = false;
 
-  // Caractères disponibles pour le mot de passe visuel (identique à l'écran de login)
-  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉', '🥦', '🫜', '🌱', '🥥', '🥑', '🥐', '🥨', '🌰'];
+  function toggleIngredient(char) {
+    if (smoothie.includes(char)) {
+      smoothie = smoothie.filter(c => c !== char);
+    } else if (smoothie.length < MAX_SMOOTHIE_SIZE) {
+      smoothie = [...smoothie, char];
+    }
+  }
 
   async function handleRegister() {
     submitted = true;
 
-    if (!username || !passwordChar || !playerMode) {
+    if (!username || smoothie.length === 0 || !playerMode) {
       error = _('auth.requiredFields');
       return;
     }
@@ -33,7 +39,7 @@
         },
         body: JSON.stringify({
           username,
-          passwordChar,
+          smoothie,
           displayName: displayName || username,
           playerMode
         })
@@ -144,19 +150,19 @@
         <div class="form-group">
           <label for="passwordChar">{_('auth.secretCharacter')}</label>
           <div class="password-container">
-            {#each passwordChars as char}
+            {#each SMOOTHIE_INGREDIENTS as char}
               <button
                 type="button"
                 class="password-char-btn"
-                class:selected={passwordChar === char}
-                on:click={() => passwordChar = char}
+                class:selected={smoothie.includes(char)}
+                on:click={() => toggleIngredient(char)}
                 disabled={loading}
               >
                 {char}
               </button>
             {/each}
           </div>
-          {#if submitted && !passwordChar}
+          {#if submitted && smoothie.length === 0}
             <div class="error-text">{_('auth.chooseSecretCharacter')}</div>
           {/if}
           <p class="input-help">{_('auth.emojiPassword')}</p>

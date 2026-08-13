@@ -1,19 +1,25 @@
 <script>
   import { _ } from '$lib/utils/i18n';
+  import { SMOOTHIE_INGREDIENTS, MAX_SMOOTHIE_SIZE } from '$lib/utils/smoothie.js';
 
   // État du formulaire
   let username = '';
-  let passwordChar = '';
+  let smoothie = [];
   let loading = false;
   let error = '';
   let showPassword = false;
   let submitted = false;
 
-  // Caractères disponibles pour le mot de passe visuel
-  const passwordChars = ['🍎', '🍌', '🍇', '🍓', '🍊', '🥝', '🍍', '🍒', '🥭', '🍉', '🥦', '🫜', '🌱', '🥥', '🥑', '🥐', '🥨', '🌰'];
+  function toggleIngredient(char) {
+    if (smoothie.includes(char)) {
+      smoothie = smoothie.filter(c => c !== char);
+    } else if (smoothie.length < MAX_SMOOTHIE_SIZE) {
+      smoothie = [...smoothie, char];
+    }
+  }
 
   async function handleLogin() {
-    if (!username || !passwordChar) {
+    if (!username || smoothie.length === 0) {
       error = "Veuillez remplir tous les champs";
       return;
     }
@@ -28,7 +34,7 @@
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({username, passwordChar})
+        body: JSON.stringify({username, smoothie})
       });
 
       const data = await response.json();
@@ -84,19 +90,19 @@
         <div class="form-group">
           <label for="password">{_('auth.secretCharacter')}</label>
           <div class="password-container">
-            {#each passwordChars as char}
+            {#each SMOOTHIE_INGREDIENTS as char}
               <button
                 type="button"
                 class="password-char-btn"
-                class:selected={passwordChar === char}
-                on:click={() => passwordChar = char}
+                class:selected={smoothie.includes(char)}
+                on:click={() => toggleIngredient(char)}
                 disabled={loading}
               >
                 {char}
               </button>
             {/each}
           </div>
-          {#if submitted && !passwordChar}
+          {#if submitted && smoothie.length === 0}
             <div class="error-text">{_('auth.secretCharacter')}</div>
           {/if}
           <div class="password-help">

@@ -24,7 +24,11 @@ vi.mock('@neondatabase/serverless', () => {
           if (values.includes('newuser')) {
             return [];
           }
-          return [{ id: 'user-id', username: 'test', display_name: 'Test User', password_char: '🍎' }];
+          if (values.includes('multi')) {
+            // Smoothie stocké sous sa forme canonique (triée) : 🍎,🍇
+            return [{ id: 'user-id', username: 'multi', display_name: 'Multi User', password_emojis: '🍎,🍇' }];
+          }
+          return [{ id: 'user-id', username: 'test', display_name: 'Test User', password_emojis: '🍎' }];
         }
         if (query.includes('UPDATE users')) {
           return [];
@@ -76,19 +80,19 @@ describe('API d\'authentification', () => {
   describe('Endpoint login', () => {
     it('devrait retourner une erreur 400 si les données de connexion sont manquantes', async () => {
       mockRequest.json.mockResolvedValue({
-        // username et passwordChar manquants
+        // username et smoothie manquants
       });
 
       const response = await loginPost({ request: mockRequest, cookies: mockCookies });
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error', 'Nom d\'utilisateur et caractère de mot de passe requis');
+      expect(response.body).toHaveProperty('error', 'Nom d\'utilisateur et smoothie requis');
     });
 
     it('devrait retourner une erreur 401 si le mot de passe est incorrect', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'test',
-        passwordChar: '🍌' // Différent de celui stocké (🍎)
+        smoothie: ['🍌'] // Différent de celui stocké (🍎)
       });
 
       const response = await loginPost({ request: mockRequest, cookies: mockCookies });
@@ -100,7 +104,7 @@ describe('API d\'authentification', () => {
     it('devrait réussir la connexion avec les bonnes informations', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'test',
-        passwordChar: '🍎'
+        smoothie: ['🍎']
       });
 
       const response = await loginPost({ request: mockRequest, cookies: mockCookies });
@@ -111,37 +115,50 @@ describe('API d\'authentification', () => {
       expect(response.body).toHaveProperty('user');
       expect(mockCookies.set).toHaveBeenCalled();
     });
+
+    it('devrait réussir la connexion avec un smoothie multi-emoji cliqué dans le désordre', async () => {
+      // L'utilisateur mocké a pour smoothie stocké la clé triée de 🍎+🍇 (voir smoothieKey)
+      mockRequest.json.mockResolvedValue({
+        username: 'multi',
+        smoothie: ['🍇', '🍎'] // ordre inverse de la sélection d'origine, doit tout de même matcher
+      });
+
+      const response = await loginPost({ request: mockRequest, cookies: mockCookies });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+    });
   });
 
   describe('Endpoint register', () => {
     it('devrait retourner une erreur 400 si les données d\'inscription sont incomplètes', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'newuser',
-        // passwordChar manquant
+        // smoothie manquant
       });
 
       const response = await registerPost({ request: mockRequest, cookies: mockCookies });
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error', 'Nom d\'utilisateur et caractère de mot de passe requis');
+      expect(response.body).toHaveProperty('error', 'Nom d\'utilisateur et smoothie requis');
     });
 
-    it('devrait retourner une erreur 400 si le mot de passe n\'est pas un caractère unique', async () => {
+    it('devrait retourner une erreur 400 si le smoothie contient plus de 3 emoji', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'newuser',
-        passwordChar: '🍎🍌' // Plus d'un caractère
+        smoothie: ['🍎', '🍌', '🍇', '🍓'] // 4 emoji, au-delà de la limite
       });
 
       const response = await registerPost({ request: mockRequest, cookies: mockCookies });
 
       expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('error', 'Le mot de passe doit être un seul caractère');
+      expect(response.body).toHaveProperty('error', 'Le smoothie doit contenir 1 à 3 emoji distincts de la palette');
     });
 
     it('devrait retourner une erreur 400 si le mode adulte/enfant est manquant', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'newuser',
-        passwordChar: '🍎'
+        smoothie: ['🍎']
         // playerMode manquant
       });
 
@@ -154,7 +171,7 @@ describe('API d\'authentification', () => {
     it('devrait créer un nouvel utilisateur avec succès', async () => {
       mockRequest.json.mockResolvedValue({
         username: 'newuser',
-        passwordChar: '🍎',
+        smoothie: ['🍎', '🍇'],
         displayName: 'New User',
         playerMode: 'adulte'
       });

@@ -1,19 +1,20 @@
 import { json } from '@sveltejs/kit';
 import { sql } from '$lib/server/db';
 import { PLAYER_MODES } from '$lib/utils/player-mode.js';
+import { isValidSmoothie, smoothieKey } from '$lib/utils/smoothie.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ request, cookies }) {
   try {
-    const { username, passwordChar, displayName, playerMode } = await request.json();
+    const { username, smoothie, displayName, playerMode } = await request.json();
 
     // Validation basique
-    if (!username || !passwordChar) {
-      return json({ error: 'Nom d\'utilisateur et caractère de mot de passe requis' }, { status: 400 });
+    if (!username || !smoothie) {
+      return json({ error: 'Nom d\'utilisateur et smoothie requis' }, { status: 400 });
     }
 
-    if (passwordChar.length > 2) {
-      return json({ error: 'Le mot de passe doit être un seul caractère' }, { status: 400 });
+    if (!isValidSmoothie(smoothie)) {
+      return json({ error: 'Le smoothie doit contenir 1 à 3 emoji distincts de la palette' }, { status: 400 });
     }
 
     if (!PLAYER_MODES.includes(playerMode)) {
@@ -31,7 +32,7 @@ export async function POST({ request, cookies }) {
 
     // Créer le nouvel utilisateur avec la fonction SQL
     const result = await sql`
-      SELECT * FROM create_new_user(${username}, ${passwordChar}, ${displayName || username}, ${playerMode})
+      SELECT * FROM create_new_user(${username}, ${smoothieKey(smoothie)}, ${displayName || username}, ${playerMode})
     `;
 
     if (!result || result.length === 0) throw new Error('Failed to create user');

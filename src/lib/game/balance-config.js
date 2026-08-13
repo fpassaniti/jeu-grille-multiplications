@@ -47,6 +47,14 @@ export const OP_DIFFICULTY = 0.8;
  */
 export const POSED_SCORE_CALIBRATION = 2;
 
+/**
+ * Facteur correctif appliqué au score selon l'opérateur (retour utilisateur :
+ * addition et soustraction rapportaient un score bien trop élevé, du même
+ * ordre de grandeur ; division sous-récompensée en comparaison). Multiplication
+ * et tables non concernées — laissées à 1.
+ */
+export const OPERATOR_SCORE_MULTIPLIER = { '+': 0.5, '−': 0.5, '×': 1, '÷': 2 };
+
 /** Secondes allouées par opération élémentaire (base adulte). */
 export const OP_SEC = 4;
 

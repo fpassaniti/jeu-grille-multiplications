@@ -2,7 +2,7 @@
 
 > Document de spécification vivant. Il décrit l'existant (V1), les points d'attention, puis les spécifications de la V2 : modes de calcul multiples et gamification (pièces d'or, boutique, personnage RPG, coffres, streaks). Il est fait pour itérer : chaque section peut être amendée avant implémentation.
 
-**Dernière mise à jour** : 2026-08-11
+**Dernière mise à jour** : 2026-08-13
 
 ---
 
@@ -28,8 +28,8 @@
 |---|---|---|
 | `/` | Public | Accueil. Connecté : bienvenue + avatar de niveau + lien dashboard. Invité : cartes S'inscrire / Se connecter / Jouer |
 | `/play` | Public | Le jeu (machine à états `notStarted` → `playing` → `finished`) |
-| `/login` | Public | Connexion : username + emoji secret (18 choix) |
-| `/register` | Public | Inscription : username, displayName optionnel, emoji secret |
+| `/login` | Public | Connexion : username + mot de passe smoothie (1 à 3 emoji parmi 18 choix, ordre libre) |
+| `/register` | Public | Inscription : username, displayName optionnel, mot de passe smoothie |
 | `/dashboard` | Connecté | Niveau, XP, barre de progression, 5 dernières parties, actions |
 | `/profile` | Connecté | Compte + changement de mode adulte/enfant (§8) |
 | `/leaderboard` | Public | Top 10 filtré par mode (adulte/enfant) × durée (2/3/5 min) |
@@ -65,11 +65,12 @@
 
 | Endpoint | Méthode | Payload / Query | Notes |
 |---|---|---|---|
-| `/api/auth/register` | POST | `{username, passwordChar, displayName?, playerMode}` | `playerMode` (`adulte`/`enfant`) obligatoire depuis §8 — appelle `create_new_user()`, pose cookie session 7 j |
-| `/api/auth/login` | POST | `{username, passwordChar}` | Comparaison en clair, `UPDATE last_login` |
+| `/api/auth/register` | POST | `{username, smoothie, displayName?, playerMode}` | `smoothie` = tableau de 1 à 3 emoji (§8bis) ; `playerMode` (`adulte`/`enfant`) obligatoire depuis §8 — appelle `create_new_user()`, pose cookie session 7 j |
+| `/api/auth/login` | POST | `{username, smoothie}` | Comparaison en clair de la forme canonique triée (`smoothieKey`, §8bis), `UPDATE last_login` |
 | `/api/auth/logout` | POST | — | Supprime le cookie |
 | `/api/scores` | POST | `{name, score, duration, level, solvedCells, totalPossibleCells, selectedTables}` | Insère dans `game_sessions` + `scores` ; si connecté, appelle `add_user_xp`. Validation : `duration ∈ {2,3,5}` seulement — **le score n'est pas validé**. **⚠️ le champ `level` du payload est ignoré depuis §8** : le serveur lit `users.player_mode` |
 | `/api/profile/mode` | POST | `{playerMode}` (§8) | `UPDATE users SET player_mode` pour le compte connecté |
+| `/api/profile/smoothie` | POST | `{smoothie}` (§8bis) | `UPDATE users SET password_emojis` pour le compte connecté, sans redemander l'ancien smoothie (même UX 2-taps que `/api/profile/mode`) |
 | `/api/leaderboard` | GET | `?level=&duration=` | Meilleur score par nom, top 10 |
 | `/api/ranking` | GET | `?playerMode=` (`adulte`/`enfant`) | Classement général par XP (`user_progress`), public, sans lien avec un mode/durée de partie — top 20 + position du joueur connecté s'il est hors top 20. Distinct de `/api/leaderboard` : ici on classe les **comptes** par progression globale, pas les **parties** par meilleur score |
 | `/api/user/progress` | GET | (cookie) | Progression + niveau courant/suivant + % |
@@ -79,7 +80,7 @@
 
 | Table | Colonnes principales |
 |---|---|
-| `users` | `id (UUID)`, `username`, `password_char` (emoji en clair), `display_name`, `last_login`, `created_at`, `player_mode` (`adulte`/`enfant`, §8) |
+| `users` | `id (UUID)`, `username`, `password_emojis` (smoothie de 1 à 3 emoji en clair, forme canonique triée, §8bis), `display_name`, `last_login`, `created_at`, `player_mode` (`adulte`/`enfant`, §8) |
 | `user_progress` | `user_id`, `xp`, `level`, `games_played`, `total_score`, `streak_days`, `unlocked_badges (JSON)`, `last_played_at` |
 | `scores` (leaderboard) | `id`, `name`, `score`, `level (text: adulte/enfant)`, `duration`, `cells_solved`, `total_cells`, `tables_used (int[])`, `date` |
 | `game_sessions` (historique) | idem `scores` + `user_id`, `xp_earned`, `completed` |
@@ -107,7 +108,7 @@
 | 1 | `level_definitions` versionné = 10 niveaux, mais UI/i18n/images = 30 | Seuils XP 11–30 dépendent du contenu réel de la base prod | Réconcilier et versionner le seed 30 niveaux |
 | 2 | Le client attend `returned_previous_level`/`returned_level_title` que `add_user_xp` (repo) ne retourne pas | Détection de level-up fragile | Corrigé par `add_game_rewards` (V2, §5.7) |
 | 3 | `create_new_user` non versionnée | Base non reconstructible | Extraire le SQL de la base et le versionner |
-| 4 | Mot de passe = 1 emoji stocké/comparé en clair | Sécurité faible (choix assumé enfants) | Documenté, pas de changement prévu |
+| 4 | Mot de passe = 1 à 3 emoji ("smoothie", §8bis) stocké/comparé en clair | Sécurité faible mais assumée (public enfants), un peu renforcée par l'espace de combinaisons élargi | Documenté, pas de hashage prévu |
 | 5 | `gameStateStore.js` = code mort ; `gameService.saveScore` dupliqué dans `/play` | Confusion | Supprimé/réutilisé au refactor V2 (étape 1) |
 | 6 | Auto-validation à chaque frappe : taper « 4 » pour 42 flashe « incorrect » | Bloquant avec des réponses à 3-4 chiffres | Corrigé par l'engine V2 (§4.3) |
 | 7 | `POST /api/scores` ne valide pas la plausibilité du score | Triche triviale (XP et bientôt pièces) | Anti-triche V2 (§5.7) |
@@ -617,3 +618,23 @@ Le mode adulte/enfant devient un attribut permanent du compte :
 ### 8.3 Fichiers clés
 
 `db/migrations/012_player_mode.sql` (+ `db/create_new_user.sql` mis à jour, `create_new_user()` gagne un paramètre `p_player_mode`) ; `src/routes/register/+page.svelte` + `/api/auth/register` (`playerMode` obligatoire) ; `src/routes/profile/` (nouveau) + `/api/profile/mode` (nouveau) ; `src/routes/play/+page.server.js` (charge `player_mode`) ; `src/lib/game/persistence.js` (le `level` sort du schema de settings localStorage) ; `src/routes/api/scores/+server.js` + `scoreValidation.js` (autorité serveur).
+
+---
+
+## 8bis. Mot de passe "smoothie" (décision 2026-08-13)
+
+### 8bis.1 Problème
+
+Le mot de passe (dette #4, §3) était un seul emoji parmi 18 fruits/légumes, stocké en clair (`users.password_char`, `character(1)`). Espace de mots de passe minuscule (18 possibilités) pour un gain de sécurité quasi nul, mais la contrainte produit reste inchangée : gestion de compte simple pour un public d'enfants, pas de hashage ni de formulaire classique.
+
+### 8bis.2 Décision
+
+Le mot de passe devient un **"smoothie"** : 1 à 3 emoji choisis dans la même palette de 18, **peu importe l'ordre de sélection** — porte l'espace de mots de passe de 18 à 18 + C(18,2) + C(18,3) = 984 combinaisons, sans complexifier l'UX (même grille de boutons emoji, juste passée en sélection multiple togglable).
+
+- **Stockage** : `users.password_emojis` (`TEXT`, remplace `password_char`) — les emoji choisis sont triés selon leur position dans la palette canonique (`SMOOTHIE_INGREDIENTS`, `src/lib/utils/smoothie.js`) puis joints par une virgule (`smoothieKey()`), ex. `"🍎,🍓"`. Cette forme canonique rend la comparaison "ordre libre" triviale : on normalise de la même façon à l'inscription, à la connexion et au changement de smoothie, puis on compare des chaînes égales avec `=`. Un compte existant (1 seul emoji) migre tel quel (chaîne à 1 élément, pas de virgule) — aucune rupture pour les comptes créés avant cette décision (`db/migrations/016_password_smoothie.sql`).
+- **Inscription/connexion** (`/register`, `/login`) : le payload `passwordChar` (string) devient `smoothie` (tableau de 1 à 3 emoji). Validation partagée `isValidSmoothie()` (1 à 3 éléments, pas de doublon, tous issus de la palette).
+- **Changement de smoothie** (`/profile`, nouveau bloc) : même UX en 2 taps que le changement de mode adulte/enfant (§8.2) — on choisit un nouveau smoothie et on confirme, **sans redemander l'ancien** (cohérent avec la philosophie de compte simple). `POST /api/profile/smoothie`. Le smoothie actuel n'est jamais renvoyé en clair au client (comme un mot de passe classique) : le profil ne connaît que la nouvelle sélection en cours de composition.
+
+### 8bis.3 Fichiers clés
+
+`src/lib/utils/smoothie.js` (nouveau — palette, validation, normalisation, partagé client/serveur) ; `db/migrations/016_password_smoothie.sql` (+ `db/create_new_user.sql` mis à jour) ; `src/routes/api/auth/register/+server.js` + `login/+server.js` ; `src/routes/api/profile/smoothie/+server.js` (nouveau) ; `src/routes/register/+page.svelte`, `login/+page.svelte`, `profile/+page.svelte` (grille emoji togglable, jusqu'à 3).

@@ -15,7 +15,11 @@
  * division, M1/M2 « règle mentale ») via `GameEngine#checkWhole`.
  */
 
-import { operationDifficulty, POSED_SCORE_CALIBRATION } from './balance-config.js';
+import {
+  operationDifficulty,
+  POSED_SCORE_CALIBRATION,
+  OPERATOR_SCORE_MULTIPLIER
+} from './balance-config.js';
 
 export const BASE_POINTS = 15;
 export const FLOOR_RATIO = 0.25;
@@ -58,7 +62,12 @@ export const MAX_POSED_DIGITS = 13;
  */
 export function computeScore(question, timeRemainingSec) {
   const ratio = Math.max(0, Math.min(1, timeRemainingSec / question.timeAllowedSec));
-  return Math.round(BASE_POINTS * question.difficulty * (FLOOR_RATIO + (1 - FLOOR_RATIO) * ratio));
+  return Math.round(
+    BASE_POINTS *
+      question.difficulty *
+      (FLOOR_RATIO + (1 - FLOOR_RATIO) * ratio) *
+      (OPERATOR_SCORE_MULTIPLIER[question.operator] ?? 1)
+  );
 }
 
 /**
