@@ -1,6 +1,7 @@
 import { sql } from '$lib/server/db';
 import { getEquipment } from '$lib/server/shop.js';
 import { getChestAvailability } from '$lib/server/chests.js';
+import { getMissionStatus } from '$lib/server/missions.js';
 import {
   getPlayedDays,
   getEarliestPlayedMonth,
@@ -84,6 +85,7 @@ export async function load({ locals }) {
 
     const equipment = await getEquipment(locals.user.id);
     const chests = await getChestAvailability(locals.user.id);
+    const mission = await getMissionStatus(locals.user.id, todayISO);
 
     return {
       user: locals.user,
@@ -102,7 +104,8 @@ export async function load({ locals }) {
       nextStreakMilestone,
       milestoneProjections,
       equipment,
-      chests
+      chests,
+      mission
     };
   } catch (err) {
     console.error("Erreur lors du chargement de l'accueil:", err);
@@ -117,7 +120,8 @@ export async function load({ locals }) {
       nextStreakMilestone: null,
       milestoneProjections: [],
       equipment: null,
-      chests: null
+      chests: null,
+      mission: null
     };
   }
 }

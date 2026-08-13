@@ -1,13 +1,24 @@
 <script>
   import CoinCounter from '$lib/components/CoinCounter.svelte';
-  import { _ } from '$lib/utils/i18n';
+  import { _, getLanguage } from '$lib/utils/i18n';
+
+  function potionName(potion) {
+    return potion.name?.[getLanguage()] ?? potion.name?.fr ?? potion.code;
+  }
 
   // Props
-  export let chestType = 'daily'; // daily|streak|levelup|perfect|welcome
+  export let chestType = 'daily'; // daily|streak|levelup|perfect|welcome|mission
   export let onOpened = () => {}; // (result) => void — le parent rafraîchit coins/inventaire
   export let onClose = () => {};
 
-  const CHEST_ICONS = { daily: '🎁', streak: '🔥', levelup: '⬆️', perfect: '💯', welcome: '👋' };
+  const CHEST_ICONS = {
+    daily: '🎁',
+    streak: '🔥',
+    levelup: '⬆️',
+    perfect: '💯',
+    welcome: '👋',
+    mission: '🗝️'
+  };
   const CONFETTI = ['🎉', '✨', '🪙', '⭐'];
 
   let opened = false;
@@ -63,6 +74,14 @@
         </div>
 
         <p class="reveal-coins"><CoinCounter value={result.coins} /></p>
+
+        {#if result.potions?.length}
+          <div class="reveal-potions">
+            {#each result.potions as potion}
+              <span class="reveal-potion">🧪 {potionName(potion)}</span>
+            {/each}
+          </div>
+        {/if}
 
         <button class="close-button" on:click={onClose}>{_('common.close')}</button>
       </div>
@@ -123,6 +142,18 @@
   .reveal-coins {
     font-size: 2rem;
     margin: 10px 0;
+  }
+
+  .reveal-potions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+  }
+
+  .reveal-potion {
+    font-weight: bold;
+    color: var(--primary-dark);
   }
 
   .close-button {

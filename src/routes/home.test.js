@@ -9,6 +9,17 @@ vi.mock('$lib/server/chests.js', () => ({
   getChestAvailability: vi.fn(async () => ({ daily: { available: true } }))
 }));
 
+vi.mock('$lib/server/missions.js', () => ({
+  getMissionStatus: vi.fn(async () => ({
+    missionId: 'each_mode',
+    titleKey: 'mission.each_mode.title',
+    descriptionKey: 'mission.each_mode.description',
+    slots: [{ key: 'tables', done: false }],
+    completed: false,
+    chestAvailable: false
+  }))
+}));
+
 // Mock de Neon
 vi.mock('@neondatabase/serverless', () => {
   return {
@@ -148,5 +159,13 @@ describe('Home Page Server (fusion avec le dashboard)', () => {
     expect(result).toHaveProperty('equipment');
     expect(result).toHaveProperty('chests');
     expect(result.chests).toEqual({ daily: { available: true } });
+  });
+
+  it('charge la mission du jour', async () => {
+    const result = await load({ locals: mockLocals });
+
+    expect(result).toHaveProperty('mission');
+    expect(result.mission.missionId).toBe('each_mode');
+    expect(result.mission.chestAvailable).toBe(false);
   });
 });

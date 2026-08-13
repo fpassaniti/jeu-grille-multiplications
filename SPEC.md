@@ -386,6 +386,36 @@ Deux modèles de consommation :
   `add_game_rewards()` généralise l'ancienne règle « gel si exactement 1 jour
   manqué » à un écart de N jours couvert par N-1 jours de gel banqués.
 
+### 5.6ter Mission du jour (`db/migrations/017_daily_mission_chest.sql`)
+
+Objectif : inciter à jouer **plusieurs** parties dans la même journée (les
+mécaniques ci-dessus récompensent surtout la régularité jour après jour, pas
+le volume du jour même).
+
+- **Catalogue** (`src/lib/missions/catalog.js`) — 3 missions, pilotées à la
+  main comme le catalogue boutique (pas de génération procédurale) :
+  - *Un peu de tout* : une partie de chaque mode activé.
+  - *Persévérance* : 5 parties du même mode, au choix (n'importe quelle durée).
+  - *Endurance* : 4 parties à durée nominale 5 minutes (tous modes confondus).
+- **Tirage déterministe par date** : la mission du jour est **identique pour
+  tous les joueurs**, choisie par un hash de la date (`YYYY-MM-DD`) modulo la
+  taille du catalogue — pas de table de mission en base, pas de state à
+  synchroniser entre joueurs. Étendre le catalogue = ajouter une entrée.
+- **Progression** calculée à la volée depuis `game_sessions` du jour
+  (`src/lib/server/missions.js#getMissionStatus`), comme le coffre `perfect` —
+  aucune table de progression persistée.
+- **Coffre `mission`** (`open_chest()`) : 40–80 🪙 **+ 1 à 2 potions**
+  tirées parmi les familles stockables (`time_bonus`/`time_grace`/
+  `coin_multiplier`, jamais `streak_freeze`). **Exception scopée** à la
+  règle "coffres = pièces uniquement" de la §5.5 : les 5 autres chest_type
+  ne changent pas. La fonction SQL ne fait que la dédup anti-double-
+  réclamation du jour ; la complétion de la mission est vérifiée côté JS
+  (`POST /api/chests/open`) avant l'appel, pour ne pas dupliquer la logique
+  du catalogue en SQL.
+- **UI** : `DailyMissionCard.svelte` sur l'accueil, à côté du coffre
+  quotidien et du calendrier — une case par objectif, cochée (✅) au fil des
+  parties, bouton "Obtenir ma récompense" une fois la mission complétée.
+
 ### 5.7 Schéma DB (`db/migrations/v2_gamification.sql`)
 
 ```sql

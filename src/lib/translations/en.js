@@ -256,6 +256,24 @@ export default {
     alreadyOpened: 'Already opened today'
   },
 
+  mission: {
+    title: 'Daily mission',
+    claim: 'Claim my reward',
+    alreadyClaimed: 'Reward already claimed today',
+    each_mode: {
+      title: 'A bit of everything!',
+      description: 'Play one game of each calculation mode'
+    },
+    same_mode_x5: {
+      title: 'Perseverance',
+      description: 'Play 5 games of the same mode (your choice)'
+    },
+    duration_x4: {
+      title: 'Endurance',
+      description: 'Finish 4 games of 5 minutes'
+    }
+  },
+
   rewards: {
     base: 'Coins earned',
     weekend: 'Weekend bonus ×2!',

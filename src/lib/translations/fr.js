@@ -256,6 +256,24 @@ export default {
     alreadyOpened: 'Déjà ouvert aujourd\'hui'
   },
 
+  mission: {
+    title: 'Mission du jour',
+    claim: 'Obtenir ma récompense',
+    alreadyClaimed: 'Récompense déjà récupérée aujourd\'hui',
+    each_mode: {
+      title: 'Un peu de tout !',
+      description: 'Joue une partie de chaque mode de calcul'
+    },
+    same_mode_x5: {
+      title: 'Persévérance',
+      description: 'Joue 5 parties du même mode (au choix)'
+    },
+    duration_x4: {
+      title: 'Endurance',
+      description: 'Termine 4 parties de 5 minutes'
+    }
+  },
+
   rewards: {
     base: 'Pièces gagnées',
     weekend: 'Bonus week-end ×2 !',

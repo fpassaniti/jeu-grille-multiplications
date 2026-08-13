@@ -4,6 +4,7 @@
   import LevelBadge from '$lib/components/LevelBadge.svelte';
   import ChestModal from '$lib/components/chest/ChestModal.svelte';
   import StreakCalendar from '$lib/components/streak/StreakCalendar.svelte';
+  import DailyMissionCard from '$lib/components/mission/DailyMissionCard.svelte';
   import { listEnabledModes } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
@@ -16,6 +17,7 @@
   const isWeekend = [0, 6].includes(new Date().getDay());
 
   let chests = data.chests ?? {};
+  let mission = data.mission ?? null;
   let dailyOpen = false;
   // Le coffre de bienvenue s'ouvre automatiquement au premier chargement post-V2
   let welcomeOpen = chests.welcome?.available ?? false;
@@ -27,6 +29,13 @@
 
   function closeWelcomeChest() {
     welcomeOpen = false;
+  }
+
+  let missionOpen = false;
+
+  function closeMissionChest() {
+    missionOpen = false;
+    mission = { ...mission, chestAvailable: false };
   }
 
   // Rafraîchit les pièces/inventaire affichés (header + carte dashboard) après un gain
@@ -131,6 +140,10 @@
           {:else}
             <p class="daily-chest-done">🎁 {_('chest.comeBackTomorrow')}</p>
           {/if}
+        </div>
+
+        <div class="daily-mission-card-wrapper">
+          <DailyMissionCard {mission} onClaim={() => (missionOpen = true)} />
         </div>
 
         <div class="dashboard-calendar">
@@ -272,6 +285,8 @@
   <ChestModal chestType="daily" onClose={closeDailyChest} onOpened={handleChestOpened} />
 {:else if welcomeOpen}
   <ChestModal chestType="welcome" onClose={closeWelcomeChest} onOpened={handleChestOpened} />
+{:else if missionOpen}
+  <ChestModal chestType="mission" onClose={closeMissionChest} onOpened={handleChestOpened} />
 {/if}
 
 <style>
@@ -480,6 +495,7 @@
       grid-template-columns: 2fr 1fr;
       grid-template-areas:
         "main chest"
+        "main mission"
         "main calendar"
         "history history";
     }
@@ -490,6 +506,10 @@
 
     .daily-chest-card {
       grid-area: chest;
+    }
+
+    .daily-mission-card-wrapper {
+      grid-area: mission;
     }
 
     .dashboard-calendar {

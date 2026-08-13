@@ -256,6 +256,24 @@ export default {
     alreadyOpened: '今天已经打开过了'
   },
 
+  mission: {
+    title: '每日任务',
+    claim: '领取奖励',
+    alreadyClaimed: '今天已经领取过奖励了',
+    each_mode: {
+      title: '样样都来！',
+      description: '每种计算模式都玩一局'
+    },
+    same_mode_x5: {
+      title: '坚持不懈',
+      description: '用同一种模式（任选）玩 5 局'
+    },
+    duration_x4: {
+      title: '持久力',
+      description: '完成 4 局 5 分钟的游戏'
+    }
+  },
+
   rewards: {
     base: '获得的金币',
     weekend: '周末双倍奖励 ×2！',
