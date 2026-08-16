@@ -7,7 +7,18 @@
  * `../game/scoring.js`) — pas le modèle « rappel » rescalé de
  * `../game/balance-config.js` (utilisé par division) : le classement des
  * tables (`/api/leaderboard`) contient des scores historiques enregistrés
- * sous cette ancienne formule, il faut rester comparable.
+ * sous cette ancienne formule, il faut rester comparable. `tableDifficulty()`
+ * elle-même reste donc la valeur brute de `DIFFICULTY_MATRIX`, sans rescale.
+ *
+ * Exception délibérée et scopée (anti-abus, 2026-08-16) : une décote de
+ * *session* (`coverageFactor`, voir `createGenerator`) est appliquée
+ * par-dessus cette formule quand `selectedTables` (mode enfant) restreint le
+ * pool à des cellules nettement plus faciles que la grille complète —
+ * analyse des `game_sessions` en base ayant montré un farming réel des
+ * tables 1/2/10 (jusqu'à 2,5× plus de bonnes réponses/minute pour un score
+ * comparable, voire supérieur, à une session normale). Elle ne change pas
+ * `tableDifficulty()` ni les scores déjà enregistrés — seules les nouvelles
+ * parties avec un pool restreint sont concernées.
  */
 import { pick, createAntiRepeat } from './generator-utils.js';
 
@@ -54,6 +65,29 @@ export function tableTime(row, col, level) {
 }
 
 const ALL_TABLES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+/**
+ * Plancher du multiplicateur de décote (`coverageFactor`, `createGenerator`) :
+ * même une sélection réduite à une seule table facile garde au moins 40 %
+ * du score normal, pour ne pas écraser à zéro la pratique d'un enfant qui
+ * débute vraiment sur une table donnée.
+ */
+export const MIN_COVERAGE_FACTOR = 0.4;
+
+/**
+ * Moyenne brute de `DIFFICULTY_MATRIX` sur ses 100 cellules — calculée
+ * dynamiquement (pas une constante recopiée à la main) pour rester
+ * synchronisée si la grille est un jour retouchée. Sert de référence
+ * « grille complète » au `coverageFactor` de `createGenerator`.
+ * @returns {number}
+ */
+function fullGridAverageDifficulty() {
+  const total = DIFFICULTY_MATRIX.reduce(
+    (sum, row) => sum + row.reduce((rowSum, value) => rowSum + value, 0),
+    0
+  );
+  return total / (DIFFICULTY_MATRIX.length * DIFFICULTY_MATRIX[0].length);
+}
 
 /** @type {import('./types.js').GameMode} */
 export default {
@@ -102,6 +136,20 @@ export default {
       }
     }
 
+    // Décote anti-abus (cf. commentaire d'en-tête) : un pool nettement plus
+    // facile que la grille complète (ex. sélection {1,2,10}) rapporte moins
+    // par cellule. `selectedNumbers` couvre déjà les 10 tables hors mode
+    // enfant restreint, donc `coverageFactor` vaut naturellement 1 sinon.
+    const poolAvgDifficulty =
+      pool.reduce((sum, key) => {
+        const [row, col] = key.split(',').map(Number);
+        return sum + tableDifficulty(row, col);
+      }, 0) / pool.length;
+    const coverageFactor = Math.min(
+      1,
+      Math.max(MIN_COVERAGE_FACTOR, poolAvgDifficulty / fullGridAverageDifficulty())
+    );
+
     const solved = new Set();
     const antiRepeat = createAntiRepeat(1);
     let cumulative = 0;
@@ -123,7 +171,7 @@ export default {
           operands: [row, col],
           operator: '×',
           answer: row * col,
-          difficulty: tableDifficulty(row, col),
+          difficulty: tableDifficulty(row, col) * coverageFactor,
           timeAllowedSec: tableTime(row, col, level),
           legacyWhole: true,
           meta: { row, col }

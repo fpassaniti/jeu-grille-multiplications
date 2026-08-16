@@ -1,6 +1,15 @@
 import { describe, it, expect } from 'vitest';
 import { seededRng } from '../../test/seeded-rng.js';
-import tables, { DIFFICULTY_MATRIX, tableDifficulty, tableTime } from './tables.js';
+import tables, {
+  DIFFICULTY_MATRIX,
+  tableDifficulty,
+  tableTime,
+  MIN_COVERAGE_FACTOR
+} from './tables.js';
+
+/** Moyenne brute de DIFFICULTY_MATRIX sur ses 100 cellules — référence indépendante pour les tests de `coverageFactor`. */
+const FULL_GRID_AVG_DIFFICULTY =
+  DIFFICULTY_MATRIX.flat().reduce((sum, d) => sum + d, 0) / 100;
 
 describe('matrice de difficulté brute (formule V1)', () => {
   it('valeurs de référence de la grille brute', () => {
@@ -122,5 +131,68 @@ describe('générateur', () => {
   it('boardState retourne les tables actives', () => {
     const gen = tables.createGenerator({ selectedTables: [] }, 'adulte', seededRng(6));
     expect(gen.boardState().selectedNumbers).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+  });
+});
+
+describe('coverageFactor (décote anti-abus des sélections de tables faciles)', () => {
+  it('grille complète (adulte) : aucune décote, difficulty = tableDifficulty brute', () => {
+    const gen = tables.createGenerator({ selectedTables: [] }, 'adulte', seededRng(7));
+    for (let i = 0; i < 50; i++) {
+      const q = gen.next();
+      expect(q.difficulty).toBeCloseTo(tableDifficulty(q.meta.row, q.meta.col), 9);
+    }
+  });
+
+  it('grille complète (enfant, les 10 tables cochées) : aucune décote', () => {
+    const gen = tables.createGenerator(
+      { selectedTables: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+      'enfant',
+      seededRng(8)
+    );
+    for (let i = 0; i < 50; i++) {
+      const q = gen.next();
+      expect(q.difficulty).toBeCloseTo(tableDifficulty(q.meta.row, q.meta.col), 9);
+    }
+  });
+
+  it('sélection étroite {1,2,10} (enfant) : décote significative mais pas au plancher', () => {
+    // Pool = lignes/colonnes {1,2,10} — moyenne brute 32.6/51, cf. calcul en plan.
+    const expectedFactor = 32.6 / 51 / FULL_GRID_AVG_DIFFICULTY;
+    expect(expectedFactor).toBeLessThan(1);
+    expect(expectedFactor).toBeGreaterThan(MIN_COVERAGE_FACTOR);
+
+    const gen = tables.createGenerator({ selectedTables: [1, 2, 10] }, 'enfant', seededRng(9));
+    for (let i = 0; i < 50; i++) {
+      const q = gen.next();
+      const raw = tableDifficulty(q.meta.row, q.meta.col);
+      expect(q.difficulty).toBeCloseTo(raw * expectedFactor, 6);
+    }
+  });
+
+  it('sélection à une seule table facile ({10}) : décote maximale atteignable, au-dessus du plancher', () => {
+    // Pool = ligne/colonne 10 uniquement — moyenne brute 0.5 (le minimum de la grille).
+    const expectedFactor = 0.5 / FULL_GRID_AVG_DIFFICULTY;
+    expect(expectedFactor).toBeGreaterThan(MIN_COVERAGE_FACTOR);
+
+    const gen = tables.createGenerator({ selectedTables: [10] }, 'enfant', seededRng(10));
+    for (let i = 0; i < 30; i++) {
+      const q = gen.next();
+      const raw = tableDifficulty(q.meta.row, q.meta.col);
+      expect(q.difficulty).toBeCloseTo(raw * expectedFactor, 6);
+    }
+  });
+
+  it('sélection qui évite les tables 1 et 10 (les plus faciles) : aucune décote (pool déjà plus dur que la moyenne)', () => {
+    const gen = tables.createGenerator(
+      { selectedTables: [2, 3, 4, 5, 6, 7, 8, 9] },
+      'enfant',
+      seededRng(11)
+    );
+    for (let i = 0; i < 50; i++) {
+      const q = gen.next();
+      // Moyenne du pool (96 cellules) ≈ 1.21 > moyenne pleine grille (1.184) →
+      // ratio brut > 1, donc coverageFactor plafonné à 1 (Math.min(1, …)).
+      expect(q.difficulty).toBeCloseTo(tableDifficulty(q.meta.row, q.meta.col), 9);
+    }
   });
 });
