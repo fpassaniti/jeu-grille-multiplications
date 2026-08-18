@@ -253,7 +253,11 @@ export default {
     welcomeText: 'Voici un cadeau pour fêter les nouveautés de MultyFun.',
     youWon: 'Tu as gagné {coins} 🪙 !',
     comeBackTomorrow: 'Reviens demain pour un nouveau coffre !',
-    alreadyOpened: 'Déjà ouvert aujourd\'hui'
+    alreadyOpened: 'Déjà ouvert aujourd\'hui',
+    error: {
+      notAvailable: 'Ce coffre n\'est plus disponible pour le moment.',
+      generic: 'Une erreur est survenue, réessaie plus tard.'
+    }
   },
 
   mission: {
@@ -315,6 +319,7 @@ export default {
     customHint: 'Coche les exercices que tu veux travailler :',
     editExercises: 'Voir / modifier les exercices',
     selectAll: 'Tout cocher',
+    starsLegend: '⭐ = niveau de difficulté (plus d\'étoiles = plus difficile)',
     presets: {
       ce1: 'CE1',
       ce2: 'CE2',

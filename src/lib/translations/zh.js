@@ -253,7 +253,11 @@ export default {
     welcomeText: '这是庆祝 MultyFun 新功能的礼物。',
     youWon: '你获得了 {coins} 🪙！',
     comeBackTomorrow: '明天再来开新的宝箱吧！',
-    alreadyOpened: '今天已经打开过了'
+    alreadyOpened: '今天已经打开过了',
+    error: {
+      notAvailable: '这个宝箱现在已不可用。',
+      generic: '出现了错误，请稍后再试。'
+    }
   },
 
   mission: {
@@ -315,6 +319,7 @@ export default {
     customHint: '勾选你想练习的题型：',
     editExercises: '查看/修改题型',
     selectAll: '全选',
+    starsLegend: '⭐ = 难度等级（星星越多越难）',
     presets: {
       ce1: '二年级',
       ce2: '三年级',

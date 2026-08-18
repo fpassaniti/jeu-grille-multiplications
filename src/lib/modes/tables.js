@@ -94,7 +94,7 @@ export default {
   id: 'tables',
   enabled: true,
   labelKey: 'modes.tables',
-  icon: '✖️',
+  icon: '🔢',
   boardType: 'grid',
   tiers: [],
   defaultOptions: { selectedTables: [...ALL_TABLES] },

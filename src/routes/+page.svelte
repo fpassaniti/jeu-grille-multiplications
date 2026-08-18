@@ -5,7 +5,7 @@
   import ChestModal from '$lib/components/chest/ChestModal.svelte';
   import StreakCalendar from '$lib/components/streak/StreakCalendar.svelte';
   import DailyMissionCard from '$lib/components/mission/DailyMissionCard.svelte';
-  import { listEnabledModes } from '$lib/modes/index.js';
+  import { getMode, listEnabledModes } from '$lib/modes/index.js';
   import { _ } from '$lib/utils/i18n';
 
   const modes = listEnabledModes();
@@ -174,6 +174,9 @@
                   </div>
                   <div class="game-level">
                     <span class="emoji">{game.level === 'adulte' ? '👨‍💼' : '🧒'}</span> {game.level === 'adulte' ? _('common.adult') : _('common.child')}
+                  </div>
+                  <div class="game-mode">
+                    <span class="emoji">{getMode(game.game_mode).icon}</span> {_(getMode(game.game_mode).labelKey)}
                   </div>
                 </div>
               {/each}
@@ -768,6 +771,12 @@
   }
 
   .game-level {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-align: right;
+  }
+
+  .game-mode {
     font-size: 0.9rem;
     color: var(--text-secondary);
     text-align: right;

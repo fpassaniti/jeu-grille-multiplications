@@ -253,7 +253,11 @@ export default {
     welcomeText: 'Here is a gift to celebrate the new MultyFun features.',
     youWon: 'You won {coins} 🪙!',
     comeBackTomorrow: 'Come back tomorrow for a new chest!',
-    alreadyOpened: 'Already opened today'
+    alreadyOpened: 'Already opened today',
+    error: {
+      notAvailable: 'This chest is no longer available right now.',
+      generic: 'Something went wrong, please try again later.'
+    }
   },
 
   mission: {
@@ -315,6 +319,7 @@ export default {
     customHint: 'Tick the exercises you want to practice:',
     editExercises: 'View / edit exercises',
     selectAll: 'Select all',
+    starsLegend: '⭐ = difficulty level (more stars = harder)',
     presets: {
       ce1: 'Grade 2',
       ce2: 'Grade 3',

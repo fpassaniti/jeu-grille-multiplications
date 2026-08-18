@@ -21,6 +21,20 @@
   };
   const CONFETTI = ['🎉', '✨', '🪙', '⭐'];
 
+  /** Codes d'erreur connus de POST /api/chests/open → clé i18n. */
+  const CHEST_ERROR_KEYS = {
+    not_available: 'chest.error.notAvailable'
+  };
+
+  /**
+   * Traduit un code d'erreur brut de l'API en message compréhensible.
+   * @param {string} code
+   * @returns {string}
+   */
+  function errorMessage(code) {
+    return _(CHEST_ERROR_KEYS[code] ?? 'chest.error.generic');
+  }
+
   let opened = false;
   let isOpening = false;
   let result = null;
@@ -55,7 +69,7 @@
 
 <svelte:window on:keydown={handleKeydown} />
 
-<div class="chest-overlay" role="presentation" on:click|self={() => opened && onClose()}>
+<div class="chest-overlay" role="presentation" on:click|self={() => (opened || error) && onClose()}>
   <div class="chest-content">
     {#if !opened}
       <button class="chest-box" class:shaking={!isOpening} on:click={openChest} disabled={isOpening}>
@@ -63,7 +77,8 @@
       </button>
       <p class="chest-hint">{isOpening ? _('common.loading') : _('chest.tapToOpen')}</p>
       {#if error}
-        <p class="chest-error">⚠️ {error}</p>
+        <p class="chest-error">⚠️ {errorMessage(error)}</p>
+        <button class="close-button" on:click={onClose}>{_('common.close')}</button>
       {/if}
     {:else}
       <div class="chest-reveal">

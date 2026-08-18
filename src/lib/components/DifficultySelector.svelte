@@ -101,6 +101,7 @@
         </label>
       {/each}
     </div>
+    <p class="tiers-legend">{_('difficulty.starsLegend')}</p>
   </details>
 </div>
 
@@ -169,6 +170,13 @@
     font-size: 0.9rem;
     color: var(--text-light);
     margin: 5px 0;
+  }
+
+  .tiers-legend {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    text-align: center;
+    margin-top: 10px;
   }
 
   .tier-row {

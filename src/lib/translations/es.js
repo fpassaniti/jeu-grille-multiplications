@@ -253,7 +253,11 @@ export default {
     welcomeText: 'Aquí tienes un regalo para celebrar las novedades de MultyFun.',
     youWon: '¡Ganaste {coins} 🪙!',
     comeBackTomorrow: '¡Vuelve mañana para un nuevo cofre!',
-    alreadyOpened: 'Ya abierto hoy'
+    alreadyOpened: 'Ya abierto hoy',
+    error: {
+      notAvailable: 'Este cofre ya no está disponible por ahora.',
+      generic: 'Ha ocurrido un error, inténtalo de nuevo más tarde.'
+    }
   },
 
   mission: {
@@ -315,6 +319,7 @@ export default {
     customHint: 'Marca los ejercicios que quieres practicar:',
     editExercises: 'Ver / modificar los ejercicios',
     selectAll: 'Marcar todo',
+    starsLegend: '⭐ = nivel de dificultad (más estrellas = más difícil)',
     presets: {
       ce1: '2º Primaria',
       ce2: '3º Primaria',
